@@ -13,6 +13,7 @@ const LocationSearchPage = React.lazy(() => import('./pages/LocationSearchPage')
 const DealsPage = React.lazy(() => import('./pages/DealsPage'));
 const NewTripPage = React.lazy(() => import('./pages/Newtrip'));
 const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
+const GuidPage = React.lazy(() => import('./pages/GuidPage'));
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,6 +85,22 @@ const AppRoutes: React.FC = () => {
           element={
             <MainLayout>
               <DealsPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/guide/new"
+          element={
+            <MainLayout>
+              <GuidPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/guide/:id"
+          element={
+            <MainLayout>
+              <GuidPage />
             </MainLayout>
           }
         />

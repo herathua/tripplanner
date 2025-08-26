@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useAppDispatch } from '../store';
 import { setTripDetails } from '../store/slices/tripSlice';
+import GuideCard from '../components/GuideCard';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +15,47 @@ const HomePage: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budget, setBudget] = useState<string>('');
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+
+  // Mock guides data
+  const [guides] = useState([
+    {
+      name: 'Sri Lanka Adventure',
+      destination: 'Sri Lanka',
+      image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg',
+      description: 'A comprehensive guide to exploring the best of Sri Lanka, including beaches, temples, and wildlife.'
+    },
+    {
+      name: 'Paris in Spring',
+      destination: 'Paris, France',
+      image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg',
+      description: 'Discover the romance of Paris in springtime with this curated guide to must-see sights and hidden gems.'
+    },
+    {
+      name: 'Tokyo Food Tour',
+      destination: 'Tokyo, Japan',
+      image: 'https://images.pexels.com/photos/461382/pexels-photo-461382.jpeg',
+      description: 'Experience the culinary delights of Tokyo with this food-focused travel guide.'
+    }
+  ]);
+
+  // Sample guides for modal (mocked for now)
+  const sampleGuides = [
+    {
+      id: '1',
+      name: 'Sri Lanka Adventure',
+      destination: 'Sri Lanka',
+      image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg',
+      description: 'A comprehensive guide to exploring the best of Sri Lanka, including beaches, temples, and wildlife.'
+    },
+    {
+      id: '2',
+      name: 'Paris in Spring',
+      destination: 'Paris, France',
+      image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg',
+      description: 'Discover the romance of Paris in springtime with this curated guide to must-see sights and hidden gems.'
+    }
+  ];
 
   const handlePlanNewTrip = () => {
     setIsModalOpen(true);
@@ -36,6 +78,19 @@ const HomePage: React.FC = () => {
       navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}`);
       setIsModalOpen(false);
     }
+  };
+
+  const handleCreateGuideClick = () => setIsGuideModalOpen(true);
+  const handleCloseGuideModal = () => setIsGuideModalOpen(false);
+
+  const handleSampleGuideClick = (id: string) => {
+    setIsGuideModalOpen(false);
+    navigate(`/guide/${id}?edit=1`);
+  };
+
+  const handleNewGuideClick = () => {
+    setIsGuideModalOpen(false);
+    navigate('/guide/new?edit=1');
   };
 
   const formatCurrency = (value: string) => {
@@ -201,29 +256,72 @@ const HomePage: React.FC = () => {
         <section className="p-6 mb-12 bg-blue-50 rounded-xl">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Your guides</h2>
-            <button className="bg-white text-gray-800 px-4 py-1.5 rounded-full text-sm border">
+            <button
+              className="bg-white text-gray-800 px-4 py-1.5 rounded-full text-sm border"
+              onClick={handleCreateGuideClick}
+            >
               Create new guide
             </button>
           </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="flex items-center p-4 space-x-4 bg-white rounded-lg">
-              <img 
-                src="https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg" 
-                alt="Sri Lanka Guide" 
-                className="object-cover w-16 h-16 rounded-lg"
+          {/* Guide Cards Grid */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            {guides.map((guide, idx) => (
+              <GuideCard
+                key={idx}
+                name={guide.name}
+                destination={guide.destination}
+                image={guide.image}
+                description={guide.description}
+                onView={() => alert(`Viewing guide: ${guide.name}`)}
               />
-              <div>
-                <h3 className="font-semibold">Sri Lanka</h3>
-                <p className="text-sm text-gray-600">Guide</p>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Explore Section */}
+        {/* Create Guide Modal */}
+        {isGuideModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="w-full max-w-lg p-6 bg-white rounded-lg shadow-xl relative">
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                onClick={handleCloseGuideModal}
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <h2 className="text-2xl font-bold mb-4">Create New Guide</h2>
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">Use a Sample Guide</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {sampleGuides.map((guide) => (
+                    <div
+                      key={guide.id}
+                      className="cursor-pointer border rounded-lg p-3 flex flex-col hover:shadow-lg transition"
+                      onClick={() => handleSampleGuideClick(guide.id)}
+                    >
+                      <img src={guide.image} alt={guide.name} className="h-24 w-full object-cover rounded mb-2" />
+                      <h4 className="font-semibold text-gray-900">{guide.name}</h4>
+                      <p className="text-sm text-gray-500 mb-1">{guide.destination}</p>
+                      <p className="text-xs text-gray-600 line-clamp-2">{guide.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="text-center">
+                <button
+                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  onClick={handleNewGuideClick}
+                >
+                  + Create New Guide
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Saved  Section */}
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Explore</h2>
+          <h2 className="mb-4 text-xl font-semibold">Saved </h2>
           <h3 className="mb-6 text-lg font-medium">Popular destinations</h3>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
