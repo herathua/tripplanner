@@ -94,9 +94,9 @@ const HomePage: React.FC = () => {
 
         {/* Date Selection Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="w-full max-w-md p-6 bg-white rounded-lg">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold">Select Trip Details</h3>
                 <button 
                   onClick={() => setIsModalOpen(false)}
@@ -108,7 +108,7 @@ const HomePage: React.FC = () => {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     Trip Name
                   </label>
                   <input
@@ -125,7 +125,7 @@ const HomePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     Start Date
                   </label>
                   <DatePicker
@@ -141,7 +141,7 @@ const HomePage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     End Date
                   </label>
                   <DatePicker
@@ -157,19 +157,19 @@ const HomePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
                     Expected Budget
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <DollarSign className="h-5 w-5 text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <DollarSign className="w-5 h-5 text-gray-400" />
                     </div>
                     <input
                       type="text"
                       value={budget ? formatCurrency(budget) : ''}
                       onChange={handleBudgetChange}
                       placeholder="Enter your budget"
-                      className="w-full pl-10 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full p-2 pl-10 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   <p className="mt-1 text-sm text-gray-500">
@@ -177,7 +177,7 @@ const HomePage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex justify-end space-x-3 mt-6">
+                <div className="flex justify-end mt-6 space-x-3">
                   <button
                     onClick={() => setIsModalOpen(false)}
                     className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50"
@@ -187,7 +187,7 @@ const HomePage: React.FC = () => {
                   <button
                     onClick={handleConfirmDates}
                     disabled={!startDate || !endDate || !budget || !tripName.trim()}
-                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     Confirm
                   </button>

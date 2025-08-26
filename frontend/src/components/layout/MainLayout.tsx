@@ -45,17 +45,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="text-2xl font-bold text-red-500">
-                TripPlanner
+              <Link to="/" className="flex items-center gap-2">
+                <img
+                  src="/src/assets/logo.png"
+                  alt="Itinero Logo"
+                  title="Itinero"
+                  className="object-contain w-8 h-8"
+                />
+                <span className="text-2xl font-bold text-black-500">Itinero</span>
               </Link>
             </div>
 
             {/* Centered Navigation */}
-            <nav className="hidden md:flex justify-center flex-1">
+            <nav className="justify-center flex-1 hidden md:flex">
               <div className="flex space-x-8">
                 {navigation.map((item) => (
                   <Link
@@ -78,14 +84,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {isAuthenticated ? (
                 <button
                   onClick={handleLogout}
-                  className="ml-4 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="px-4 py-2 ml-4 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
                   Sign out
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className="ml-4 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="px-4 py-2 ml-4 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
                   Sign in
                 </Link>
@@ -96,7 +102,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {children}
       </main>
     </div>
