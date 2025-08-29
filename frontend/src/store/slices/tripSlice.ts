@@ -18,6 +18,7 @@ export interface TripDetails {
   budget: number;
   isConfigured: boolean;
   tripName: string;
+  tripDescription?: string;
 }
 
 export interface Trip {

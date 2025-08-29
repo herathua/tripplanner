@@ -12,6 +12,7 @@ const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tripName, setTripName] = useState('');
+  const [tripDescription, setTripDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budget, setBudget] = useState<string>('');
@@ -72,10 +73,11 @@ const HomePage: React.FC = () => {
         endDate: formattedEndDate,
         budget: budgetValue,
         isConfigured: true,
-        tripName: tripName.trim()
+        tripName: tripName.trim(),
+        tripDescription: tripDescription.trim()
       }));
 
-      navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}`);
+      navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`);
       setIsModalOpen(false);
     }
   };
@@ -176,6 +178,22 @@ const HomePage: React.FC = () => {
                   />
                   <p className="mt-1 text-sm text-gray-500">
                     Give your trip a memorable name
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    value={tripDescription}
+                    onChange={(e) => setTripDescription(e.target.value)}
+                    placeholder="Describe your trip (optional)"
+                    rows={3}
+                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Add a brief description of your trip
                   </p>
                 </div>
 
