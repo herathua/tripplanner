@@ -28,45 +28,13 @@ import {
   Utensils,
   Bed,
   ShoppingBag,
-  Camera as CameraIcon
+  Camera as CameraIcon,
+  Hotel
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-
-// Types
-interface Place {
-  id: string;
-  name: string;
-  location: string;
-  description: string;
-  category: 'attraction' | 'restaurant' | 'hotel' | 'transport' | 'shopping';
-  rating: number;
-  photos: string[];
-  coordinates: { lat: number; lng: number };
-  cost: number;
-  duration: number; // in hours
-  dayNumber?: number;
-}
-
-interface Activity {
-  id: string;
-  dayNumber: number;
-  time: string;
-  placeId: string;
-  placeName: string;
-  description: string;
-  cost: number;
-  duration: number;
-  type: 'sightseeing' | 'dining' | 'transport' | 'accommodation' | 'shopping';
-}
-
-interface Expense {
-  id: string;
-  dayNumber: number;
-  category: 'accommodation' | 'food' | 'transport' | 'activities' | 'shopping' | 'other';
-  description: string;
-  amount: number;
-  date: Date;
-}
+import TripMap from '../components/TripMap';
+import TripSidebar from '../components/TripSidebar';
+import { Place, HotelDestination, Activity, Expense } from '../types/tripTypes';
 
 const NewTrip = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -89,6 +57,12 @@ const NewTrip = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+
+  // Hotel search state
+  const [showHotelSearchModal, setShowHotelSearchModal] = useState(false);
+  const [hotelSearchQuery, setHotelSearchQuery] = useState('');
+  const [hotelDestinations, setHotelDestinations] = useState<HotelDestination[]>([]);
+  const [isSearchingHotels, setIsSearchingHotels] = useState(false);
 
   useEffect(() => {
     const startDateStr = searchParams.get('startDate');
@@ -174,6 +148,30 @@ const NewTrip = () => {
         coordinates: { lat: 6.0535, lng: 80.2210 },
         cost: 0,
         duration: 3
+      },
+      {
+        id: '4',
+        name: 'Colombo City Center',
+        location: 'Colombo, Sri Lanka',
+        description: 'Modern shopping and entertainment complex in the heart of Colombo. Features international brands and local boutiques.',
+        category: 'shopping',
+        rating: 4,
+        photos: [],
+        coordinates: { lat: 6.9271, lng: 79.8612 },
+        cost: 0,
+        duration: 2
+      },
+      {
+        id: '5',
+        name: 'Mount Lavinia Hotel',
+        location: 'Mount Lavinia, Sri Lanka',
+        description: 'Historic beachfront hotel with colonial architecture and stunning ocean views. Perfect for a luxury stay.',
+        category: 'hotel',
+        rating: 5,
+        photos: [],
+        coordinates: { lat: 6.8394, lng: 79.8631 },
+        cost: 150,
+        duration: 24
       }
     ];
 
@@ -246,6 +244,62 @@ const NewTrip = () => {
     setExpenses(expenses.filter(e => e.id !== expenseId));
   };
 
+  // Hotel search functionality
+  const searchHotels = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setIsSearchingHotels(true);
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.withCredentials = true;
+
+      xhr.addEventListener('readystatechange', function () {
+        if (this.readyState === this.DONE) {
+          try {
+            const response = JSON.parse(this.responseText);
+            if (response.status && response.data) {
+              setHotelDestinations(response.data);
+            } else {
+              setHotelDestinations([]);
+            }
+          } catch (error) {
+            console.error('Error parsing hotel search response:', error);
+            setHotelDestinations([]);
+          }
+          setIsSearchingHotels(false);
+        }
+      });
+
+      xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(query)}`);
+      xhr.setRequestHeader('x-rapidapi-key', 'bbefbd0c2cmsh32738304eae9dfap19a055jsn132ee598d744');
+      xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
+      xhr.send();
+    } catch (error) {
+      console.error('Error searching hotels:', error);
+      setIsSearchingHotels(false);
+    }
+  };
+
+  const addHotelAsPlace = (hotel: HotelDestination) => {
+    const newPlace: Place = {
+      id: generateId(),
+      name: hotel.name,
+      location: `${hotel.city_name}, ${hotel.country}`,
+      description: `${hotel.dest_type} in ${hotel.region}, ${hotel.country}. ${hotel.hotels} hotels available.`,
+      category: 'hotel',
+      rating: 4, // Default rating
+      photos: hotel.image_url ? [hotel.image_url] : [],
+      coordinates: { lat: hotel.latitude, lng: hotel.longitude },
+      cost: 0, // Will be updated when user adds details
+      duration: 24 // Hotel stays are typically 24 hours
+    };
+    
+    setPlaces([...places, newPlace]);
+    setShowHotelSearchModal(false);
+    setHotelSearchQuery('');
+    setHotelDestinations([]);
+  };
+
   // Export functionality
   const exportToPDF = () => {
     // TODO: Implement PDF export
@@ -298,10 +352,7 @@ const NewTrip = () => {
     alert('Trip saved successfully!');
   };
 
-  const handleAddActivity = (dayNumber: number) => {
-    setSelectedDay(dayNumber);
-    setShowAddActivityModal(true);
-  };
+
 
   const handleDeleteDay = (dayNumber: number) => {
     if (confirm(`Are you sure you want to delete Day ${dayNumber}? This will remove all activities for this day.`)) {
@@ -310,620 +361,653 @@ const NewTrip = () => {
     }
   };
 
+  const isAnyModalOpen = showAddPlaceModal || showAddActivityModal || showAddExpenseModal || showHotelSearchModal;
+
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-screen bg-white shadow-md z-50 transform transition-all duration-300 
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${isMinimized ? 'w-16' : 'w-80'}
-          md:fixed md:translate-x-0 flex flex-col`}
-      >
-        {/* Trip Header - Fixed at top */}
-        <div className="sticky top-0 z-10 p-6 bg-white border-b">
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <div className="flex items-center gap-2">
-              <img
-                src="/src/assets/logo.png"
-                alt="TripTail Logo"
-                title="TripTail"
-                className={`w-8 h-8 flex-shrink-0 object-contain transition-all duration-300 ${isMinimized ? 'mx-auto' : ''}`}
-              />
-              <h2 className={`text-lg font-bold transition-all duration-300 ${
-                isMinimized ? 'w-0 overflow-hidden opacity-0' : 'w-auto opacity-100'
-              }`}>Itinero</h2>
-            </div>
-          </div>
-          <div className={`space-y-2 ${isMinimized ? 'hidden' : 'block'}`}>
-            <h3 className="font-semibold text-gray-900">Trip to Sri Lanka</h3>
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="w-4 h-4 mr-2" />
-              <span>{formatTripDuration()}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock className="w-4 h-4 mr-2" />
-              <span>{tripDays.length} days</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation - Scrollable */}
-        <nav className={`flex-1 ${isMinimized ? 'p-2' : 'p-4'} overflow-y-auto`}>
-          <div className="space-y-1">
-            <h4 className={`px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 ${isMinimized ? 'hidden' : 'block'}`}>
-              Trip Details
-            </h4>
-            <a href="#overview" className={`flex items-center px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Overview">
-              <Map className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Overview</span>
-              <ChevronRight className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </a>
-            <a href="#places" className={`flex items-center px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Places to Visit">
-              <MapPin className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Places to Visit</span>
-              <ChevronRight className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </a>
-            <a href="#itinerary" className={`flex items-center px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Itinerary">
-              <Calendar className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Itinerary</span>
-              <ChevronRight className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </a>
-            <a href="#budgeting" className={`flex items-center px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Budget">
-              <DollarSign className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Budget</span>
-              <ChevronRight className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </a>
-          </div>
-
-          <div className="mt-8 space-y-1">
-            <h4 className={`px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 ${isMinimized ? 'hidden' : 'block'}`}>
-              Trip Tools
-            </h4>
-            <button className={`flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Share with Friends">
-              <Users className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Share with Friends</span>
-              <Share2 className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </button>
-            <button className={`flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Export Itinerary">
-              <FileText className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Export Itinerary</span>
-              <Download className={`w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 ${isMinimized ? 'hidden' : 'block'}`} />
-            </button>
-            <button 
-              onClick={exportToPDF}
-              className={`flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} 
-              title="Export to PDF"
-            >
-              <FileText className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Export to PDF</span>
-            </button>
-            <button 
-              onClick={exportToCalendar}
-              className={`flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} 
-              title="Export to Calendar"
-            >
-              <Calendar className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Export to Calendar</span>
-            </button>
-            <button className={`flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group ${isMinimized ? 'justify-center' : ''}`} title="Save to Favorites">
-              <Heart className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-              <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Save to Favorites</span>
-            </button>
-          </div>
-        </nav>
-
-        {/* Sidebar Footer - Fixed at bottom */}
-        <div className="sticky bottom-0 p-4 bg-white border-t">
-          <button className="flex items-center w-full px-2 py-2 text-gray-700 rounded-lg hover:bg-gray-100 group" title="Trip Settings">
-            <Settings className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-            <span className={`ml-3 ${isMinimized ? 'hidden' : 'block'}`}>Trip Settings</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* external toggle button (desktop) placed at the right edge of the sidebar */}
-      <button
-        onClick={() => setIsMinimized(!isMinimized)}
-        className="fixed z-50 items-center justify-center hidden w-8 h-8 bg-white rounded-full shadow-md md:flex hover:bg-gray-50"
-        title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
-        style={{ top: '1.5rem', left: isMinimized ? '4rem' : '20rem', transform: 'translateX(50%)' }}
-      >
-        <ChevronRight className={`w-4 h-4 text-gray-500 transform transition-transform duration-300 ${isMinimized ? 'rotate-180' : ''}`} />
-      </button>
-
-      {/* Main Content - Scrollable with proper margin */}
-      <div className={`flex-1 transition-all duration-300 ${isMinimized ? 'md:ml-16' : 'md:ml-80'} min-h-screen`}>
-        {/* Header Section - Only visible on mobile */}
-        <header className="sticky top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md md:hidden">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-bold">{tripName}</h1>
-            <button 
-              onClick={() => setIsEditingName(true)}
-              className="p-1 rounded hover:bg-gray-100"
-              title="Edit trip name"
-            >
-              <Edit2 className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-          <button
-            className="p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            onClick={toggleSidebar}
-          >
-            {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </header>
-
-        {/* Desktop Header - Without sidebar control button */}
-        <header className="sticky top-0 z-40 flex items-center justify-between hidden p-4 bg-white shadow-md md:flex">
-          <div className="flex items-center space-x-2">
-            {isEditingName ? (
-              <input
-                type="text"
-                value={tripName}
-                onChange={(e) => setTripName(e.target.value)}
-                onBlur={() => setIsEditingName(false)}
-                onKeyPress={(e) => e.key === 'Enter' && setIsEditingName(false)}
-                className="text-2xl font-bold border-b border-blue-500 focus:outline-none focus:border-blue-600"
-                autoFocus
-              />
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold">{tripName}</h1>
-                <button 
-                  onClick={() => setIsEditingName(true)}
-                  className="p-1 rounded hover:bg-gray-100"
-                >
-                  <Edit2 className="w-4 h-4 text-gray-500" />
-                </button>
-              </>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={handleSaveTrip}
-              className="flex items-center px-6 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Save Trip</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Main Content Sections */}
-        <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          {/* Overview Section */}
-          <section id="overview" className="mb-8">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="h-full p-6 bg-white rounded-lg shadow-md">
-                <h3 className="mb-4 text-lg font-semibold">Trip Duration</h3>
-                <div className="flex items-center text-gray-600">
-                  <Clock className="w-5 h-5 mr-2" />
-                  <span>{tripDays.length} days</span>
+      {isAnyModalOpen ? (
+        <>
+          {showAddPlaceModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" style={{ zIndex: 9999 }}>
+              <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add New Place</h3>
+                  <button 
+                    onClick={() => setShowAddPlaceModal(false)}
+                    className="p-1 text-gray-400 rounded hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-              </div>
-              <div className="h-full p-6 bg-white rounded-lg shadow-md">
-                <h3 className="mb-4 text-lg font-semibold">Total Budget</h3>
-                <div className="flex items-center text-gray-600">
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  <span>${tripBudget.toLocaleString()}</span>
-                </div>
-                <div className="mt-2 text-sm text-gray-500">
-                  Spent: ${calculateTotalSpent().toLocaleString()} | Remaining: ${calculateRemainingBudget().toLocaleString()}
-                </div>
-              </div>
-              <div className="h-full p-6 bg-white rounded-lg shadow-md">
-                <h3 className="mb-4 text-lg font-semibold">Places to Visit</h3>
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="w-5 h-5 mr-2" />
-                  <span>{places.length} places added</span>
-                </div>
-                <div className="mt-2 text-sm text-gray-500">
-                  {places.length > 0 ? `${places.filter(p => p.category === 'attraction').length} attractions, ${places.filter(p => p.category === 'restaurant').length} restaurants` : 'No places added yet'}
-                </div>
+                <AddPlaceForm onSubmit={addPlace} onCancel={() => setShowAddPlaceModal(false)} />
               </div>
             </div>
-
-            {/* Map Section */}
-            <div className="p-6 mt-6 bg-white rounded-lg shadow-md">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Trip Map</h3>
-                <button
-                  onClick={() => setIsMapFullscreen(!isMapFullscreen)}
-                  className="p-2 text-gray-600 rounded-lg hover:bg-gray-100"
-                  title={isMapFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                >
-                  <Navigation className="w-5 h-5" />
-                </button>
-              </div>
-              <div className={`${isMapFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
-                {isMapFullscreen && (
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="text-lg font-semibold">Trip Map - {tripName}</h3>
-                    <button
-                      onClick={() => setIsMapFullscreen(false)}
-                      className="p-2 text-gray-600 rounded-lg hover:bg-gray-100"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
-                <div className={`${isMapFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[400px]'}`}>
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126742.302!2d80.7718!3d7.8731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae3f9f9!2sSri%20Lanka!5e0!3m2!1sen!2sus!4v1681234567890"
-                    className="rounded-lg w-full h-full"
-                    allowFullScreen
-                    title="Map of Sri Lanka"
-                    loading="lazy"
-                  ></iframe>
+          )}
+          {showAddActivityModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" style={{ zIndex: 9999 }}>
+              <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add Activity</h3>
+                  <button 
+                    onClick={() => setShowAddActivityModal(false)}
+                    className="p-1 text-gray-400 rounded hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                {places.length > 0 && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium mb-2">Places on Map:</h4>
-                    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                      {places.map(place => (
-                        <div key={place.id} className="flex items-center space-x-2 text-sm">
-                          {getCategoryIcon(place.category)}
-                          <span className="truncate">{place.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* Places to Visit Section */}
-          <section id="places" className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Places to Visit</h2>
-              <button 
-                onClick={() => setShowAddPlaceModal(true)}
-                className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Place</span>
-              </button>
-            </div>
-            
-            {/* Search Bar */}
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search places by name, location, or category..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <AddActivityForm 
+                  onSubmit={addActivity} 
+                  onCancel={() => setShowAddActivityModal(false)}
+                  selectedDay={selectedDay || 1}
+                  places={places}
+                  selectedPlace={selectedPlace}
                 />
               </div>
             </div>
-            
-            {places.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-6 text-center text-gray-500 bg-white rounded-lg shadow-lg">
-                <div>
-                  <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium mb-2">No places added yet</p>
-                  <p className="text-sm text-gray-400 mb-4">Click "Add Place" to start planning your visits</p>
+          )}
+          {showAddExpenseModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" style={{ zIndex: 9999 }}>
+              <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add Expense</h3>
                   <button 
-                    onClick={() => setShowAddPlaceModal(true)}
-                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                    onClick={() => setShowAddExpenseModal(false)}
+                    className="p-1 text-gray-400 rounded hover:text-gray-600"
                   >
-                    Add Your First Place
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
+                <AddExpenseForm 
+                  onSubmit={addExpense} 
+                  onCancel={() => setShowAddExpenseModal(false)}
+                  tripDays={tripDays}
+                />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {places
-                  .filter(place => 
-                    searchQuery === '' || 
-                    place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    place.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    place.category.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .map(place => (
-                  <div key={place.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div className="relative h-48 bg-gray-200">
-                      {place.photos.length > 0 ? (
-                        <img 
-                          src={place.photos[0]} 
-                          alt={place.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <CameraIcon className="w-12 h-12 text-gray-400" />
+            </div>
+          )}
+          {showHotelSearchModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50" style={{ zIndex: 9999 }}>
+              <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-xl max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Search Hotels & Destinations</h3>
+                  <button 
+                    onClick={() => {
+                      setShowHotelSearchModal(false);
+                      setHotelSearchQuery('');
+                      setHotelDestinations([]);
+                    }}
+                    className="p-1 text-gray-400 rounded hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search for hotels, cities, or destinations..."
+                      value={hotelSearchQuery}
+                      onChange={(e) => setHotelSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && searchHotels(hotelSearchQuery)}
+                      className="w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() => searchHotels(hotelSearchQuery)}
+                      disabled={isSearchingHotels || !hotelSearchQuery.trim()}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {isSearchingHotels ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+                </div>
+
+                {isSearchingHotels && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-gray-600">Searching for hotels...</span>
+                  </div>
+                )}
+
+                {!isSearchingHotels && hotelDestinations.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-gray-900">Search Results</h4>
+                    {hotelDestinations.map((hotel) => (
+                      <div key={hotel.dest_id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => addHotelAsPlace(hotel)}>
+                        <div className="flex-shrink-0 w-16 h-16">
+                          {hotel.image_url ? (
+                            <img 
+                              src={hotel.image_url} 
+                              alt={hotel.name}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                              <Hotel className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <div className="absolute top-2 right-2">
-                        <span className="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-full">
-                          {place.category}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-sm font-medium text-gray-900 truncate">{hotel.name}</h5>
+                          <p className="text-sm text-gray-500">{hotel.label}</p>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <span className="text-xs text-gray-400 capitalize">{hotel.dest_type}</span>
+                            <span className="text-xs text-blue-600">{hotel.hotels} hotels</span>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <button className="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-50">
+                            Add
+                          </button>
+                        </div>
                       </div>
-                      <div className="absolute top-2 left-2 flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium text-white">{place.rating}</span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold mb-2">{place.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{place.location}</p>
-                      <p className="text-sm text-gray-700 mb-3 line-clamp-2">{place.description}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                        <span>${place.cost}</span>
-                        <span>{place.duration}h</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <button 
-                          onClick={() => {
-                            setSelectedPlace(place);
-                            setShowAddActivityModal(true);
-                          }}
-                          className="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
-                        >
-                          Add to Itinerary
-                        </button>
-                        <button 
-                          onClick={() => deletePlace(place.id)}
-                          className="p-1 text-red-500 rounded hover:bg-red-50"
-                          title="Delete place"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!isSearchingHotels && hotelDestinations.length === 0 && hotelSearchQuery && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Hotel className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>No destinations found for "{hotelSearchQuery}"</p>
+                    <p className="text-sm">Try searching for a different location</p>
+                  </div>
+                )}
+
+                {!isSearchingHotels && hotelDestinations.length === 0 && !hotelSearchQuery && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Hotel className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>Search for hotels and destinations</p>
+                    <p className="text-sm">Enter a city, hotel name, or destination to get started</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <TripSidebar
+            isSidebarOpen={isSidebarOpen}
+            isMinimized={isMinimized}
+            tripName={tripName}
+            tripDays={tripDays}
+            formatTripDuration={formatTripDuration}
+            setShowHotelSearchModal={setShowHotelSearchModal}
+            toggleSidebar={toggleSidebar}
+            setIsMinimized={setIsMinimized}
+          />
+
+          {/* external toggle button (desktop) placed at the right edge of the sidebar */}
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="fixed z-50 items-center justify-center hidden w-8 h-8 bg-white rounded-full shadow-md md:flex hover:bg-gray-50"
+            title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            style={{ top: '1.5rem', left: isMinimized ? '4rem' : '20rem', transform: 'translateX(50%)' }}
+          >
+            <ChevronRight className={`w-4 h-4 text-gray-500 transform transition-transform duration-300 ${isMinimized ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Main Content - Scrollable with proper margin */}
+          <div className={`flex-1 transition-all duration-300 ${isMinimized ? 'md:ml-16' : 'md:ml-80'} min-h-screen`}>
+            {/* Header Section - Only visible on mobile */}
+            <header className="sticky top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md md:hidden">
+              <div className="flex items-center space-x-2">
+                <h1 className="text-xl font-bold">{tripName}</h1>
+                <button 
+                  onClick={() => setIsEditingName(true)}
+                  className="p-1 rounded hover:bg-gray-100"
+                  title="Edit trip name"
+                >
+                  <Edit2 className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+              <button
+                className="p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                onClick={toggleSidebar}
+              >
+                {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </header>
+
+            {/* Desktop Header - Without sidebar control button */}
+            <header className="sticky top-0 z-40 flex items-center justify-between hidden p-4 bg-white shadow-md md:flex">
+              <div className="flex items-center space-x-2">
+                {isEditingName ? (
+                  <input
+                    type="text"
+                    value={tripName}
+                    onChange={(e) => setTripName(e.target.value)}
+                    onBlur={() => setIsEditingName(false)}
+                    onKeyPress={(e) => e.key === 'Enter' && setIsEditingName(false)}
+                    className="text-2xl font-bold border-b border-blue-500 focus:outline-none focus:border-blue-600"
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <h1 className="text-2xl font-bold">{tripName}</h1>
+                    <button 
+                      onClick={() => setIsEditingName(true)}
+                      className="p-1 rounded hover:bg-gray-100"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={handleSaveTrip}
+                  className="flex items-center px-6 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Save Trip</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Main Content Sections */}
+            <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+              {/* Overview Section */}
+              <section id="overview" className="mb-8">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <div className="h-full p-6 bg-white rounded-lg shadow-md">
+                    <h3 className="mb-4 text-lg font-semibold">Trip Duration</h3>
+                    <div className="flex items-center text-gray-600">
+                      <Clock className="w-5 h-5 mr-2" />
+                      <span>{tripDays.length} days</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Itinerary Section */}
-          <section id="itinerary" className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Itinerary</h2>
-              <button 
-                onClick={() => {
-                  setSelectedDay(1);
-                  setShowAddActivityModal(true);
-                }}
-                className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Activity</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              {tripDays.map(({ date, dayNumber }) => {
-                const dayActivities = activities.filter(a => a.dayNumber === dayNumber);
-                return (
-                  <div key={dayNumber} className="p-6 bg-white rounded-lg shadow-lg">
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-medium">Day {dayNumber}: {formatDate(date)}</h3>
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={() => {
-                            setSelectedDay(dayNumber);
-                            setShowAddActivityModal(true);
-                          }}
-                          className="p-2 text-blue-600 rounded hover:bg-blue-50"
-                          title={`Add activity for day ${dayNumber}`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                        {dayActivities.length > 0 && (
-                          <button 
-                            onClick={() => handleDeleteDay(dayNumber)}
-                            className="p-2 text-red-500 rounded hover:bg-red-50"
-                            title={`Clear all activities for day ${dayNumber}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                  <div className="h-full p-6 bg-white rounded-lg shadow-md">
+                    <h3 className="mb-4 text-lg font-semibold">Total Budget</h3>
+                    <div className="flex items-center text-gray-600">
+                      <DollarSign className="w-5 h-5 mr-2" />
+                      <span>${tripBudget.toLocaleString()}</span>
                     </div>
-                    
-                    {dayActivities.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p>No activities planned yet</p>
-                        <button 
-                          onClick={() => {
-                            setSelectedDay(dayNumber);
-                            setShowAddActivityModal(true);
-                          }}
-                          className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                    <div className="mt-2 text-sm text-gray-500">
+                      Spent: ${calculateTotalSpent().toLocaleString()} | Remaining: ${calculateRemainingBudget().toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="h-full p-6 bg-white rounded-lg shadow-md">
+                    <h3 className="mb-4 text-lg font-semibold">Places to Visit</h3>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      <span>{places.length} places added</span>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-500">
+                      {places.length > 0 ? `${places.filter(p => p.category === 'attraction').length} attractions, ${places.filter(p => p.category === 'restaurant').length} restaurants` : 'No places added yet'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Map Section */}
+                <div className="p-6 mt-6 bg-white rounded-lg shadow-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Trip Map</h3>
+                    <button
+                      onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+                      className="p-2 text-gray-600 rounded-lg hover:bg-gray-100"
+                      title={isMapFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                    >
+                      <Navigation className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className={`${isMapFullscreen ? 'fixed inset-0 z-101 bg-white' : ''}`}>
+                    {isMapFullscreen && (
+                      <div className="flex items-center justify-between p-4 border-b">
+                        <h3 className="text-lg font-semibold">Trip Map - {tripName}</h3>
+                        <button
+                          onClick={() => setIsMapFullscreen(false)}
+                          className="p-2 text-gray-600 rounded-lg hover:bg-gray-100"
                         >
-                          + Add your first activity
+                          <X className="w-5 h-5" />
                         </button>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {dayActivities
-                          .sort((a, b) => a.time.localeCompare(b.time))
-                          .map(activity => (
-                            <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                              <div className="flex-shrink-0 w-16 text-sm font-medium text-gray-600">
-                                {activity.time}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  {getCategoryIcon(activity.type)}
-                                  <h4 className="font-medium">{activity.placeName}</h4>
-                                  <span className="text-sm text-gray-500">({activity.duration}h)</span>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-green-600 font-medium">${activity.cost}</span>
-                                  <button 
-                                    onClick={() => deleteActivity(activity.id)}
-                                    className="text-red-500 hover:text-red-700"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </div>
+                    )}
+                    <TripMap 
+                      places={places}
+                      tripName={tripName}
+                      isFullscreen={isMapFullscreen}
+                    />
+                    {places.length > 0 && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium mb-2">Places on Map:</h4>
+                        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                          {places.map(place => (
+                            <div key={place.id} className="flex items-center space-x-2 text-sm">
+                              {getCategoryIcon(place.category)}
+                              <span className="truncate">{place.name}</span>
                             </div>
                           ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="flex items-center justify-center space-x-4 text-xs text-gray-600">
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              <span>Attractions</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                              <span>Restaurants</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                              <span>Hotels</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                              <span>Transport</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                              <span>Shopping</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                </div>
+              </section>
 
-          {/* Budgeting Section */}
-          <section id="budgeting" className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Budget</h2>
-              <button 
-                onClick={() => setShowAddExpenseModal(true)}
-                className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Expense</span>
-              </button>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-lg">
-              <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3">
-                <div className="h-full p-6 rounded-lg bg-blue-50">
-                  <h3 className="mb-2 text-sm font-medium text-gray-600">Total Budget</h3>
-                  <p className="text-2xl font-semibold text-blue-600">${tripBudget.toLocaleString()}</p>
+              {/* Places to Visit Section */}
+              <section id="places" className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">Places to Visit</h2>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => setShowHotelSearchModal(true)}
+                      className="flex items-center px-4 py-2 space-x-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+                    >
+                      <Hotel className="w-4 h-4" />
+                      <span>Search Hotels</span>
+                    </button>
+                    <button 
+                      onClick={() => setShowAddPlaceModal(true)}
+                      className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Place</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="h-full p-6 rounded-lg bg-green-50">
-                  <h3 className="mb-2 text-sm font-medium text-gray-600">Spent</h3>
-                  <p className="text-2xl font-semibold text-green-600">${calculateTotalSpent().toLocaleString()}</p>
+                
+                {/* Search Bar */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search places by name, location, or category..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
-                <div className="h-full p-6 rounded-lg bg-yellow-50">
-                  <h3 className="mb-2 text-sm font-medium text-gray-600">Remaining</h3>
-                  <p className="text-2xl font-semibold text-yellow-600">${calculateRemainingBudget().toLocaleString()}</p>
-                </div>
-              </div>
-              
-              {expenses.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p className="text-lg font-medium mb-2">No expenses added yet</p>
-                  <p className="text-sm text-gray-400 mb-4">Click "Add Expense" to start tracking your budget</p>
+                
+                {places.length === 0 ? (
+                  <div className="flex items-center justify-center h-full p-6 text-center text-gray-500 bg-white rounded-lg shadow-lg">
+                    <div>
+                      <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium mb-2">No places added yet</p>
+                      <p className="text-sm text-gray-400 mb-4">Click "Add Place" to start planning your visits</p>
+                      <button 
+                        onClick={() => setShowAddPlaceModal(true)}
+                        className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                      >
+                        Add Your First Place
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {places
+                      .filter(place => 
+                        searchQuery === '' || 
+                        place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        place.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        place.category.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map(place => (
+                      <div key={place.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div className="relative h-48 bg-gray-200">
+                          {place.photos.length > 0 ? (
+                            <img 
+                              src={place.photos[0]} 
+                              alt={place.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <CameraIcon className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2">
+                            <span className="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-full">
+                              {place.category}
+                            </span>
+                          </div>
+                          <div className="absolute top-2 left-2 flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm font-medium text-white">{place.rating}</span>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-lg font-semibold mb-2">{place.name}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{place.location}</p>
+                          <p className="text-sm text-gray-700 mb-3 line-clamp-2">{place.description}</p>
+                          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                            <span>${place.cost}</span>
+                            <span>{place.duration}h</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <button 
+                              onClick={() => {
+                                setSelectedPlace(place);
+                                setShowAddActivityModal(true);
+                              }}
+                              className="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
+                            >
+                              Add to Itinerary
+                            </button>
+                            <button 
+                              onClick={() => deletePlace(place.id)}
+                              className="p-1 text-red-500 rounded hover:bg-red-50"
+                              title="Delete place"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Itinerary Section */}
+              <section id="itinerary" className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">Itinerary</h2>
                   <button 
-                    onClick={() => setShowAddExpenseModal(true)}
-                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                    onClick={() => {
+                      setSelectedDay(1);
+                      setShowAddActivityModal(true);
+                    }}
+                    className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                   >
-                    Add Your First Expense
+                    <Plus className="w-4 h-4" />
+                    <span>Add Activity</span>
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-900">Expense Breakdown</h4>
-                  {['accommodation', 'food', 'transport', 'activities', 'shopping', 'other'].map(category => {
-                    const categoryExpenses = expenses.filter(e => e.category === category);
-                    const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-                    
-                    if (categoryTotal === 0) return null;
-                    
+                <div className="grid grid-cols-1 gap-4">
+                  {tripDays.map(({ date, dayNumber }) => {
+                    const dayActivities = activities.filter(a => a.dayNumber === dayNumber);
                     return (
-                      <div key={category} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-3">
+                      <div key={dayNumber} className="p-6 bg-white rounded-lg shadow-lg">
+                        <div className="flex items-start justify-between mb-4">
+                          <h3 className="text-lg font-medium">Day {dayNumber}: {formatDate(date)}</h3>
                           <div className="flex items-center space-x-2">
-                            {getExpenseCategoryIcon(category)}
-                            <span className="font-medium capitalize">{category}</span>
+                            <button 
+                              onClick={() => {
+                                setSelectedDay(dayNumber);
+                                setShowAddActivityModal(true);
+                              }}
+                              className="p-2 text-blue-600 rounded hover:bg-blue-50"
+                              title={`Add activity for day ${dayNumber}`}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                            {dayActivities.length > 0 && (
+                              <button 
+                                onClick={() => handleDeleteDay(dayNumber)}
+                                className="p-2 text-red-500 rounded hover:bg-red-50"
+                                title={`Clear all activities for day ${dayNumber}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
-                          <span className="font-semibold text-gray-900">${categoryTotal.toLocaleString()}</span>
                         </div>
-                        <div className="space-y-2">
-                          {categoryExpenses.map(expense => (
-                            <div key={expense.id} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-gray-600">Day {expense.dayNumber}</span>
-                                <span className="text-gray-900">{expense.description}</span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium">${expense.amount.toLocaleString()}</span>
-                                <button 
-                                  onClick={() => deleteExpense(expense.id)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        
+                        {dayActivities.length === 0 ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                            <p>No activities planned yet</p>
+                            <button 
+                              onClick={() => {
+                                setSelectedDay(dayNumber);
+                                setShowAddActivityModal(true);
+                              }}
+                              className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                            >
+                              + Add your first activity
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {dayActivities
+                              .sort((a, b) => a.time.localeCompare(b.time))
+                              .map(activity => (
+                                <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex-shrink-0 w-16 text-sm font-medium text-gray-600">
+                                    {activity.time}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      {getCategoryIcon(activity.type)}
+                                      <h4 className="font-medium">{activity.placeName}</h4>
+                                      <span className="text-sm text-gray-500">({activity.duration}h)</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span className="text-green-600 font-medium">${activity.cost}</span>
+                                      <button 
+                                        onClick={() => deleteActivity(activity.id)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
-          </section>
-        </div>
-      </div>
+              </section>
 
-      {/* Add Place Modal */}
-      {showAddPlaceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Add New Place</h3>
-              <button 
-                onClick={() => setShowAddPlaceModal(false)}
-                className="p-1 text-gray-400 rounded hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Budgeting Section */}
+              <section id="budgeting" className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">Budget</h2>
+                  <button 
+                    onClick={() => setShowAddExpenseModal(true)}
+                    className="flex items-center px-4 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Expense</span>
+                  </button>
+                </div>
+                <div className="p-6 bg-white rounded-lg shadow-lg">
+                  <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3">
+                    <div className="h-full p-6 rounded-lg bg-blue-50">
+                      <h3 className="mb-2 text-sm font-medium text-gray-600">Total Budget</h3>
+                      <p className="text-2xl font-semibold text-blue-600">${tripBudget.toLocaleString()}</p>
+                    </div>
+                    <div className="h-full p-6 rounded-lg bg-green-50">
+                      <h3 className="mb-2 text-sm font-medium text-gray-600">Spent</h3>
+                      <p className="text-2xl font-semibold text-green-600">${calculateTotalSpent().toLocaleString()}</p>
+                    </div>
+                    <div className="h-full p-6 rounded-lg bg-yellow-50">
+                      <h3 className="mb-2 text-sm font-medium text-gray-600">Remaining</h3>
+                      <p className="text-2xl font-semibold text-yellow-600">${calculateRemainingBudget().toLocaleString()}</p>
+                    </div>
+                  </div>
+                  
+                  {expenses.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p className="text-lg font-medium mb-2">No expenses added yet</p>
+                      <p className="text-sm text-gray-400 mb-4">Click "Add Expense" to start tracking your budget</p>
+                      <button 
+                        onClick={() => setShowAddExpenseModal(true)}
+                        className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
+                      >
+                        Add Your First Expense
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Expense Breakdown</h4>
+                      {['accommodation', 'food', 'transport', 'activities', 'shopping', 'other'].map(category => {
+                        const categoryExpenses = expenses.filter(e => e.category === category);
+                        const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+                        
+                        if (categoryTotal === 0) return null;
+                        
+                        return (
+                          <div key={category} className="p-4 border rounded-lg">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-2">
+                                {getExpenseCategoryIcon(category)}
+                                <span className="font-medium capitalize">{category}</span>
+                              </div>
+                              <span className="font-semibold text-gray-900">${categoryTotal.toLocaleString()}</span>
+                            </div>
+                            <div className="space-y-2">
+                              {categoryExpenses.map(expense => (
+                                <div key={expense.id} className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-gray-600">Day {expense.dayNumber}</span>
+                                    <span className="text-gray-900">{expense.description}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium">${expense.amount.toLocaleString()}</span>
+                                    <button 
+                                      onClick={() => deleteExpense(expense.id)}
+                                      className="text-red-500 hover:text-red-700"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
-            <AddPlaceForm onSubmit={addPlace} onCancel={() => setShowAddPlaceModal(false)} />
           </div>
-        </div>
-      )}
-
-      {/* Add Activity Modal */}
-      {showAddActivityModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Add Activity</h3>
-              <button 
-                onClick={() => setShowAddActivityModal(false)}
-                className="p-1 text-gray-400 rounded hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <AddActivityForm 
-              onSubmit={addActivity} 
-              onCancel={() => setShowAddActivityModal(false)}
-              selectedDay={selectedDay || 1}
-              places={places}
-              selectedPlace={selectedPlace}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Add Expense Modal */}
-      {showAddExpenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Add Expense</h3>
-              <button 
-                onClick={() => setShowAddExpenseModal(false)}
-                className="p-1 text-gray-400 rounded hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <AddExpenseForm 
-              onSubmit={addExpense} 
-              onCancel={() => setShowAddExpenseModal(false)}
-              tripDays={tripDays}
-            />
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -942,14 +1026,16 @@ const AddPlaceForm: React.FC<{
     rating: 5,
     cost: 0,
     duration: 2,
-    photos: [] as string[]
+    photos: [] as string[],
+    lat: 7.8731,
+    lng: 80.7718
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
-      coordinates: { lat: 0, lng: 0 } // Default coordinates
+      coordinates: { lat: formData.lat, lng: formData.lng }
     });
   };
 
@@ -1027,6 +1113,31 @@ const AddPlaceForm: React.FC<{
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Describe what makes this place special..."
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+          <input
+            type="number"
+            step="any"
+            value={formData.lat}
+            onChange={(e) => setFormData({ ...formData, lat: parseFloat(e.target.value) || 0 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., 7.8731"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+          <input
+            type="number"
+            step="any"
+            value={formData.lng}
+            onChange={(e) => setFormData({ ...formData, lng: parseFloat(e.target.value) || 0 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., 80.7718"
+          />
+        </div>
       </div>
 
       <div>
