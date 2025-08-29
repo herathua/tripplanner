@@ -551,7 +551,7 @@ const NewTrip = () => {
           {/* Main Content - Scrollable with proper margin */}
           <div className={`flex-1 transition-all duration-300 ${isMinimized ? 'md:ml-16' : 'md:ml-80'} min-h-screen`}>
             {/* Header Section - Only visible on mobile */}
-            <header className="sticky top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md md:hidden">
+            <header className="top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md md:hidden">
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-bold">{tripName}</h1>
                 <button 
@@ -1193,6 +1193,8 @@ const AddActivityForm: React.FC<{
     type: 'sightseeing' as Activity['type']
   });
 
+  const [customActivityType, setCustomActivityType] = useState('');
+
   const handlePlaceChange = (placeId: string) => {
     const place = places.find(p => p.id === placeId);
     if (place) {
@@ -1208,7 +1210,8 @@ const AddActivityForm: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const activityType = formData.type === 'other' && customActivityType ? customActivityType : formData.type;
+    onSubmit({ ...formData, type: activityType });
   };
 
   return (
@@ -1253,17 +1256,14 @@ const AddActivityForm: React.FC<{
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
-        <select
+        <input
+          type="text"
+          placeholder="Enter activity type (e.g. Sightseeing, Dining, etc.)"
           value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value as Activity['type'] })}
+          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="sightseeing">Sightseeing</option>
-          <option value="dining">Dining</option>
-          <option value="transport">Transport</option>
-          <option value="accommodation">Accommodation</option>
-          <option value="shopping">Shopping</option>
-        </select>
+          required
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
