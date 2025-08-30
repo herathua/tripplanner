@@ -12,6 +12,7 @@ const TravelGuidePage = React.lazy(() => import('./pages/TravelGuidePage'));
 const LocationSearchPage = React.lazy(() => import('./pages/LocationSearchPage'));
 const DealsPage = React.lazy(() => import('./pages/DealsPage'));
 const NewTripPage = React.lazy(() => import('./pages/Newtrip'));
+const TripListPage = React.lazy(() => import('./pages/TripListPage'));
 const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
 const GuidPage = React.lazy(() => import('./pages/GuidPage'));
 
@@ -127,6 +128,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <NewTripPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trips"
+          element={
+            <ProtectedRoute>
+              <TripListPage />
             </ProtectedRoute>
           }
         />

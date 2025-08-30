@@ -31,6 +31,7 @@ import {
   Camera as CameraIcon
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { tripApi, CreateTripRequest } from '../services/api';
 
 // Types
 interface Place {
@@ -278,24 +279,59 @@ const NewTrip = () => {
     return '';
   };
 
-  const handleSaveTrip = () => {
-    // Save trip data to localStorage and Redux
-    const tripData = {
-      name: tripName,
-      startDate: tripDays[0]?.date,
-      endDate: tripDays[tripDays.length - 1]?.date,
-      budget: tripBudget,
-      places,
-      activities,
-      expenses,
-      createdAt: new Date()
-    };
-    
-    localStorage.setItem(`trip_${tripName}`, JSON.stringify(tripData));
-    console.log('Trip saved:', tripData);
-    
-    // Show success notification
-    alert('Trip saved successfully!');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleSaveTrip = async () => {
+    if (!tripDays.length) {
+      alert('No trip dates available');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const tripData: CreateTripRequest = {
+        title: tripName,
+        destination: 'Sri Lanka', // You can make this dynamic
+        startDate: tripDays[0].date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        endDate: tripDays[tripDays.length - 1].date.toISOString().split('T')[0],
+        budget: tripBudget
+      };
+
+      // Save to backend
+      const tripId = await tripApi.createTrip(tripData);
+      
+      // Also save detailed data to localStorage for now (you can extend the backend later)
+      const detailedTripData = {
+        id: tripId,
+        name: tripName,
+        startDate: tripDays[0]?.date,
+        endDate: tripDays[tripDays.length - 1]?.date,
+        budget: tripBudget,
+        places,
+        activities,
+        expenses,
+        createdAt: new Date()
+      };
+      
+      localStorage.setItem(`trip_${tripId}`, JSON.stringify(detailedTripData));
+      console.log('Trip saved with ID:', tripId);
+      
+      // Show success notification
+      alert(`Trip saved successfully! Trip ID: ${tripId}`);
+      
+      // Optionally navigate to a trip list page or stay on current page
+      // navigate(`/trip/${tripId}`);
+      
+    } catch (error) {
+      console.error('Error saving trip:', error);
+      setSaveError('Failed to save trip. Please try again.');
+      alert('Failed to save trip. Please check your connection and try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddActivity = (dayNumber: number) => {
@@ -479,12 +515,29 @@ const NewTrip = () => {
             )}
           </div>
           <div className="flex items-center space-x-4">
+            {saveError && (
+              <div className="text-red-600 text-sm">{saveError}</div>
+            )}
             <button 
               onClick={handleSaveTrip}
-              className="flex items-center px-6 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              disabled={isSaving}
+              className={`flex items-center px-6 py-2 space-x-2 text-white rounded-lg ${
+                isSaving 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
-              <FileText className="w-4 h-4" />
-              <span>Save Trip</span>
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span>Save Trip</span>
+                </>
+              )}
             </button>
           </div>
         </header>
