@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -93,14 +94,17 @@ public class Expense {
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id", nullable = false)
+    @JsonIgnore
     private Trip trip;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "activity_id")
+    @JsonIgnore
     private Activity activity;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id")
+    @JsonIgnore
     private Place place;
     
     // Enums

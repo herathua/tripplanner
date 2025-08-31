@@ -15,7 +15,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -79,7 +81,20 @@ public class ExpenseController {
             System.out.println("Saving expense: " + expense);
             Expense savedExpense = expenseRepository.save(expense);
             System.out.println("Saved expense: " + savedExpense);
-            return ResponseEntity.ok(savedExpense);
+            
+            // Create a simple response object to avoid lazy loading issues
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", savedExpense.getId());
+            response.put("dayNumber", savedExpense.getDayNumber());
+            response.put("expenseDate", savedExpense.getExpenseDate());
+            response.put("category", savedExpense.getCategory());
+            response.put("description", savedExpense.getDescription());
+            response.put("amount", savedExpense.getAmount());
+            response.put("currency", savedExpense.getCurrency());
+            response.put("status", savedExpense.getStatus());
+            response.put("tripId", savedExpense.getTripId());
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Error creating expense: " + e.getMessage());
             System.err.println("Error type: " + e.getClass().getSimpleName());
