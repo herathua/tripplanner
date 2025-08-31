@@ -1,44 +1,21 @@
-import React, { useEffect } from 'react';
-import { Provider } from 'react-redux';
+import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import { store } from './store';
-import { useAppDispatch } from './store';
-import { setUser } from './store/slices/authSlice';
-import { onAuthStateChange } from './config/firebase';
-import ErrorBoundary from './components/common/ErrorBoundary';
-import NotificationContainer from './components/common/NotificationContainer';
 import AppRoutes from './routes';
+import { TripProvider } from './contexts/TripContext';
+import './index.css';
 
-// Auth listener component
-const AuthListener: React.FC = () => {
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      dispatch(setUser(user));
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, [dispatch]);
-
-  return null;
-};
-
-const App: React.FC = () => {
+function App() {
   return (
     <Provider store={store}>
-      <ErrorBoundary>
+      <TripProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
-            <AuthListener />
-            <NotificationContainer />
-            <AppRoutes />
-          </div>
+          <AppRoutes />
         </Router>
-      </ErrorBoundary>
+      </TripProvider>
     </Provider>
   );
-};
+}
 
 export default App;

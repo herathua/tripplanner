@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useAppDispatch } from '../store';
 import { setTripDetails } from '../store/slices/tripSlice';
 import GuideCard from '../components/GuideCard';
+import { tripService } from '../services';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const HomePage: React.FC = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budget, setBudget] = useState<string>('');
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Mock guides data
   const [guides] = useState([
@@ -62,23 +65,58 @@ const HomePage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleConfirmDates = () => {
+  const handleConfirmDates = async () => {
     if (startDate && endDate && tripName.trim()) {
+      setIsLoading(true);
+      setError(null);
+      
       const formattedStartDate = startDate.toISOString().split('T')[0];
       const formattedEndDate = endDate.toISOString().split('T')[0];
       const budgetValue = parseFloat(budget.replace(/[^0-9.-]+/g, ''));
-      
-      dispatch(setTripDetails({
+
+      console.log('Trip data being prepared:', {
+        title: tripName.trim(),
+        destination: tripDescription.trim(),
         startDate: formattedStartDate,
         endDate: formattedEndDate,
         budget: budgetValue,
-        isConfigured: true,
-        tripName: tripName.trim(),
-        tripDescription: tripDescription.trim()
-      }));
+        budgetOriginal: budget
+      });
 
-      navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`);
-      setIsModalOpen(false);
+      // Validate budget
+      if (isNaN(budgetValue) || budgetValue <= 0) {
+        setError('Please enter a valid budget amount');
+        return;
+      }
+
+      // Send trip details to backend using service
+      try {
+        await tripService.createTrip({
+          title: tripName.trim(),
+          destination: tripDescription.trim(), // Using description as destination for now
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          budget: budgetValue
+        });
+        
+        dispatch(setTripDetails({
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          budget: budgetValue,
+          isConfigured: true,
+          tripName: tripName.trim(),
+          tripDescription: tripDescription.trim()
+        }));
+
+        navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`);
+        setIsModalOpen(false);
+      } catch (error: any) {
+        console.error('Failed to create trip:', error);
+        console.error('Error response:', error.response?.data);
+        setError(`Failed to create trip: ${error.response?.data || error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -250,19 +288,33 @@ const HomePage: React.FC = () => {
                   </p>
                 </div>
 
+                {error && (
+                  <div className="p-3 mt-4 text-sm text-red-700 bg-red-100 border border-red-400 rounded-md">
+                    {error}
+                  </div>
+                )}
+                
                 <div className="flex justify-end mt-6 space-x-3">
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50"
+                    disabled={isLoading}
+                    className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmDates}
-                    disabled={!startDate || !endDate || !budget || !tripName.trim()}
-                    className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    disabled={!startDate || !endDate || !budget || !tripName.trim() || isLoading}
+                    className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
                   >
-                    Confirm
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      'Confirm'
+                    )}
                   </button>
                 </div>
               </div>

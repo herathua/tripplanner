@@ -14,6 +14,8 @@ const DealsPage = React.lazy(() => import('./pages/DealsPage'));
 const NewTripPage = React.lazy(() => import('./pages/Newtrip'));
 const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
 const GuidPage = React.lazy(() => import('./pages/GuidPage'));
+const CorsTestPage = React.lazy(() => import('./pages/CorsTestPage'));
+const ApiTestPage = React.lazy(() => import('./pages/ApiTestPage'));
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -101,6 +103,22 @@ const AppRoutes: React.FC = () => {
           element={
             <MainLayout>
               <GuidPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/cors-test"
+          element={
+            <MainLayout>
+              <CorsTestPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/api-test"
+          element={
+            <MainLayout>
+              <ApiTestPage />
             </MainLayout>
           }
         />
