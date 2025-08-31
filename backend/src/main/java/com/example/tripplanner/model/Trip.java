@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -78,18 +79,23 @@ public class Trip {
     private User user;
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private List<Place> places = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private List<Activity> activities = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private List<Expense> expenses = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private Set<TripShare> shares = new HashSet<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
     private List<BudgetAlert> budgetAlerts = new ArrayList<>();
     
     // Enums
@@ -102,46 +108,55 @@ public class Trip {
     }
     
     // Helper methods
+    @JsonIgnore
     public void addPlace(Place place) {
         places.add(place);
         place.setTrip(this);
     }
     
+    @JsonIgnore
     public void removePlace(Place place) {
         places.remove(place);
         place.setTrip(null);
     }
     
+    @JsonIgnore
     public void addActivity(Activity activity) {
         activities.add(activity);
         activity.setTrip(this);
     }
     
+    @JsonIgnore
     public void removeActivity(Activity activity) {
         activities.remove(activity);
         activity.setTrip(null);
     }
     
+    @JsonIgnore
     public void addExpense(Expense expense) {
         expenses.add(expense);
         expense.setTrip(this);
     }
     
+    @JsonIgnore
     public void removeExpense(Expense expense) {
         expenses.remove(expense);
         expense.setTrip(null);
     }
     
+    @JsonIgnore
     public BigDecimal getTotalExpenses() {
         return expenses.stream()
                 .map(Expense::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
+    @JsonIgnore
     public BigDecimal getRemainingBudget() {
         return budget.subtract(getTotalExpenses());
     }
     
+    @JsonIgnore
     public double getBudgetUsagePercentage() {
         if (budget.compareTo(BigDecimal.ZERO) == 0) return 0.0;
         return getTotalExpenses().divide(budget, 4, BigDecimal.ROUND_HALF_UP)
@@ -149,10 +164,12 @@ public class Trip {
                 .doubleValue();
     }
     
+    @JsonIgnore
     public boolean isOverBudget() {
         return getTotalExpenses().compareTo(budget) > 0;
     }
     
+    @JsonIgnore
     public boolean isNearBudgetLimit(double threshold) {
         return getBudgetUsagePercentage() >= threshold;
     }
