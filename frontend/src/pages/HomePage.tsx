@@ -3,7 +3,7 @@ import { Heart, X, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { useAppDispatch } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { setTripDetails } from '../store/slices/tripSlice';
 import GuideCard from '../components/GuideCard';
 import { tripService } from '../services';
@@ -17,49 +17,23 @@ const HomePage: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budget, setBudget] = useState<string>('');
-  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock guides data
-  const [guides] = useState([
-    {
-      name: 'Sri Lanka Adventure',
-      destination: 'Sri Lanka',
-      image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg',
-      description: 'A comprehensive guide to exploring the best of Sri Lanka, including beaches, temples, and wildlife.'
-    },
-    {
-      name: 'Paris in Spring',
-      destination: 'Paris, France',
-      image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg',
-      description: 'Discover the romance of Paris in springtime with this curated guide to must-see sights and hidden gems.'
-    },
-    {
-      name: 'Tokyo Food Tour',
-      destination: 'Tokyo, Japan',
-      image: 'https://images.pexels.com/photos/461382/pexels-photo-461382.jpeg',
-      description: 'Experience the culinary delights of Tokyo with this food-focused travel guide.'
-    }
-  ]);
+  const user = useAppSelector((state) => state.auth.user);
+  const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
+  const [tripPage, setTripPage] = useState(0);
+  const [tripTotalPages, setTripTotalPages] = useState(1);
+  const tripsPerPage = 3;
 
-  // Sample guides for modal (mocked for now)
-  const sampleGuides = [
-    {
-      id: '1',
-      name: 'Sri Lanka Adventure',
-      destination: 'Sri Lanka',
-      image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg',
-      description: 'A comprehensive guide to exploring the best of Sri Lanka, including beaches, temples, and wildlife.'
-    },
-    {
-      id: '2',
-      name: 'Paris in Spring',
-      destination: 'Paris, France',
-      image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg',
-      description: 'Discover the romance of Paris in springtime with this curated guide to must-see sights and hidden gems.'
+  React.useEffect(() => {
+    if (user && user.uid) {
+      tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+        setUpcomingTrips(data.content || []);
+        setTripTotalPages(data.totalPages || 1);
+      });
     }
-  ];
+  }, [user, tripPage]);
 
   const handlePlanNewTrip = () => {
     setIsModalOpen(true);
@@ -127,19 +101,6 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleCreateGuideClick = () => setIsGuideModalOpen(true);
-  const handleCloseGuideModal = () => setIsGuideModalOpen(false);
-
-  const handleSampleGuideClick = (id: string) => {
-    setIsGuideModalOpen(false);
-    navigate(`/guide/${id}?edit=1`);
-  };
-
-  const handleNewGuideClick = () => {
-    setIsGuideModalOpen(false);
-    navigate('/guide/new?edit=1');
-  };
-
   const formatCurrency = (value: string) => {
     // Remove any non-digit characters
     const number = value.replace(/\D/g, '');
@@ -162,7 +123,7 @@ const HomePage: React.FC = () => {
         {/* Recently Viewed Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Recently viewed and upcoming</h2>
+            <h2 className="text-xl font-semibold">Upcoming Trips</h2>
             <button
               className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm"
               onClick={handlePlanNewTrip}
@@ -172,26 +133,51 @@ const HomePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Trip Card */}
-            <div className="overflow-hidden border rounded-lg shadow-sm">
-              <div className="relative">
-                <img 
-                  src="https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg" 
-                  alt="Sri Lanka Waterfall" 
-                  className="object-cover w-full h-48"
-                />
-                <Heart className="absolute w-6 h-6 text-white top-3 right-3" />
-              </div>
-              <div className="p-4">
-                <h3 className="mb-2 font-semibold">Trip to Sri Lanka</h3>
-                <div className="flex items-center text-sm text-gray-600">
-                  <span>Sep 28 - Oct 13, 2024</span>
-                  <span className="mx-2">•</span>
-                  <span>4 places</span>
+            {upcomingTrips.length === 0 && (
+              <div className="col-span-3 text-center text-gray-500">No upcoming trips found.</div>
+            )}
+            {upcomingTrips.map((trip, idx) => (
+              <div key={trip.id || idx} className="overflow-hidden border rounded-lg shadow-sm">
+                <div className="relative">
+                  <img
+                    src={trip.image || 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg'}
+                    alt={trip.title}
+                    className="object-cover w-full h-48"
+                  />
+                  <Heart className="absolute w-6 h-6 text-white top-3 right-3" />
+                </div>
+                <div className="p-4">
+                  <h3 className="mb-2 font-semibold">{trip.title}</h3>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span>{trip.startDate} - {trip.endDate}</span>
+                    <span className="mx-2">•</span>
+                    <span>{trip.destination}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
+          {/* Paging Controls */}
+          {tripTotalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              {tripPage > 0 && (
+                <button
+                  className="px-4 py-2 mr-2 bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setTripPage(tripPage - 1)}
+                >
+                  Show less
+                </button>
+              )}
+              {tripPage < tripTotalPages - 1 && (
+                <button
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setTripPage(tripPage + 1)}
+                >
+                  Show more
+                </button>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Date Selection Modal */}
@@ -335,66 +321,13 @@ const HomePage: React.FC = () => {
             <h2 className="text-xl font-semibold">Your guides</h2>
             <button
               className="bg-white text-gray-800 px-4 py-1.5 rounded-full text-sm border"
-              onClick={handleCreateGuideClick}
+              onClick={() => navigate('/guide/new')}
             >
               Create new guide
             </button>
           </div>
-          {/* Guide Cards Grid */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            {guides.map((guide, idx) => (
-              <GuideCard
-                key={idx}
-                name={guide.name}
-                destination={guide.destination}
-                image={guide.image}
-                description={guide.description}
-                onView={() => alert(`Viewing guide: ${guide.name}`)}
-              />
-            ))}
-          </div>
+          {/* You can add a list of user's guides here if needed */}
         </section>
-
-        {/* Create Guide Modal */}
-        {isGuideModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="w-full max-w-lg p-6 bg-white rounded-lg shadow-xl relative">
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                onClick={handleCloseGuideModal}
-                aria-label="Close"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <h2 className="text-2xl font-bold mb-4">Create New Guide</h2>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Use a Sample Guide</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sampleGuides.map((guide) => (
-                    <div
-                      key={guide.id}
-                      className="cursor-pointer border rounded-lg p-3 flex flex-col hover:shadow-lg transition"
-                      onClick={() => handleSampleGuideClick(guide.id)}
-                    >
-                      <img src={guide.image} alt={guide.name} className="h-24 w-full object-cover rounded mb-2" />
-                      <h4 className="font-semibold text-gray-900">{guide.name}</h4>
-                      <p className="text-sm text-gray-500 mb-1">{guide.destination}</p>
-                      <p className="text-xs text-gray-600 line-clamp-2">{guide.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="text-center">
-                <button
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  onClick={handleNewGuideClick}
-                >
-                  + Create New Guide
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Saved  Section */}
         <section>

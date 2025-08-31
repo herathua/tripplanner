@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import java.util.Map;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +21,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    // DTO for safe user serialization
+    public record UserDTO(Long id, String firebaseUid, String email, String displayName, String photoUrl, boolean emailVerified, boolean active, String role) {}
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
@@ -44,6 +49,48 @@ public class UserController {
             @RequestBody User user) {
         User savedUser = userRepository.save(user);
         return ResponseEntity.ok(savedUser);
+    }
+
+    @PostMapping("/sync")
+    public ResponseEntity<UserDTO> syncUser(@RequestBody Map<String, Object> userInfo, Authentication authentication) {
+        try {
+            String firebaseUid = (String) authentication.getPrincipal();
+            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            User user;
+            if (userOpt.isPresent()) {
+                user = userOpt.get();
+            } else {
+                user = new User();
+                user.setFirebaseUid(firebaseUid);
+                String email = (String) userInfo.get("email");
+                user.setEmail(email);
+                String displayName = (String) userInfo.get("displayName");
+                if (displayName == null || displayName.isBlank()) {
+                    displayName = (email != null && email.contains("@")) ? email.split("@")[0] : "User";
+                }
+                user.setDisplayName(displayName);
+                Object photoUrlObj = userInfo.get("photoUrl");
+                user.setPhotoUrl(photoUrlObj != null ? photoUrlObj.toString() : null);
+                user.setEmailVerified(Boolean.TRUE.equals(userInfo.get("emailVerified")));
+                user.setActive(true);
+                user.setRole(User.UserRole.USER);
+                user = userRepository.save(user);
+            }
+            UserDTO dto = new UserDTO(
+                user.getId(),
+                user.getFirebaseUid(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getPhotoUrl(),
+                user.isEmailVerified(),
+                user.isActive(),
+                user.getRole().name()
+            );
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @PutMapping("/{id}")

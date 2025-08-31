@@ -8,6 +8,8 @@ import {
   loginWithGoogle as firebaseGoogleLogin,
   loginAnonymously as firebaseAnonymousLogin,
 } from '../../config/firebase';
+import apiClient from '../../config/api';
+import { auth } from '../../config/firebase';
 
 // TEMPORARY: Mock user type to replace Firebase User
 // TODO: Replace with Firebase User type when backend is integrated
@@ -39,12 +41,30 @@ const initialState: AuthState = {
   isAuthenticated: false,
 };
 
+// Helper to sync user with backend
+async function syncUserWithBackend(user: User) {
+  if (!user) return;
+  const token = await user.getIdToken();
+  await apiClient.post('/users/sync', {
+    firebaseUid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoUrl: user.photoURL,
+    emailVerified: user.emailVerified,
+  }, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+}
+
 // Login with email/password
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const user = await loginWithEmailAndPassword(credentials.email, credentials.password);
+      await syncUserWithBackend(user);
       return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to login');
@@ -58,6 +78,7 @@ export const register = createAsyncThunk(
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const user = await registerWithEmailAndPassword(credentials.email, credentials.password);
+      await syncUserWithBackend(user);
       return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to register');
@@ -71,6 +92,7 @@ export const loginWithGoogle = createAsyncThunk<User, void, { rejectValue: strin
   async (_, { rejectWithValue }) => {
     try {
       const user = await firebaseGoogleLogin();
+      await syncUserWithBackend(user);
       return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to login with Google');
@@ -84,6 +106,7 @@ export const loginAnonymously = createAsyncThunk<User, void, { rejectValue: stri
   async (_, { rejectWithValue }) => {
     try {
       const user = await firebaseAnonymousLogin();
+      await syncUserWithBackend(user);
       return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to login anonymously');

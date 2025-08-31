@@ -25,8 +25,11 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     
     List<Trip> findByUserAndVisibility(User user, Trip.TripVisibility visibility);
     
-    @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.startDate >= :startDate")
+    @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.startDate >= :startDate ORDER BY t.startDate ASC")
     List<Trip> findByUserAndStartDateAfter(@Param("user") User user, @Param("startDate") LocalDate startDate);
+
+    @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.startDate >= :startDate ORDER BY t.startDate ASC")
+    Page<Trip> findByUserAndStartDateAfter(@Param("user") User user, @Param("startDate") LocalDate startDate, Pageable pageable);
     
     @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.endDate <= :endDate")
     List<Trip> findByUserAndEndDateBefore(@Param("user") User user, @Param("endDate") LocalDate endDate);

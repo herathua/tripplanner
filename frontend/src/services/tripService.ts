@@ -68,5 +68,13 @@ export const tripService = {
   async getTripsByStatus(status: TripStatus): Promise<Trip[]> {
     const response = await apiClient.get(`/trips/status/${status}`);
     return response.data;
+  },
+
+  // Get upcoming trips by user ID with paging
+  async getUpcomingTripsByUser(userId: number, page = 0, size = 3) {
+    const response = await apiClient.get(`/trips/user/${userId}/upcoming`, {
+      params: { page, size }
+    });
+    return response.data;
   }
 };

@@ -1,7 +1,9 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.Trip;
+import com.example.tripplanner.model.User;
 import com.example.tripplanner.repository.TripRepository;
+import com.example.tripplanner.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,8 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/trips")
@@ -19,6 +25,9 @@ public class TripController {
 
     @Autowired
     private TripRepository tripRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping
     @Operation(summary = "Get all trips", description = "Retrieve a list of all trips")
@@ -141,5 +150,22 @@ public class TripController {
             @PathVariable Trip.TripStatus status) {
         List<Trip> trips = tripRepository.findByStatus(status);
         return ResponseEntity.ok(trips);
+    }
+
+    @GetMapping("/user/{userId}/upcoming")
+    @Operation(summary = "Get upcoming trips for a user", description = "Retrieve upcoming trips for a specific user with paging support")
+    public ResponseEntity<?> getUpcomingTripsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+        User user = userOpt.get();
+        LocalDate today = LocalDate.now();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Trip> tripPage = tripRepository.findByUserAndStartDateAfter(user, today.minusDays(1), pageable);
+        return ResponseEntity.ok(tripPage);
     }
 }
