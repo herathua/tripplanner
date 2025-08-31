@@ -37,6 +37,10 @@ public class Itinerary {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
+    // Transient field for handling tripId from frontend requests
+    @Transient
+    private Long tripId;
+    
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

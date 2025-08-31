@@ -10,9 +10,9 @@ import java.util.List;
 @Repository
 public interface ItineraryRepository extends JpaRepository<Itinerary, Long> {
     
-    List<Itinerary> findByTripIdOrderByDayNumberAsc(Long tripId);
+    List<Itinerary> findByTrip_IdOrderByDayNumberAsc(Long tripId);
     
-    List<Itinerary> findByTripIdAndDateBetweenOrderByDateAsc(Long tripId, LocalDate startDate, LocalDate endDate);
+    List<Itinerary> findByTrip_IdAndDateBetweenOrderByDateAsc(Long tripId, LocalDate startDate, LocalDate endDate);
     
-    List<Itinerary> findByTripIdAndDayNumber(Long tripId, Integer dayNumber);
+    List<Itinerary> findByTrip_IdAndDayNumber(Long tripId, Integer dayNumber);
 }

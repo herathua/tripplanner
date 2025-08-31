@@ -86,6 +86,10 @@ public class Expense {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    // Transient fields for JSON deserialization
+    @Transient
+    private Long tripId;
+    
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id", nullable = false)

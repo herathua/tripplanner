@@ -17,6 +17,7 @@ import { tripService } from '../services/tripService';
 import { itineraryService, Itinerary } from '../services/itineraryService';
 import { activityService } from '../services/activityService';
 import { locationService } from '../services/locationService';
+import { expenseService, Expense as BackendExpense, ExpenseCategory, Currency, ExpenseStatus } from '../services/expenseService';
 
 // Import extracted components
 import Modal from '../components/modals/Modal';
@@ -61,12 +62,16 @@ const NewTrip = () => {
   const [tripId, setTripId] = useState<number | null>(null);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [backendActivities, setBackendActivities] = useState<Activity[]>([]);
+  const [backendExpenses, setBackendExpenses] = useState<BackendExpense[]>([]);
   
   // Modal states
   const [showAddPlaceModal, setShowAddPlaceModal] = useState(false);
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [showHotelSearchModal, setShowHotelSearchModal] = useState(false);
+  
+  // Edit activity state
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   
   // Activity and place selection states
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -141,6 +146,11 @@ const NewTrip = () => {
       console.log('Loaded activities:', tripActivities);
       setBackendActivities(tripActivities as Activity[]);
       
+      // Load expenses for this trip
+      const tripExpenses = await expenseService.getExpensesByTripId(id);
+      console.log('Loaded expenses:', tripExpenses);
+      setBackendExpenses(tripExpenses);
+      
       // Update context with trip data
       // Note: You might need to update the context to handle this
       
@@ -166,7 +176,27 @@ const NewTrip = () => {
   };
 
   // Utility functions
-  const calculateTotalSpent = () => state.expenses.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+  const calculateTotalSpent = () => {
+    if (tripId) {
+      // Use backend expenses
+      return backendExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    } else {
+      // Use local expenses
+      return state.expenses.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+    }
+  };
+
+  // Convert backend expenses to frontend format
+  const convertBackendExpensesToFrontend = (backendExpenses: BackendExpense[]): Expense[] => {
+    return backendExpenses.map(expense => ({
+      id: expense.id?.toString(),
+      dayNumber: expense.dayNumber,
+      category: expense.category.toLowerCase(),
+      description: expense.description,
+      amount: expense.amount,
+      date: expense.expenseDate
+    }));
+  };
 
   // Place management
   const handleAddPlace = (place: Omit<Place, 'id'>) => {
@@ -190,61 +220,87 @@ const NewTrip = () => {
     console.log('tripId:', tripId);
     console.log('selectedDay:', selectedDay);
     
-    if (tripId) {
+    if (editingActivity) {
+      // Update existing activity
       try {
-        console.log('Creating activity for trip:', tripId);
-        
-        // Find or create itinerary for the selected day
-        let itinerary = itineraries.find(i => i.dayNumber === selectedDay);
-        console.log('Found existing itinerary:', itinerary);
-        
-        if (!itinerary) {
-          console.log('Creating new itinerary for day:', selectedDay);
-          // Create new itinerary for this day
-          const tripDays = generateTripDays(
-            new Date(state.currentTrip?.startDate || new Date()),
-            new Date(state.currentTrip?.endDate || new Date())
+        if (tripId) {
+          // Update in backend
+          const updatedActivity = await activityService.updateActivity(parseInt(editingActivity.id!.toString()), activity);
+          console.log('Updated activity:', updatedActivity);
+          
+          // Update local state
+          setBackendActivities(prev => 
+            prev.map(a => a.id === editingActivity.id ? updatedActivity : a)
           );
-          const dayDate = tripDays.find(d => d.dayNumber === selectedDay)?.date;
-          
-          if (dayDate) {
-            const newItinerary = await itineraryService.createItinerary({
-              dayNumber: selectedDay || 1,
-              date: dayDate.toISOString().split('T')[0],
-              tripId: tripId,
-              notes: ''
-            });
-            console.log('Created new itinerary:', newItinerary);
-            itinerary = newItinerary;
-            setItineraries(prev => [...prev, newItinerary]);
-          }
-        }
-
-        if (itinerary) {
-          console.log('Creating activity with itinerary:', itinerary.id);
-          // Create activity with backend
-          const newActivity = await activityService.createActivity({
-            ...activity,
-            tripId: tripId,
-            itineraryId: itinerary.id!
-          } as Activity);
-          
-          console.log('Created activity:', newActivity);
-          // Add to local state
-          addActivity(newActivity);
-          setBackendActivities(prev => [...prev, newActivity]);
+        } else {
+          // Update in local state
+          const updatedActivity = { ...editingActivity, ...activity };
+          // Note: You might need to update the context to handle activity updates
+          console.log('Updated activity in local state:', updatedActivity);
         }
       } catch (error) {
-        console.error('Failed to create activity:', error);
-        alert('Failed to create activity. Please try again.');
+        console.error('Failed to update activity:', error);
+        alert('Failed to update activity. Please try again.');
       }
     } else {
-      console.log('No tripId, using local state fallback');
-      // Fallback to local state if no tripId
-      addActivity(activity);
+      // Create new activity
+      if (tripId) {
+        try {
+          console.log('Creating activity for trip:', tripId);
+          
+          // Find or create itinerary for the selected day
+          let itinerary = itineraries.find(i => i.dayNumber === selectedDay);
+          console.log('Found existing itinerary:', itinerary);
+          
+          if (!itinerary) {
+            console.log('Creating new itinerary for day:', selectedDay);
+            // Create new itinerary for this day
+            const tripDays = generateTripDays(
+              new Date(state.currentTrip?.startDate || new Date()),
+              new Date(state.currentTrip?.endDate || new Date())
+            );
+            const dayDate = tripDays.find(d => d.dayNumber === selectedDay)?.date;
+            
+            if (dayDate) {
+              const newItinerary = await itineraryService.createItinerary({
+                dayNumber: selectedDay || 1,
+                date: dayDate.toISOString().split('T')[0],
+                tripId: tripId,
+                notes: ''
+              });
+              console.log('Created new itinerary:', newItinerary);
+              itinerary = newItinerary;
+              setItineraries(prev => [...prev, newItinerary]);
+            }
+          }
+
+          if (itinerary) {
+            console.log('Creating activity with itinerary:', itinerary.id);
+            // Create activity with backend
+            const newActivity = await activityService.createActivity({
+              ...activity,
+              tripId: tripId,
+              itineraryId: itinerary.id!
+            } as Activity);
+            
+            console.log('Created activity:', newActivity);
+            // Add to local state
+            addActivity(newActivity);
+            setBackendActivities(prev => [...prev, newActivity]);
+          }
+        } catch (error) {
+          console.error('Failed to create activity:', error);
+          alert('Failed to create activity. Please try again.');
+        }
+      } else {
+        console.log('No tripId, using local state fallback');
+        // Fallback to local state if no tripId
+        addActivity(activity);
+      }
     }
     
     setShowAddActivityModal(false);
+    setEditingActivity(null);
   };
 
   const handleDeleteActivity = async (activityId: string) => {
@@ -263,13 +319,75 @@ const NewTrip = () => {
     removeActivity(activityId);
   };
 
-  // Expense management
-  const handleAddExpense = (expense: Omit<Expense, 'id' | 'date'>) => {
-    addExpense(expense);
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+    setSelectedDay(activity.itineraryId ? 
+      itineraries.find(i => i.id === activity.itineraryId)?.dayNumber || 1 : 1);
+    setShowAddActivityModal(true);
+  };
+
+  // Expense management with backend integration
+  const handleAddExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
+    if (tripId) {
+      try {
+        // Convert frontend category to backend format
+        const categoryMap: { [key: string]: ExpenseCategory } = {
+          'accommodation': ExpenseCategory.ACCOMMODATION,
+          'food': ExpenseCategory.FOOD,
+          'transport': ExpenseCategory.TRANSPORT,
+          'activities': ExpenseCategory.ACTIVITIES,
+          'shopping': ExpenseCategory.SHOPPING,
+          'other': ExpenseCategory.OTHER
+        };
+        
+        // Convert frontend expense to backend format
+        const backendExpense: Omit<BackendExpense, 'id'> = {
+          dayNumber: expense.dayNumber || 1,
+          expenseDate: new Date().toISOString().split('T')[0], // Today's date
+          category: categoryMap[expense.category] || ExpenseCategory.OTHER,
+          description: expense.description,
+          amount: parseFloat(expense.amount.toString()), // Ensure it's a number
+          currency: Currency.USD,
+          status: ExpenseStatus.PAID,
+          tripId: tripId
+        };
+        
+        console.log('Sending expense to backend:', backendExpense);
+        console.log('Trip ID being sent:', tripId);
+        console.log('Amount type:', typeof backendExpense.amount);
+        console.log('Amount value:', backendExpense.amount);
+        
+        // Create expense in backend
+        const newExpense = await expenseService.createExpense(backendExpense);
+        console.log('Created expense:', newExpense);
+        
+        // Add to local state
+        setBackendExpenses(prev => [...prev, newExpense]);
+      } catch (error) {
+        console.error('Failed to create expense:', error);
+        alert('Failed to create expense. Please try again.');
+      }
+    } else {
+      // Fallback to local state if no tripId
+      addExpense(expense);
+    }
+    
     setShowAddExpenseModal(false);
   };
 
-  const handleDeleteExpense = (expenseId: string) => {
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (tripId) {
+      try {
+        // Delete from backend
+        await expenseService.deleteExpense(parseInt(expenseId));
+        setBackendExpenses(prev => prev.filter(e => e.id?.toString() !== expenseId));
+      } catch (error) {
+        console.error('Failed to delete expense:', error);
+        alert('Failed to delete expense. Please try again.');
+      }
+    }
+    
+    // Remove from local state
     removeExpense(expenseId);
   };
 
@@ -378,15 +496,22 @@ const NewTrip = () => {
 
           <Modal
             isOpen={showAddActivityModal}
-            onClose={() => setShowAddActivityModal(false)}
-            title="Add Activity"
+            onClose={() => {
+              setShowAddActivityModal(false);
+              setEditingActivity(null);
+            }}
+            title={editingActivity ? "Edit Activity" : "Add Activity"}
           >
             <AddActivityForm 
               onSubmit={handleAddActivity} 
-              onCancel={() => setShowAddActivityModal(false)}
+              onCancel={() => {
+                setShowAddActivityModal(false);
+                setEditingActivity(null);
+              }}
               selectedDay={selectedDay || 1}
               places={state.places || []}
               selectedPlace={selectedPlace}
+              editingActivity={editingActivity}
             />
           </Modal>
 
@@ -548,6 +673,7 @@ const NewTrip = () => {
                   setSelectedDay(dayNumber);
                   setShowAddActivityModal(true);
                 }}
+                onEditActivity={handleEditActivity}
                 onDeleteActivity={handleDeleteActivity}
                 onDeleteDay={handleDeleteDay}
                 getCategoryIcon={getCategoryIcon}
@@ -557,7 +683,7 @@ const NewTrip = () => {
               <BudgetSection
                 budget={state.currentTrip?.budget || 0}
                 totalSpent={calculateTotalSpent()}
-                expenses={state.expenses || []}
+                expenses={tripId ? convertBackendExpensesToFrontend(backendExpenses) : state.expenses || []}
                 onAddExpense={() => setShowAddExpenseModal(true)}
                 onDeleteExpense={handleDeleteExpense}
                 getExpenseCategoryIcon={getExpenseCategoryIcon}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Calendar, Trash2 } from 'lucide-react';
+import { Plus, Calendar, Trash2, Edit } from 'lucide-react';
 import { Activity, Itinerary } from '../../services/itineraryService';
 
 interface TripDay {
@@ -12,6 +12,7 @@ interface ItinerarySectionProps {
   activities: Activity[];
   itineraries: Itinerary[];
   onAddActivity: (dayNumber: number) => void;
+  onEditActivity: (activity: Activity) => void;
   onDeleteActivity: (activityId: string) => void;
   onDeleteDay: (dayNumber: number) => void;
   getCategoryIcon: (category: string) => React.ReactNode;
@@ -23,6 +24,7 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
   activities,
   itineraries,
   onAddActivity,
+  onEditActivity,
   onDeleteActivity,
   onDeleteDay,
   getCategoryIcon,
@@ -145,8 +147,16 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
                                 {activity.status}
                               </span>
                               <button 
+                                onClick={() => onEditActivity(activity)}
+                                className="text-blue-500 hover:text-blue-700"
+                                title="Edit activity"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button 
                                 onClick={() => onDeleteActivity(activity.id?.toString() || '')}
                                 className="text-red-500 hover:text-red-700"
+                                title="Remove activity"
                               >
                                 Remove
                               </button>

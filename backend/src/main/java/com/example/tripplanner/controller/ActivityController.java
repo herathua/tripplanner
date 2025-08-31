@@ -1,6 +1,8 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.Activity;
+import com.example.tripplanner.model.Itinerary;
+import com.example.tripplanner.model.Trip;
 import com.example.tripplanner.repository.ActivityRepository;
 import com.example.tripplanner.repository.ItineraryRepository;
 import com.example.tripplanner.repository.TripRepository;
@@ -69,8 +71,34 @@ public class ActivityController {
     public ResponseEntity<Activity> createActivity(
             @Parameter(description = "Activity object to create") 
             @RequestBody Activity activity) {
-        Activity savedActivity = activityRepository.save(activity);
-        return ResponseEntity.ok(savedActivity);
+        try {
+            // If tripId is provided in the request, find the trip and set it
+            if (activity.getTrip() == null && activity.getTripId() != null) {
+                Optional<Trip> trip = tripRepository.findById(activity.getTripId());
+                if (trip.isPresent()) {
+                    activity.setTrip(trip.get());
+                } else {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            // If itineraryId is provided in the request, find the itinerary and set it
+            if (activity.getItinerary() == null && activity.getItineraryId() != null) {
+                Optional<Itinerary> itinerary = itineraryRepository.findById(activity.getItineraryId());
+                if (itinerary.isPresent()) {
+                    activity.setItinerary(itinerary.get());
+                } else {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            Activity savedActivity = activityRepository.save(activity);
+            return ResponseEntity.ok(savedActivity);
+        } catch (Exception e) {
+            System.err.println("Error creating activity: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @PutMapping("/{id}")

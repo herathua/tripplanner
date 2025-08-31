@@ -1,7 +1,9 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.Itinerary;
+import com.example.tripplanner.model.Trip;
 import com.example.tripplanner.repository.ItineraryRepository;
+import com.example.tripplanner.repository.TripRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,12 +22,15 @@ public class ItineraryController {
     @Autowired
     private ItineraryRepository itineraryRepository;
 
+    @Autowired
+    private TripRepository tripRepository;
+
     @GetMapping("/trip/{tripId}")
     @Operation(summary = "Get itineraries by trip ID", description = "Retrieve all itineraries for a specific trip")
     public ResponseEntity<List<Itinerary>> getItinerariesByTripId(
             @Parameter(description = "ID of the trip") 
             @PathVariable Long tripId) {
-        List<Itinerary> itineraries = itineraryRepository.findByTripIdOrderByDayNumberAsc(tripId);
+        List<Itinerary> itineraries = itineraryRepository.findByTrip_IdOrderByDayNumberAsc(tripId);
         return ResponseEntity.ok(itineraries);
     }
 
@@ -44,8 +49,24 @@ public class ItineraryController {
     public ResponseEntity<Itinerary> createItinerary(
             @Parameter(description = "Itinerary object to create") 
             @RequestBody Itinerary itinerary) {
-        Itinerary savedItinerary = itineraryRepository.save(itinerary);
-        return ResponseEntity.ok(savedItinerary);
+        try {
+            // If tripId is provided in the request, find the trip and set it
+            if (itinerary.getTrip() == null && itinerary.getTripId() != null) {
+                Optional<Trip> trip = tripRepository.findById(itinerary.getTripId());
+                if (trip.isPresent()) {
+                    itinerary.setTrip(trip.get());
+                } else {
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+            
+            Itinerary savedItinerary = itineraryRepository.save(itinerary);
+            return ResponseEntity.ok(savedItinerary);
+        } catch (Exception e) {
+            System.err.println("Error creating itinerary: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @PutMapping("/{id}")

@@ -100,6 +100,8 @@ const HomePage: React.FC = () => {
         });
         
         console.log('Trip created successfully:', createdTrip);
+        console.log('Trip ID:', createdTrip.id);
+        console.log('Trip object keys:', Object.keys(createdTrip));
         
         dispatch(setTripDetails({
           startDate: formattedStartDate,
@@ -111,7 +113,9 @@ const HomePage: React.FC = () => {
         }));
 
         // Navigate to the new trip page with the trip ID
-        navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}&tripId=${createdTrip.id}`);
+        const navigationUrl = `/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}&tripId=${createdTrip.id}`;
+        console.log('Navigating to:', navigationUrl);
+        navigate(navigationUrl);
         setIsModalOpen(false);
       } catch (error: any) {
         console.error('Failed to create trip:', error);

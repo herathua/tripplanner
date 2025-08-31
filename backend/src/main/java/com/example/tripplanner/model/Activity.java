@@ -57,6 +57,13 @@ public class Activity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    // Transient fields for JSON deserialization
+    @Transient
+    private Long tripId;
+    
+    @Transient
+    private Long itineraryId;
+    
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id", nullable = false)

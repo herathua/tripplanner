@@ -8,6 +8,7 @@ interface AddActivityFormProps {
   selectedDay: number;
   places: Place[];
   selectedPlace?: Place | null;
+  editingActivity?: Activity | null;
 }
 
 const AddActivityForm: React.FC<AddActivityFormProps> = ({ 
@@ -15,18 +16,19 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
   onCancel, 
   selectedDay, 
   places, 
-  selectedPlace 
+  selectedPlace,
+  editingActivity
 }) => {
   const [formData, setFormData] = useState({
-    name: selectedPlace?.name || '',
-    description: '',
-    startTime: '09:00',
-    endTime: '11:00',
-    cost: selectedPlace?.cost || 0,
-    durationHours: selectedPlace?.duration || 2,
-    type: ActivityType.SIGHTSEEING,
-    status: ActivityStatus.PLANNED,
-    placeId: selectedPlace?.id || undefined
+    name: editingActivity?.name || selectedPlace?.name || '',
+    description: editingActivity?.description || '',
+    startTime: editingActivity?.startTime || '09:00',
+    endTime: editingActivity?.endTime || '11:00',
+    cost: editingActivity?.cost || selectedPlace?.cost || 0,
+    durationHours: editingActivity?.durationHours || selectedPlace?.duration || 2,
+    type: editingActivity?.type || ActivityType.SIGHTSEEING,
+    status: editingActivity?.status || ActivityStatus.PLANNED,
+    placeId: editingActivity?.placeId || selectedPlace?.id || undefined
   });
 
   const handlePlaceChange = (placeId: string) => {
@@ -193,7 +195,7 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
           type="submit"
           className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          Add Activity
+          {editingActivity ? 'Update Activity' : 'Add Activity'}
         </button>
       </div>
     </form>
