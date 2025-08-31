@@ -60,12 +60,7 @@ public class ExpenseController {
             @Parameter(description = "Expense object to create") 
             @RequestBody Expense expense) {
         try {
-            System.out.println("Received expense request: " + expense);
-            System.out.println("Trip ID from request: " + expense.getTripId());
-            System.out.println("Trip object from request: " + expense.getTrip());
-            System.out.println("Amount from request: " + expense.getAmount());
-            System.out.println("Description from request: " + expense.getDescription());
-            
+            System.out.println("Received expense request: expenseId=" + expense.getId() + ", tripId=" + expense.getTripId() + ", amount=" + expense.getAmount() + ", description=" + expense.getDescription());
             // If tripId is provided in the request, find the trip and set it
             if (expense.getTrip() == null && expense.getTripId() != null) {
                 Optional<Trip> trip = tripRepository.findById(expense.getTripId());
@@ -77,11 +72,11 @@ public class ExpenseController {
                     return ResponseEntity.badRequest().build();
                 }
             }
-            
-            System.out.println("Saving expense: " + expense);
+            if (expense.getExpenseType() == null) {
+                expense.setExpenseType(Expense.ExpenseType.DEFAULT);
+            }
             Expense savedExpense = expenseRepository.save(expense);
-            System.out.println("Saved expense: " + savedExpense);
-            
+            System.out.println("Saved expense with id: " + savedExpense.getId());
             // Create a simple response object to avoid lazy loading issues
             Map<String, Object> response = new HashMap<>();
             response.put("id", savedExpense.getId());
@@ -93,14 +88,12 @@ public class ExpenseController {
             response.put("currency", savedExpense.getCurrency());
             response.put("status", savedExpense.getStatus());
             response.put("tripId", savedExpense.getTripId());
-            
+            response.put("expenseType", savedExpense.getExpenseType());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Error creating expense: " + e.getMessage());
             System.err.println("Error type: " + e.getClass().getSimpleName());
             e.printStackTrace();
-            
-            // Return more specific error information
             if (e.getMessage() != null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
@@ -204,6 +197,21 @@ public class ExpenseController {
         Optional<Trip> trip = tripRepository.findById(tripId);
         if (trip.isPresent()) {
             List<Expense> expenses = expenseRepository.findByTripAndDayNumber(trip.get(), dayNumber);
+            return ResponseEntity.ok(expenses);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/trip/{tripId}/type/{expenseType}")
+    @Operation(summary = "Get expenses by trip and type", description = "Retrieve expenses for a trip filtered by type")
+    public ResponseEntity<List<Expense>> getExpensesByTripAndType(
+            @Parameter(description = "ID of the trip") 
+            @PathVariable Long tripId,
+            @Parameter(description = "Type to filter by") 
+            @PathVariable Expense.ExpenseType expenseType) {
+        Optional<Trip> trip = tripRepository.findById(tripId);
+        if (trip.isPresent()) {
+            List<Expense> expenses = expenseRepository.findByTripAndExpenseType(trip.get(), expenseType);
             return ResponseEntity.ok(expenses);
         }
         return ResponseEntity.notFound().build();

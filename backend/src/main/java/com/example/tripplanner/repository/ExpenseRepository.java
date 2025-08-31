@@ -153,4 +153,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // Monthly expense totals
     @Query("SELECT YEAR(e.expenseDate), MONTH(e.expenseDate), SUM(e.amount) FROM Expense e WHERE e.trip = :trip GROUP BY YEAR(e.expenseDate), MONTH(e.expenseDate) ORDER BY YEAR(e.expenseDate), MONTH(e.expenseDate)")
     List<Object[]> findMonthlyTotalsByTrip(@Param("trip") Trip trip);
+
+    List<Expense> findByTripAndExpenseType(Trip trip, Expense.ExpenseType expenseType);
 }

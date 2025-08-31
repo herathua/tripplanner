@@ -36,6 +36,10 @@ public class Expense {
     @Column(nullable = false)
     private ExpenseCategory category;
     
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ExpenseType expenseType = ExpenseType.DEFAULT;
+    
     @NotBlank(message = "Expense description is required")
     @Size(min = 1, max = 255, message = "Description must be between 1 and 255 characters")
     @Column(nullable = false)
@@ -119,6 +123,10 @@ public class Expense {
     
     public enum ExpenseStatus {
         PENDING, PAID, CANCELLED, REFUNDED
+    }
+    
+    public enum ExpenseType {
+        DEFAULT, EXTRA
     }
     
     // Helper methods
