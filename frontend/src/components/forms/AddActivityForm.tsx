@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Activity, Place } from '../../contexts/TripContext';
+import { Place } from '../../contexts/TripContext';
+import { Activity, ActivityType, ActivityStatus } from '../../services/itineraryService';
 
 interface AddActivityFormProps {
   onSubmit: (activity: Omit<Activity, 'id'>) => void;
@@ -17,14 +18,15 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
   selectedPlace 
 }) => {
   const [formData, setFormData] = useState({
-    dayNumber: selectedDay,
-    time: '09:00',
-    placeId: selectedPlace?.id || '',
-    placeName: selectedPlace?.name || '',
+    name: selectedPlace?.name || '',
     description: '',
+    startTime: '09:00',
+    endTime: '11:00',
     cost: selectedPlace?.cost || 0,
-    duration: selectedPlace?.duration || 2,
-    type: 'sightseeing' as Activity['type']
+    durationHours: selectedPlace?.duration || 2,
+    type: ActivityType.SIGHTSEEING,
+    status: ActivityStatus.PLANNED,
+    placeId: selectedPlace?.id || undefined
   });
 
   const handlePlaceChange = (placeId: string) => {
@@ -32,53 +34,95 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
     if (place) {
       setFormData({
         ...formData,
-        placeId: place.id,
-        placeName: place.name,
+        name: place.name,
         cost: place.cost,
-        duration: place.duration
+        durationHours: place.duration,
+        placeId: place.id
       });
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Create the activity object matching the backend structure
+    const activity: Omit<Activity, 'id'> = {
+      name: formData.name,
+      description: formData.description,
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      cost: formData.cost,
+      durationHours: formData.durationHours,
+      type: formData.type,
+      status: formData.status,
+      placeId: formData.placeId
+    };
+    
+    onSubmit(activity);
   };
+
+  const activityTypeOptions = Object.values(ActivityType).map(type => ({
+    value: type,
+    label: type.charAt(0) + type.slice(1).toLowerCase()
+  }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Day</label>
         <select
-          value={formData.dayNumber}
-          onChange={(e) => setFormData({ ...formData, dayNumber: parseInt(e.target.value) })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={selectedDay}
+          disabled
+          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
         >
-          {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
-            <option key={day} value={day}>Day {day}</option>
-          ))}
+          <option value={selectedDay}>Day {selectedDay}</option>
         </select>
+        <p className="text-xs text-gray-500 mt-1">Day selection is handled automatically</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Activity Name</label>
         <input
-          type="time"
+          type="text"
           required
-          value={formData.time}
-          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter activity name"
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+          <input
+            type="time"
+            required
+            value={formData.startTime}
+            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+          <input
+            type="time"
+            required
+            value={formData.endTime}
+            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Place</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Place (Optional)</label>
         <select
-          value={formData.placeId}
+          value={formData.placeId || ''}
           onChange={(e) => handlePlaceChange(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">Select a place</option>
+          <option value="">Select a place (optional)</option>
           {places.map(place => (
             <option key={place.id} value={place.id}>{place.name}</option>
           ))}
@@ -87,14 +131,18 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
-        <input
-          type="text"
-          placeholder="Enter activity type (e.g. Sightseeing, Dining, etc.)"
+        <select
           value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, type: e.target.value as ActivityType })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
-        />
+        >
+          {activityTypeOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -103,8 +151,9 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
           <input
             type="number"
             min="0"
+            step="0.01"
             value={formData.cost}
-            onChange={(e) => setFormData({ ...formData, cost: parseInt(e.target.value) || 0 })}
+            onChange={(e) => setFormData({ ...formData, cost: parseFloat(e.target.value) || 0 })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -114,8 +163,8 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
             type="number"
             min="0.5"
             step="0.5"
-            value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: parseFloat(e.target.value) || 0 })}
+            value={formData.durationHours}
+            onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

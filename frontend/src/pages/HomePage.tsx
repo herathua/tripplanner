@@ -91,13 +91,15 @@ const HomePage: React.FC = () => {
 
       // Send trip details to backend using service
       try {
-        await tripService.createTrip({
+        const createdTrip = await tripService.createTrip({
           title: tripName.trim(),
           destination: tripDescription.trim(), // Using description as destination for now
           startDate: formattedStartDate,
           endDate: formattedEndDate,
           budget: budgetValue
         });
+        
+        console.log('Trip created successfully:', createdTrip);
         
         dispatch(setTripDetails({
           startDate: formattedStartDate,
@@ -108,7 +110,8 @@ const HomePage: React.FC = () => {
           tripDescription: tripDescription.trim()
         }));
 
-        navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`);
+        // Navigate to the new trip page with the trip ID
+        navigate(`/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}&tripId=${createdTrip.id}`);
         setIsModalOpen(false);
       } catch (error: any) {
         console.error('Failed to create trip:', error);

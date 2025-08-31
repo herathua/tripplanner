@@ -1,55 +1,66 @@
 import { useState } from 'react';
+import { locationService } from '../services/locationService';
 
 export interface HotelDestination {
-  dest_id: string;
+  id: string;
   name: string;
-  label: string;
-  dest_type: string;
-  region: string;
   city_name: string;
   country: string;
+  region: string;
+  dest_type: string;
   hotels: number;
   latitude: number;
   longitude: number;
-  image_url?: string;
+  image_url: string;
 }
 
 export const useHotelSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [destinations, setDestinations] = useState<HotelDestination[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const searchHotels = async (query: string) => {
-    if (!query.trim()) return;
-    
+    if (!query.trim()) {
+      setDestinations([]);
+      return;
+    }
+
     setIsSearching(true);
+    setError(null);
+
     try {
-      const xhr = new XMLHttpRequest();
-      xhr.withCredentials = true;
+      // Use our backend location search API instead of direct external API
+      // Limit to 3 results as requested
+      const response = await locationService.searchLocations(query, 'en', 3);
+      
+      if (response.success && response.data?.data?.autoCompleteSuggestions?.results) {
+        const results = response.data.data.autoCompleteSuggestions.results;
+        
+        // Transform the results to match our HotelDestination interface
+        const transformedDestinations: HotelDestination[] = results.map((result: any) => ({
+          id: result.destination.destId,
+          name: result.displayInfo.title,
+          city_name: result.displayInfo.labelComponents.find((comp: any) => comp.type === 'CITY')?.name || '',
+          country: result.displayInfo.labelComponents.find((comp: any) => comp.type === 'COUNTRY')?.name || '',
+          region: result.displayInfo.labelComponents.find((comp: any) => comp.type === 'REGION')?.name || '',
+          dest_type: result.destination.destType,
+          hotels: result.destination.nbHotels,
+          latitude: result.destination.latitude,
+          longitude: result.destination.longitude,
+          image_url: result.displayInfo.absoluteImageUrl
+        }));
 
-      xhr.addEventListener('readystatechange', function () {
-        if (this.readyState === this.DONE) {
-          try {
-            const response = JSON.parse(this.responseText);
-            if (response.status && response.data) {
-              setDestinations(response.data);
-            } else {
-              setDestinations([]);
-            }
-          } catch (error) {
-            console.error('Error parsing hotel search response:', error);
-            setDestinations([]);
-          }
-          setIsSearching(false);
-        }
-      });
-
-      xhr.open('GET', `https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?query=${encodeURIComponent(query)}`);
-      xhr.setRequestHeader('x-rapidapi-key', 'bbefbd0c2cmsh32738304eae9dfap19a055jsn132ee598d744');
-      xhr.setRequestHeader('x-rapidapi-host', 'booking-com15.p.rapidapi.com');
-      xhr.send();
-    } catch (error) {
-      console.error('Error searching hotels:', error);
+        setDestinations(transformedDestinations);
+      } else {
+        setDestinations([]);
+        setError('No results found');
+      }
+    } catch (err) {
+      console.error('Error searching hotels:', err);
+      setError('Failed to search hotels. Please try again.');
+      setDestinations([]);
+    } finally {
       setIsSearching(false);
     }
   };
@@ -57,6 +68,7 @@ export const useHotelSearch = () => {
   const clearSearch = () => {
     setSearchQuery('');
     setDestinations([]);
+    setError(null);
   };
 
   return {
@@ -64,6 +76,7 @@ export const useHotelSearch = () => {
     setSearchQuery,
     destinations,
     isSearching,
+    error,
     searchHotels,
     clearSearch
   };

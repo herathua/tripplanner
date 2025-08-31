@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
-import { tripService, Trip } from '../services/tripService';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import { Trip, TripStatus, TripVisibility, tripService } from '../services/tripService';
+import { Activity, ActivityType, ActivityStatus } from '../services/itineraryService';
 
-// Types
 export interface Place {
-  id: string;
+  id?: string;
   name: string;
   location: string;
-  description: string;
+  description?: string;
   category: string;
   rating: number;
   photos: string[];
@@ -15,24 +15,13 @@ export interface Place {
   duration: number;
 }
 
-export interface Activity {
-  id: string;
-  name: string;
-  description: string;
-  day: number;
-  startTime: string;
-  endTime: string;
-  placeId?: string;
-  cost: number;
-  category: string;
-}
-
 export interface Expense {
-  id: string;
+  id?: string;
   description: string;
   amount: number;
   category: string;
-  date: Date;
+  date?: string;
+  dayNumber?: number;
 }
 
 interface TripState {
@@ -224,7 +213,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newExpense: Expense = {
       ...expense,
       id: Math.random().toString(36).substr(2, 9),
-      date: new Date(),
+      date: new Date().toISOString(), // Convert Date object to ISO string
     };
     dispatch({ type: 'ADD_EXPENSE', payload: newExpense });
   };

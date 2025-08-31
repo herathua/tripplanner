@@ -84,7 +84,7 @@ public class Trip {
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
-    private List<Activity> activities = new ArrayList<>();
+    private List<Itinerary> itineraries = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
@@ -109,6 +109,18 @@ public class Trip {
     
     // Helper methods
     @JsonIgnore
+    public void addItinerary(Itinerary itinerary) {
+        itineraries.add(itinerary);
+        itinerary.setTrip(this);
+    }
+    
+    @JsonIgnore
+    public void removeItinerary(Itinerary itinerary) {
+        itineraries.remove(itinerary);
+        itinerary.setTrip(null);
+    }
+    
+    @JsonIgnore
     public void addPlace(Place place) {
         places.add(place);
         place.setTrip(this);
@@ -118,18 +130,6 @@ public class Trip {
     public void removePlace(Place place) {
         places.remove(place);
         place.setTrip(null);
-    }
-    
-    @JsonIgnore
-    public void addActivity(Activity activity) {
-        activities.add(activity);
-        activity.setTrip(this);
-    }
-    
-    @JsonIgnore
-    public void removeActivity(Activity activity) {
-        activities.remove(activity);
-        activity.setTrip(null);
     }
     
     @JsonIgnore

@@ -53,7 +53,7 @@ export const tripService = {
     return response.data;
   },
 
-  // Delete trip
+  // Delete a trip
   async deleteTrip(id: number): Promise<void> {
     await apiClient.delete(`/trips/${id}`);
   },
