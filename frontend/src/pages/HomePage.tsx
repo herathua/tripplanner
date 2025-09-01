@@ -8,6 +8,7 @@ import { setTripDetails } from '../store/slices/tripSlice';
 import GuideCard from '../components/GuideCard';
 import { tripService, TripStatus, TripVisibility } from '../services/tripService';
 import { blogService, BlogPost } from '../services/blogService';
+import CardImageService from '../utils/cardImageService';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,110 @@ const HomePage: React.FC = () => {
   const [budget, setBudget] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic Trip Card Component
+  const DynamicTripCard: React.FC<{ trip: any }> = ({ trip }) => {
+    const [imageData, setImageData] = useState<{
+      url: string;
+      alt: string;
+      credit: string;
+    } | null>(null);
+    const [isImageLoading, setIsImageLoading] = useState(true);
+
+    useEffect(() => {
+      const loadImage = async () => {
+        try {
+          setIsImageLoading(true);
+          // Use destination from trip or fallback to title
+          const destination = trip.destination || trip.title || 'Travel';
+          const image = await CardImageService.getTripCardImage(destination);
+          setImageData(image);
+        } catch (error) {
+          console.error('Failed to load trip image:', error);
+          // Fallback to default image
+          setImageData({
+            url: '/src/assets/logo.png',
+            alt: 'Travel destination',
+            credit: 'Default image'
+          });
+        } finally {
+          setIsImageLoading(false);
+        }
+      };
+
+      loadImage();
+    }, [trip.destination, trip.title]);
+
+    return (
+      <div className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+        <div className="relative">
+          {isImageLoading ? (
+            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+              <div className="text-gray-500">Loading...</div>
+            </div>
+          ) : (
+            <img
+              src={imageData?.url || '/src/assets/logo.png'}
+              alt={imageData?.alt || trip.title}
+              className="object-cover w-full h-48"
+            />
+          )}
+          <div className="absolute top-3 right-3 flex space-x-2">
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              trip.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+              trip.status === 'PLANNING' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {trip.status || 'PLANNING'}
+            </span>
+            <Heart className="w-6 h-6 text-white" />
+          </div>
+        </div>
+        <div className="p-4">
+          <div 
+            className="cursor-pointer mb-3"
+            onClick={() => handleViewTrip(trip)}
+          >
+            <h3 className="mb-2 font-semibold text-lg hover:text-blue-600 transition-colors">{trip.title}</h3>
+            <div className="flex items-center text-sm text-gray-600 mb-2">
+              <span className="font-medium">{trip.destination}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>{trip.startDate} - {trip.endDate}</span>
+              {trip.budget && (
+                <span className="font-medium text-green-600">
+                  ${trip.budget.toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Trip action buttons */}
+          <div className="flex space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditTrip(trip);
+              }}
+              className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-600 flex items-center justify-center"
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteTrip(trip.id);
+              }}
+              className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 flex items-center justify-center"
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const user = useAppSelector((state) => state.auth.user);
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
@@ -220,67 +325,7 @@ const HomePage: React.FC = () => {
               <div className="col-span-3 text-center text-gray-500">No upcoming trips found.</div>
             )}
             {upcomingTrips.map((trip, idx) => (
-              <div key={trip.id || idx} className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="relative">
-                  <img
-                    src={trip.image || 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg'}
-                    alt={trip.title}
-                    className="object-cover w-full h-48"
-                  />
-                  <div className="absolute top-3 right-3 flex space-x-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      trip.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                      trip.status === 'PLANNING' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {trip.status || 'PLANNING'}
-                    </span>
-                    <Heart className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div 
-                    className="cursor-pointer mb-3"
-                    onClick={() => handleViewTrip(trip)}
-                  >
-                    <h3 className="mb-2 font-semibold text-lg hover:text-blue-600 transition-colors">{trip.title}</h3>
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <span className="font-medium">{trip.destination}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{trip.startDate} - {trip.endDate}</span>
-                      {trip.budget && (
-                        <span className="font-medium text-green-600">
-                          ${trip.budget.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Trip action buttons */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditTrip(trip);
-                      }}
-                      className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-600 flex items-center justify-center"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTrip(trip.id);
-                      }}
-                      className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 flex items-center justify-center"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <DynamicTripCard key={trip.id || idx} trip={trip} />
             ))}
           </div>
           {/* Paging Controls */}

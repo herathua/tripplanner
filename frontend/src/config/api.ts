@@ -28,6 +28,12 @@ export const EXTERNAL_APIS = {
     API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY || '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',
     TIMEOUT: 30000,
   },
+  UNSPLASH: {
+    BASE_URL: 'https://api.unsplash.com',
+    API_KEY: import.meta.env.VITE_UNSPLASH_API_KEY || 'MjwYOUS8g6wm55UM6A1_lutLuAJq0sMQPTHKNK64B84',
+    TIMEOUT: 10000,
+  },
+
 };
 
 // Create axios instance with default configuration
@@ -69,6 +75,16 @@ export const openRouterClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export const unsplashClient = axios.create({
+  baseURL: EXTERNAL_APIS.UNSPLASH.BASE_URL,
+  timeout: EXTERNAL_APIS.UNSPLASH.TIMEOUT,
+  headers: {
+    'Authorization': `Client-ID ${EXTERNAL_APIS.UNSPLASH.API_KEY}`,
+  },
+});
+
+
 
 // Request interceptor for logging (development only)
 if (import.meta.env.DEV) {

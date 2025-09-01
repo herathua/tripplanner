@@ -10,15 +10,17 @@ const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const PlanningPage = React.lazy(() => import('./pages/PlanningPage'));
 const TravelGuidePage = React.lazy(() => import('./pages/TravelGuidePage'));
 const LocationSearchPage = React.lazy(() => import('./pages/LocationSearchPage'));
-const DealsPage = React.lazy(() => import('./pages/DealsPage'));
+
 const NewTripPage = React.lazy(() => import('./pages/Newtrip'));
 const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
 const GuidPage = React.lazy(() => import('./pages/GuidPage'));
 const CorsTestPage = React.lazy(() => import('./pages/CorsTestPage'));
 const ApiTestPage = React.lazy(() => import('./pages/ApiTestPage'));
+const ImageTestPage = React.lazy(() => import('./pages/ImageTestPage'));
 const BlogBlockEditor = React.lazy(() => import('./pages/BlogBlockEditor'));
 const BlogPostViewer = React.lazy(() => import('./pages/BlogPostViewer'));
 const BlogListPage = React.lazy(() => import('./pages/BlogListPage'));
+
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -85,14 +87,8 @@ const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path="/deals"
-          element={
-            <MainLayout>
-              <DealsPage />
-            </MainLayout>
-          }
-        />
+
+
         <Route
           path="/guide/new"
           element={
@@ -122,6 +118,14 @@ const AppRoutes: React.FC = () => {
           element={
             <MainLayout>
               <ApiTestPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/image-test"
+          element={
+            <MainLayout>
+              <ImageTestPage />
             </MainLayout>
           }
         />

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, Edit, Trash2, Eye, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BlogPost } from '../services/blogService';
+import CardImageService from '../utils/cardImageService';
 
 interface GuideCardProps {
   guide: BlogPost;
@@ -19,6 +20,37 @@ const GuideCard: React.FC<GuideCardProps> = ({
   onView 
 }) => {
   const navigate = useNavigate();
+  const [imageData, setImageData] = useState<{
+    url: string;
+    alt: string;
+    credit: string;
+  } | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        setIsImageLoading(true);
+        // Use title or tags to determine guide type and destination
+        const guideType = guide.tags?.[0] || 'travel';
+        const destination = guide.title?.split(' ')[0] || 'Travel'; // Simple extraction
+        const image = await CardImageService.getGuideCardImage(destination, guideType);
+        setImageData(image);
+      } catch (error) {
+        console.error('Failed to load guide image:', error);
+        // Fallback to default image
+        setImageData({
+          url: '/src/assets/logo.png',
+          alt: 'Travel guide',
+          credit: 'Default image'
+        });
+      } finally {
+        setIsImageLoading(false);
+      }
+    };
+
+    loadImage();
+  }, [guide.title, guide.tags]);
 
   const handleEdit = () => {
     if (onEdit) {
@@ -67,11 +99,17 @@ const GuideCard: React.FC<GuideCardProps> = ({
   return (
     <div className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
       <div className="relative">
-        <img
-          src={guide.image || 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg'}
-          alt={guide.title}
-          className="object-cover w-full h-48"
-        />
+        {isImageLoading ? (
+          <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        ) : (
+          <img
+            src={imageData?.url || '/src/assets/logo.png'}
+            alt={imageData?.alt || guide.title}
+            className="object-cover w-full h-48"
+          />
+        )}
         <div className="absolute top-3 right-3 flex space-x-2">
           {guide.status && (
             <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(guide.status)}`}>

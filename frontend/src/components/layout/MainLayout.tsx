@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { clearTripDetails } from '../../store/slices/tripSlice';
 import { addNotification } from '../../store/slices/uiSlice';
+import FloatingAIAssistant from '../chatbot/FloatingAIAssistant';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+
+  const toggleAIAssistant = () => {
+    setIsAIAssistantOpen(!isAIAssistantOpen);
+  };
 
   const handleLogout = async () => {
     try {
@@ -37,8 +43,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Home', path: '/' },
     { name: 'Travel Guide', path: '/travel-guide' },
-    { name: 'AI Travel Assistant', path: '/location-search' },
-    { name: 'Deals', path: '/deals' },
+    { name: 'AI Travel Assistant', path: '/location-search', action: toggleAIAssistant },
   ];
 
   return (
@@ -64,17 +69,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <nav className="justify-center flex-1 hidden md:flex">
               <div className="flex space-x-8">
                 {navigation.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                      location.pathname === item.path
-                        ? 'text-red-500 border-b-2 border-red-500'
-                        : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
+                  item.action ? (
+                    <button
+                      key={item.path}
+                      onClick={item.action}
+                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 cursor-pointer"
+                    >
+                      {item.name}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                        location.pathname === item.path
+                          ? 'text-red-500 border-b-2 border-red-500'
+                          : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  )
                 ))}
               </div>
             </nav>
@@ -105,6 +120,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         {children}
       </main>
+
+      {/* Floating AI Assistant */}
+      <FloatingAIAssistant 
+        isOpen={isAIAssistantOpen} 
+        onToggle={toggleAIAssistant} 
+      />
     </div>
   );
 };
