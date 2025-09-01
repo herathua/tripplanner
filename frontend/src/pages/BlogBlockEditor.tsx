@@ -8,15 +8,34 @@ import CodeTool from '@editorjs/code';
 import Embed from '@editorjs/embed';
 import Marker from '@editorjs/marker';
 import { supabase } from '../config/supabase';
+import { blogService, BlogPost } from '../services/blogService';
+import { useAppSelector } from '../store';
 
 const uploadImageToSupabase = async (file: File) => {
-  const fileName = `${Date.now()}-${file.name}`;
-  const { error } = await supabase.storage.from('guides').upload(fileName, file, { upsert: true });
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
 
-  if (error) throw error;
+    const { error } = await supabase.storage
+      .from('guides')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
 
-  const { data } = supabase.storage.from('guides').getPublicUrl(fileName);
-  return data.publicUrl; // ✅ correct property
+    if (error) {
+      console.error('Upload error:', error);
+      return 'https://via.placeholder.com/400x300?text=Upload+Failed';
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('guides')
+      .getPublicUrl(fileName);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Image upload failed:', error);
+    return 'https://via.placeholder.com/400x300?text=Error';
+  }
 };
 
 const EditorJsBlogPage: React.FC = () => {
@@ -25,6 +44,15 @@ const EditorJsBlogPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [currentBlogPost, setCurrentBlogPost] = useState<BlogPost | null>(null);
+  const [publicUrl, setPublicUrl] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Get user from auth state
+  const user = useAppSelector((state) => state.auth.user);
+  const currentUserId = user?.uid || 'anonymous'; // Use Firebase UID or fallback
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -68,22 +96,92 @@ const EditorJsBlogPage: React.FC = () => {
         },
         placeholder: 'Start writing your story...',
         inlineToolbar: ['bold', 'italic', 'marker'],
+        onReady: () => {
+          console.log('Editor is ready to work!');
+        },
       });
     }
 
     return () => {
-      ejInstance.current?.destroy();
+      if (ejInstance.current && typeof ejInstance.current.destroy === 'function') {
+        ejInstance.current.destroy();
+      }
       ejInstance.current = null;
     };
   }, []);
 
   const handleSave = async () => {
-    if (!ejInstance.current || !title.trim()) return;
+    if (!ejInstance.current || !title.trim()) {
+      alert('Please enter a title for your blog post');
+      return;
+    }
 
-    const outputData: OutputData = await ejInstance.current.save();
+    setIsSaving(true);
+    try {
+      const outputData: OutputData = await ejInstance.current.save();
+      
+      const blogPostData: BlogPost = {
+        title: title.trim(),
+        content: JSON.stringify(outputData),
+        tags: tags,
+      };
 
-    alert('Blog post saved! (see console for data)');
-    console.log('Saved blog post:', { title, tags, ...outputData });
+      let savedPost: BlogPost;
+      
+      if (currentBlogPost?.id) {
+        // Update existing post
+        savedPost = await blogService.updateBlogPost(currentBlogPost.id, blogPostData, currentUserId);
+      } else {
+        // Create new post
+        savedPost = await blogService.createBlogPost(blogPostData, currentUserId);
+        setCurrentBlogPost(savedPost);
+      }
+
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+      
+      console.log('Blog post saved:', savedPost);
+    } catch (error) {
+      console.error('Error saving blog post:', error);
+      alert('Failed to save blog post. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!currentBlogPost?.id) {
+      alert('Please save your blog post first before publishing');
+      return;
+    }
+
+    if (!title.trim()) {
+      alert('Please enter a title for your blog post');
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      // First save any changes
+      await handleSave();
+      
+      // Then publish
+      const publishResponse = await blogService.publishBlogPost(currentBlogPost.id, currentUserId);
+      
+      setPublicUrl(publishResponse.publicUrl);
+      setCurrentBlogPost(publishResponse.blogPost);
+      
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+      
+      console.log('Blog post published:', publishResponse);
+      alert(`Blog post published successfully! Public URL: ${publishResponse.publicUrl}`);
+    } catch (error) {
+      console.error('Error publishing blog post:', error);
+      alert('Failed to publish blog post. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +208,26 @@ const EditorJsBlogPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center py-8">
       <div className="w-full max-w-3xl">
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+            {publicUrl ? 'Blog post published successfully!' : 'Blog post saved successfully!'}
+            {publicUrl && (
+              <div className="mt-2">
+                <strong>Public URL:</strong> 
+                <a 
+                  href={publicUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="ml-2 text-blue-600 hover:underline"
+                >
+                  {window.location.origin}{publicUrl}
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Title input */}
         <input
           className="w-full text-6xl font-extrabold mb-2 border-none outline-none bg-transparent text-gray-800 placeholder-gray-400"
@@ -147,14 +265,44 @@ const EditorJsBlogPage: React.FC = () => {
         {/* Editor */}
         <div ref={editorRef} className="bg-white border rounded min-h-[300px] p-4" />
 
-        {/* Publish button */}
-        <div className="flex justify-end mt-8">
-          <button
-            className="bg-green-200 text-green-800 px-6 py-2 rounded-full text-lg font-semibold"
-            onClick={handleSave}
-          >
-            Publish
-          </button>
+        {/* Action buttons */}
+        <div className="flex justify-between items-center mt-8">
+          <div className="flex gap-4">
+            <button
+              className={`px-6 py-2 rounded-full text-lg font-semibold ${
+                isSaving 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-blue-200 text-blue-800 hover:bg-blue-300'
+              }`}
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Draft'}
+            </button>
+            
+            <button
+              className={`px-6 py-2 rounded-full text-lg font-semibold ${
+                isPublishing || !currentBlogPost?.id
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-green-200 text-green-800 hover:bg-green-300'
+              }`}
+              onClick={handlePublish}
+              disabled={isPublishing || !currentBlogPost?.id}
+            >
+              {isPublishing ? 'Publishing...' : 'Publish'}
+            </button>
+          </div>
+
+          {currentBlogPost?.status === 'PUBLISHED' && publicUrl && (
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline text-sm"
+            >
+              View Published Post →
+            </a>
+          )}
         </div>
       </div>
     </div>

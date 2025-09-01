@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { auth } from './firebase';
 
 // API Configuration
 export const API_CONFIG = {
@@ -44,17 +43,17 @@ if (import.meta.env.DEV) {
   );
 }
 
-// Attach Firebase ID token to every request if user is logged in
-apiClient.interceptors.request.use(async (config) => {
-  const user = auth.currentUser;
-  if (user) {
-    const token = await user.getIdToken();
-    config.headers = {
-      ...config.headers,
-      Authorization: `Bearer ${token}`,
-    };
-  }
-  return config;
-}, (error) => Promise.reject(error));
+// Temporarily disable Firebase authentication for testing
+// apiClient.interceptors.request.use(async (config) => {
+//   const user = auth.currentUser;
+//   if (user) {
+//     const token = await user.getIdToken();
+//     config.headers = {
+//       ...config.headers,
+//       Authorization: `Bearer ${token}`,
+//     };
+//   }
+//   return config;
+// }, (error) => Promise.reject(error));
 
 export default apiClient;

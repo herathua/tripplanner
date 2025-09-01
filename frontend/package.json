@@ -33,6 +33,7 @@
     "@types/leaflet": "^1.9.8",
     "@types/react-datepicker": "^6.2.0",
     "axios": "^1.11.0",
+    "editorjs-style": "^3.0.3",
     "firebase": "^11.7.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.344.0",

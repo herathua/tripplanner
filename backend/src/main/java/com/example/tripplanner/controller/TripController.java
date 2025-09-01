@@ -50,7 +50,8 @@ public class TripController {
     @Operation(summary = "Create a new trip", description = "Create a new trip with the provided details")
     public ResponseEntity<?> createTrip(
             @Parameter(description = "Trip object to create") 
-            @RequestBody Trip trip) {
+            @RequestBody Trip trip,
+            @RequestParam String firebaseUid) {
         try {
             System.out.println("=== TRIP CREATION DEBUG ===");
             System.out.println("Received trip object: " + trip);
@@ -61,6 +62,16 @@ public class TripController {
             System.out.println("Trip budget: " + (trip.getBudget() != null ? trip.getBudget().toString() : "NULL"));
             System.out.println("Trip status: " + (trip.getStatus() != null ? trip.getStatus().toString() : "NULL"));
             System.out.println("Trip visibility: " + (trip.getVisibility() != null ? trip.getVisibility().toString() : "NULL"));
+            System.out.println("Firebase UID: " + firebaseUid);
+            
+            // Find user by Firebase UID
+            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            if (userOpt.isEmpty()) {
+                System.out.println("ERROR: User not found with Firebase UID: " + firebaseUid);
+                return ResponseEntity.badRequest().body("User not found with Firebase UID: " + firebaseUid);
+            }
+            User user = userOpt.get();
+            System.out.println("Found user: " + user.getDisplayName() + " (ID: " + user.getId() + ")");
             
             // Validate required fields
             if (trip.getTitle() == null || trip.getTitle().trim().isEmpty()) {
@@ -85,6 +96,10 @@ public class TripController {
             }
             
             System.out.println("All validations passed, saving trip...");
+            
+            // Set the user for the trip
+            trip.setUser(user);
+            
             Trip savedTrip = tripRepository.save(trip);
             System.out.println("Successfully saved trip with ID: " + savedTrip.getId());
             return ResponseEntity.ok(savedTrip);
@@ -152,15 +167,15 @@ public class TripController {
         return ResponseEntity.ok(trips);
     }
 
-    @GetMapping("/user/{userId}/upcoming")
+    @GetMapping("/user/{firebaseUid}/upcoming")
     @Operation(summary = "Get upcoming trips for a user", description = "Retrieve upcoming trips for a specific user with paging support")
     public ResponseEntity<?> getUpcomingTripsByUser(
-            @PathVariable Long userId,
+            @PathVariable String firebaseUid,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "3") int size) {
-        Optional<User> userOpt = userRepository.findById(userId);
+        Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
         if (userOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("User not found");
+            return ResponseEntity.badRequest().body("User not found with Firebase UID: " + firebaseUid);
         }
         User user = userOpt.get();
         LocalDate today = LocalDate.now();

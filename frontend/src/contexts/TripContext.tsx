@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 import { Trip, TripStatus, TripVisibility, tripService } from '../services/tripService';
 import { Activity, ActivityType, ActivityStatus } from '../services/itineraryService';
+import { useAppSelector } from '../store';
 
 export interface Place {
   id?: string;
@@ -126,11 +127,15 @@ const TripContext = createContext<TripContextType | undefined>(undefined);
 // Provider component
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(tripReducer, initialState);
+  const user = useAppSelector((state) => state.auth.user);
 
   // API functions
   const createTrip = async (trip: Trip) => {
     try {
-      const createdTrip = await tripService.createTrip(trip);
+      if (!user?.uid) {
+        throw new Error('User not authenticated');
+      }
+      const createdTrip = await tripService.createTrip(trip, user.uid);
       dispatch({ type: 'SET_CURRENT_TRIP', payload: createdTrip });
     } catch (error) {
       console.error('Error creating trip:', error);
@@ -155,7 +160,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (state.currentTrip.id) {
         await tripService.updateTrip(state.currentTrip.id, state.currentTrip);
       } else {
-        await tripService.createTrip(state.currentTrip);
+        if (!user?.uid) {
+          throw new Error('User not authenticated');
+        }
+        await tripService.createTrip(state.currentTrip, user.uid);
       }
     } catch (error) {
       console.error('Error saving trip:', error);

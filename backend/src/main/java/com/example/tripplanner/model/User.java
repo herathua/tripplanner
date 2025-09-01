@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -62,9 +63,11 @@ public class User {
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Trip> trips = new HashSet<>();
     
     @OneToMany(mappedBy = "sharedWith", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<TripShare> sharedTrips = new HashSet<>();
     
     public enum UserRole {
@@ -72,11 +75,13 @@ public class User {
     }
     
     // Helper methods
+    @JsonIgnore
     public void addTrip(Trip trip) {
         trips.add(trip);
         trip.setUser(this);
     }
     
+    @JsonIgnore
     public void removeTrip(Trip trip) {
         trips.remove(trip);
         trip.setUser(null);

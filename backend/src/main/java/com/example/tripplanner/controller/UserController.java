@@ -54,24 +54,95 @@ public class UserController {
     @PostMapping("/sync")
     public ResponseEntity<UserDTO> syncUser(@RequestBody Map<String, Object> userInfo, Authentication authentication) {
         try {
-            String firebaseUid = (String) authentication.getPrincipal();
-            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            String firebaseUid = null;
+            if (authentication != null && authentication.getPrincipal() != null) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof String) {
+                    firebaseUid = (String) principal;
+                }
+            }
+            // Fallbacks when authentication is disabled
+            if (firebaseUid == null || firebaseUid.isBlank()) {
+                Object uidObj = userInfo.get("firebaseUid");
+                if (uidObj == null) {
+                    uidObj = userInfo.get("uid");
+                }
+                if (uidObj != null) {
+                    firebaseUid = uidObj.toString();
+                }
+            }
+
+            // Also capture email early for lookup
+            String emailFromBody = null;
+            Object emailObj = userInfo.get("email");
+            if (emailObj != null) {
+                emailFromBody = emailObj.toString();
+            }
+            
+            Optional<User> userOpt = Optional.empty();
+            if (firebaseUid != null && !firebaseUid.isBlank()) {
+                userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            }
+            if (userOpt.isEmpty() && emailFromBody != null && !emailFromBody.isBlank()) {
+                userOpt = userRepository.findByEmail(emailFromBody);
+            }
             User user;
             if (userOpt.isPresent()) {
                 user = userOpt.get();
+                // Update fields if provided
+                if (firebaseUid != null && !firebaseUid.isBlank() && !firebaseUid.equals(user.getFirebaseUid())) {
+                    user.setFirebaseUid(firebaseUid);
+                }
+                Object displayNameObj = userInfo.get("displayName");
+                if (displayNameObj != null) {
+                    String dn = displayNameObj.toString();
+                    if (!dn.isBlank()) {
+                        user.setDisplayName(dn);
+                    }
+                }
+                Object photoUrlObj = userInfo.get("photoUrl");
+                if (photoUrlObj != null) {
+                    user.setPhotoUrl(photoUrlObj.toString());
+                }
+                Object emailVerifiedObj = userInfo.get("emailVerified");
+                if (emailVerifiedObj != null) {
+                    boolean emailVerified;
+                    if (emailVerifiedObj instanceof Boolean) {
+                        emailVerified = (Boolean) emailVerifiedObj;
+                    } else {
+                        emailVerified = Boolean.parseBoolean(emailVerifiedObj.toString());
+                    }
+                    user.setEmailVerified(emailVerified);
+                }
+                user = userRepository.save(user);
             } else {
                 user = new User();
+                if (firebaseUid == null || firebaseUid.isBlank()) {
+                    firebaseUid = "anonymous-" + System.currentTimeMillis();
+                }
                 user.setFirebaseUid(firebaseUid);
-                String email = (String) userInfo.get("email");
+                String email = emailFromBody;
+                if (email == null || email.isBlank()) {
+                    email = "anonymous+" + System.currentTimeMillis() + "@example.com";
+                }
                 user.setEmail(email);
                 String displayName = (String) userInfo.get("displayName");
                 if (displayName == null || displayName.isBlank()) {
-                    displayName = (email != null && email.contains("@")) ? email.split("@")[0] : "User";
+                    displayName = (email != null && email.contains("@")) ? email.split("@")[0] : "Anonymous User";
                 }
                 user.setDisplayName(displayName);
                 Object photoUrlObj = userInfo.get("photoUrl");
                 user.setPhotoUrl(photoUrlObj != null ? photoUrlObj.toString() : null);
-                user.setEmailVerified(Boolean.TRUE.equals(userInfo.get("emailVerified")));
+                Object emailVerifiedObj = userInfo.get("emailVerified");
+                boolean emailVerified = false;
+                if (emailVerifiedObj != null) {
+                    if (emailVerifiedObj instanceof Boolean) {
+                        emailVerified = (Boolean) emailVerifiedObj;
+                    } else {
+                        emailVerified = Boolean.parseBoolean(emailVerifiedObj.toString());
+                    }
+                }
+                user.setEmailVerified(emailVerified);
                 user.setActive(true);
                 user.setRole(User.UserRole.USER);
                 user = userRepository.save(user);

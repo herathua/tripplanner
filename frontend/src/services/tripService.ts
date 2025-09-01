@@ -41,9 +41,10 @@ export const tripService = {
   },
 
   // Create a new trip
-  async createTrip(trip: Trip): Promise<Trip> {
+  async createTrip(trip: Trip, firebaseUid?: string): Promise<Trip> {
     console.log('Sending trip data to backend:', JSON.stringify(trip, null, 2));
-    const response = await apiClient.post('/trips', trip);
+    const url = firebaseUid ? `/trips?firebaseUid=${firebaseUid}` : '/trips';
+    const response = await apiClient.post(url, trip);
     return response.data;
   },
 
@@ -70,9 +71,9 @@ export const tripService = {
     return response.data;
   },
 
-  // Get upcoming trips by user ID with paging
-  async getUpcomingTripsByUser(userId: number, page = 0, size = 3) {
-    const response = await apiClient.get(`/trips/user/${userId}/upcoming`, {
+  // Get upcoming trips by user Firebase UID with paging
+  async getUpcomingTripsByUser(firebaseUid: string, page = 0, size = 3) {
+    const response = await apiClient.get(`/trips/user/${firebaseUid}/upcoming`, {
       params: { page, size }
     });
     return response.data;

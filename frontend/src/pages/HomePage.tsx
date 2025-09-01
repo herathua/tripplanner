@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Heart, X, DollarSign } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Heart, X, DollarSign, Plus, ArrowRight, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useAppDispatch, useAppSelector } from '../store';
 import { setTripDetails } from '../store/slices/tripSlice';
 import GuideCard from '../components/GuideCard';
-import { tripService } from '../services';
+import { tripService, TripStatus, TripVisibility } from '../services/tripService';
+import { blogService, BlogPost } from '../services/blogService';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,15 +26,48 @@ const HomePage: React.FC = () => {
   const [tripPage, setTripPage] = useState(0);
   const [tripTotalPages, setTripTotalPages] = useState(1);
   const tripsPerPage = 3;
+  
+  // User guides state
+  const [userGuides, setUserGuides] = useState<BlogPost[]>([]);
+  const [publishedGuides, setPublishedGuides] = useState<BlogPost[]>([]);
+  const [guidePage, setGuidePage] = useState(0);
+  const [guideTotalPages, setGuideTotalPages] = useState(1);
+  const guidesPerPage = 3;
 
-  React.useEffect(() => {
+  // Load user trips
+  useEffect(() => {
     if (user && user.uid) {
+      console.log('Loading trips for user:', user.uid);
       tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+        console.log('Trips data received:', data);
         setUpcomingTrips(data.content || []);
         setTripTotalPages(data.totalPages || 1);
+      }).catch(error => {
+        console.error('Error loading trips:', error);
+        console.error('Error details:', error.response?.data);
       });
     }
   }, [user, tripPage]);
+
+  // Load user guides
+  useEffect(() => {
+    if (user && user.uid) {
+      // Load user's own guides
+      blogService.getUserBlogPosts(user.uid, guidePage, guidesPerPage).then((data) => {
+        setUserGuides(data.content || []);
+        setGuideTotalPages(data.totalPages || 1);
+      }).catch(error => {
+        console.error('Error loading user guides:', error);
+      });
+
+      // Load published guides from all users
+      blogService.getPublishedBlogPosts(0, 6).then((data) => {
+        setPublishedGuides(data.content || []);
+      }).catch(error => {
+        console.error('Error loading published guides:', error);
+      });
+    }
+  }, [user, guidePage]);
 
   const handlePlanNewTrip = () => {
     setIsModalOpen(true);
@@ -70,8 +104,10 @@ const HomePage: React.FC = () => {
           destination: tripDescription.trim(), // Using description as destination for now
           startDate: formattedStartDate,
           endDate: formattedEndDate,
-          budget: budgetValue
-        });
+          budget: budgetValue,
+          status: TripStatus.PLANNING,
+          visibility: TripVisibility.PRIVATE
+        }, user?.uid);
         
         console.log('Trip created successfully:', createdTrip);
         console.log('Trip ID:', createdTrip.id);
@@ -113,6 +149,64 @@ const HomePage: React.FC = () => {
     setBudget(value);
   };
 
+  // Guide management functions
+  const handleEditGuide = (guide: BlogPost) => {
+    navigate(`/blog-editor/${guide.id}`);
+  };
+
+  const handleDeleteGuide = async (guideId: number) => {
+    if (window.confirm('Are you sure you want to delete this guide?')) {
+      try {
+        await blogService.deleteBlogPost(guideId, user?.uid || '');
+        // Refresh guides
+        if (user && user.uid) {
+          const data = await blogService.getUserBlogPosts(user.uid, guidePage, guidesPerPage);
+          setUserGuides(data.content || []);
+        }
+      } catch (error) {
+        console.error('Error deleting guide:', error);
+        alert('Failed to delete guide');
+      }
+    }
+  };
+
+  // Trip management functions
+  const handleEditTrip = (trip: any) => {
+    navigate(`/new-trip?tripId=${trip.id}`);
+  };
+
+  const handleViewTrip = (trip: any) => {
+    navigate(`/new-trip?tripId=${trip.id}`);
+  };
+
+  const handleDeleteTrip = async (tripId: number) => {
+    if (window.confirm('Are you sure you want to delete this trip?')) {
+      try {
+        await tripService.deleteTrip(tripId);
+        // Refresh trips
+        if (user && user.uid) {
+          const data = await tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage);
+          setUpcomingTrips(data.content || []);
+        }
+      } catch (error) {
+        console.error('Error deleting trip:', error);
+        alert('Failed to delete trip');
+      }
+    }
+  };
+
+  const handleCreateNewGuide = () => {
+    navigate('/blog-editor');
+  };
+
+  const handleViewAllGuides = () => {
+    navigate('/guides');
+  };
+
+  const handleViewAllTrips = () => {
+    navigate('/trips');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -120,16 +214,26 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <main className="px-6 py-8">
-        {/* Recently Viewed Section */}
+        {/* Upcoming Trips Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Upcoming Trips</h2>
-            <button
-              className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm"
-              onClick={handlePlanNewTrip}
-            >
-              Plan new trip
-            </button>
+            <div className="flex space-x-3">
+              <button
+                className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
+                onClick={handleViewAllTrips}
+              >
+                View All
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-1.5 rounded-full text-sm hover:bg-red-600 flex items-center"
+                onClick={handlePlanNewTrip}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Plan new trip
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -137,21 +241,64 @@ const HomePage: React.FC = () => {
               <div className="col-span-3 text-center text-gray-500">No upcoming trips found.</div>
             )}
             {upcomingTrips.map((trip, idx) => (
-              <div key={trip.id || idx} className="overflow-hidden border rounded-lg shadow-sm">
+              <div key={trip.id || idx} className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="relative">
                   <img
                     src={trip.image || 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg'}
                     alt={trip.title}
                     className="object-cover w-full h-48"
                   />
-                  <Heart className="absolute w-6 h-6 text-white top-3 right-3" />
+                  <div className="absolute top-3 right-3 flex space-x-2">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      trip.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                      trip.status === 'PLANNING' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {trip.status || 'PLANNING'}
+                    </span>
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="mb-2 font-semibold">{trip.title}</h3>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span>{trip.startDate} - {trip.endDate}</span>
-                    <span className="mx-2">•</span>
-                    <span>{trip.destination}</span>
+                  <div 
+                    className="cursor-pointer mb-3"
+                    onClick={() => handleViewTrip(trip)}
+                  >
+                    <h3 className="mb-2 font-semibold text-lg hover:text-blue-600 transition-colors">{trip.title}</h3>
+                    <div className="flex items-center text-sm text-gray-600 mb-2">
+                      <span className="font-medium">{trip.destination}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{trip.startDate} - {trip.endDate}</span>
+                      {trip.budget && (
+                        <span className="font-medium text-green-600">
+                          ${trip.budget.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Trip action buttons */}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditTrip(trip);
+                      }}
+                      className="flex-1 bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-600 flex items-center justify-center"
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTrip(trip.id);
+                      }}
+                      className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 flex items-center justify-center"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -316,42 +463,135 @@ const HomePage: React.FC = () => {
         )}
 
         {/* Your Guides Section */}
-        <section className="p-6 mb-12 bg-blue-50 rounded-xl">
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Your guides</h2>
-            <button
-              className="bg-white text-gray-800 px-4 py-1.5 rounded-full text-sm border"
-              onClick={() => navigate('/guide/new')}
-            >
-              Create new guide
-            </button>
+            <h2 className="text-xl font-semibold">Your Guides</h2>
+            <div className="flex space-x-3">
+              <button
+                className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
+                onClick={handleViewAllGuides}
+              >
+                View All
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm hover:bg-blue-600 flex items-center"
+                onClick={handleCreateNewGuide}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Create new guide
+              </button>
+            </div>
           </div>
-          {/* You can add a list of user's guides here if needed */}
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {userGuides.length === 0 ? (
+              <div className="col-span-3 text-center py-8">
+                <div className="text-gray-500 mb-4">No guides created yet.</div>
+                <button
+                  onClick={handleCreateNewGuide}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+                >
+                  Create Your First Guide
+                </button>
+              </div>
+            ) : (
+              userGuides.map((guide) => (
+                <GuideCard
+                  key={guide.id}
+                  guide={guide}
+                  isOwnGuide={true}
+                  onEdit={handleEditGuide}
+                  onDelete={handleDeleteGuide}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Paging Controls for Guides */}
+          {guideTotalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              {guidePage > 0 && (
+                <button
+                  className="px-4 py-2 mr-2 bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setGuidePage(guidePage - 1)}
+                >
+                  Show less
+                </button>
+              )}
+              {guidePage < guideTotalPages - 1 && (
+                <button
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  onClick={() => setGuidePage(guidePage + 1)}
+                >
+                  Show more
+                </button>
+              )}
+            </div>
+          )}
         </section>
 
-        {/* Saved  Section */}
+        {/* Published Guides Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">Popular Guides</h2>
+            <button
+              className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
+              onClick={handleViewAllGuides}
+            >
+              View All
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {publishedGuides.length === 0 ? (
+              <div className="col-span-3 text-center py-8 text-gray-500">
+                No published guides available.
+              </div>
+            ) : (
+              publishedGuides.map((guide) => (
+                <GuideCard
+                  key={guide.id}
+                  guide={guide}
+                  isOwnGuide={false}
+                />
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Saved Section */}
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Saved </h2>
-          <h3 className="mb-6 text-lg font-medium">Popular destinations</h3>
+          <h2 className="mb-6 text-xl font-semibold">Popular Destinations</h2>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Destination Cards */}
-            {['Taiwan', 'Seoul', 'Dubai'].map((city, index) => (
-              <div key={index} className="overflow-hidden border rounded-lg shadow-sm">
+            {[
+              { name: 'Taiwan', rating: 4.8, reviews: 256, image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg' },
+              { name: 'Seoul', rating: 4.6, reviews: 189, image: 'https://images.pexels.com/photos/2166554/pexels-photo-2166554.jpeg' },
+              { name: 'Dubai', rating: 4.7, reviews: 234, image: 'https://images.pexels.com/photos/2166555/pexels-photo-2166555.jpeg' }
+            ].map((destination, index) => (
+              <div key={index} className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="relative">
                   <img 
-                    src={`https://images.pexels.com/photos/${2166553 + index}/pexels-photo-${2166553 + index}.jpeg`}
-                    alt={city} 
+                    src={destination.image}
+                    alt={destination.name} 
                     className="object-cover w-full h-48"
                   />
                   <Heart className="absolute w-6 h-6 text-white top-3 right-3" />
                 </div>
                 <div className="p-4">
-                  <h3 className="mb-2 font-semibold">{city}</h3>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span>4.8</span>
-                    <span className="mx-2">•</span>
-                    <span>256 reviews</span>
+                  <h3 className="mb-2 font-semibold text-lg">{destination.name}</h3>
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <span className="font-medium">{destination.rating}</span>
+                      <span className="mx-2">•</span>
+                      <span>{destination.reviews} reviews</span>
+                    </div>
+                    <button className="text-blue-600 hover:text-blue-800 font-medium">
+                      Explore
+                    </button>
                   </div>
                 </div>
               </div>

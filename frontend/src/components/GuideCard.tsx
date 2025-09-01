@@ -1,27 +1,151 @@
 import React from 'react';
+import { Heart, Edit, Trash2, Eye, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BlogPost } from '../services/blogService';
 
 interface GuideCardProps {
-  name: string;
-  destination: string;
-  image: string;
-  description: string;
-  onView: () => void;
+  guide: BlogPost;
+  isOwnGuide?: boolean;
+  onEdit?: (guide: BlogPost) => void;
+  onDelete?: (guideId: number) => void;
+  onView?: (guide: BlogPost) => void;
 }
 
-const GuideCard: React.FC<GuideCardProps> = ({ name, destination, image, description, onView }) => {
+const GuideCard: React.FC<GuideCardProps> = ({ 
+  guide, 
+  isOwnGuide = false, 
+  onEdit, 
+  onDelete, 
+  onView 
+}) => {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(guide);
+    } else {
+      navigate(`/blog-editor/${guide.id}`);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete && guide.id) {
+      onDelete(guide.id);
+    }
+  };
+
+  const handleView = () => {
+    if (onView) {
+      onView(guide);
+    } else if (guide.publicSlug) {
+      navigate(`/guide/${guide.publicSlug}`);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'PUBLISHED':
+        return 'bg-green-100 text-green-800';
+      case 'DRAFT':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'ARCHIVED':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-      <img src={image} alt={name} className="h-32 w-full object-cover" />
-      <div className="p-4 flex-1 flex flex-col">
-        <h3 className="text-lg font-semibold mb-1">{name}</h3>
-        <p className="text-sm text-gray-500 mb-2">{destination}</p>
-        <p className="text-sm text-gray-700 flex-1 mb-3 line-clamp-2">{description}</p>
-        <button
-          onClick={onView}
-          className="mt-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-        >
-          View
-        </button>
+    <div className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+      <div className="relative">
+        <img
+          src={guide.image || 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg'}
+          alt={guide.title}
+          className="object-cover w-full h-48"
+        />
+        <div className="absolute top-3 right-3 flex space-x-2">
+          {guide.status && (
+            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(guide.status)}`}>
+              {guide.status}
+            </span>
+          )}
+          <Heart className="w-6 h-6 text-white" />
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <h3 className="mb-2 font-semibold text-lg line-clamp-2">{guide.title}</h3>
+        
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center text-sm text-gray-600">
+            <span className="font-medium">{guide.author?.displayName || 'Anonymous'}</span>
+            <span className="mx-2">•</span>
+            <span>{formatDate(guide.publishedAt || guide.createdAt)}</span>
+          </div>
+          
+          <div className="flex items-center text-sm text-gray-600">
+            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+            <span className="ml-1">4.8</span>
+            <span className="mx-1">•</span>
+            <span>{guide.viewCount || 0} views</span>
+          </div>
+        </div>
+
+        {guide.tags && guide.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {guide.tags.slice(0, 3).map((tag, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+            {guide.tags.length > 3 && (
+              <span className="px-2 py-1 text-xs text-gray-500">
+                +{guide.tags.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="flex justify-between items-center">
+          <button
+            onClick={handleView}
+            className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            View Guide
+          </button>
+
+          {isOwnGuide && (
+            <div className="flex space-x-2">
+              <button
+                onClick={handleEdit}
+                className="flex items-center text-gray-600 hover:text-blue-600 text-sm"
+                title="Edit guide"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center text-gray-600 hover:text-red-600 text-sm"
+                title="Delete guide"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

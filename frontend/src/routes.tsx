@@ -16,6 +16,9 @@ const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
 const GuidPage = React.lazy(() => import('./pages/GuidPage'));
 const CorsTestPage = React.lazy(() => import('./pages/CorsTestPage'));
 const ApiTestPage = React.lazy(() => import('./pages/ApiTestPage'));
+const BlogBlockEditor = React.lazy(() => import('./pages/BlogBlockEditor'));
+const BlogPostViewer = React.lazy(() => import('./pages/BlogPostViewer'));
+const BlogListPage = React.lazy(() => import('./pages/BlogListPage'));
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -119,6 +122,30 @@ const AppRoutes: React.FC = () => {
           element={
             <MainLayout>
               <ApiTestPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog"
+          element={
+            <MainLayout>
+              <BlogListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog/new"
+          element={
+            <MainLayout>
+              <BlogBlockEditor />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog/:slug"
+          element={
+            <MainLayout>
+              <BlogPostViewer />
             </MainLayout>
           }
         />

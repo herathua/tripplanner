@@ -3,10 +3,12 @@ import { tripService, userService, placeService } from '../services';
 import { Trip, TripStatus, TripVisibility } from '../services/tripService';
 import { User, UserRole } from '../services/userService';
 import { Place, PlaceCategory } from '../services/placeService';
+import { useAppSelector } from '../store';
 
 const ApiTestPage: React.FC = () => {
   const [results, setResults] = useState<{ [key: string]: any }>({});
   const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
+  const user = useAppSelector((state) => state.auth.user);
 
   const setLoadingState = (key: string, isLoading: boolean) => {
     setLoading(prev => ({ ...prev, [key]: isLoading }));
@@ -30,7 +32,10 @@ const ApiTestPage: React.FC = () => {
         status: TripStatus.PLANNING,
         visibility: TripVisibility.PRIVATE
       };
-      const result = await tripService.createTrip(newTrip);
+      if (!user?.uid) {
+        throw new Error('User not authenticated');
+      }
+      const result = await tripService.createTrip(newTrip, user.uid);
       setResult('createTrip', result);
     } catch (error: any) {
       setResult('createTrip', { error: error.message });
