@@ -62,11 +62,11 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     private Set<Trip> trips = new HashSet<>();
     
-    @OneToMany(mappedBy = "sharedWith", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "sharedWith", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     private Set<TripShare> sharedTrips = new HashSet<>();
     
@@ -85,5 +85,33 @@ public class User {
     public void removeTrip(Trip trip) {
         trips.remove(trip);
         trip.setUser(null);
+    }
+    
+    // Override toString to prevent circular reference issues
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", firebaseUid='" + firebaseUid + '\'' +
+                ", email='" + email + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", role=" + role +
+                ", emailVerified=" + emailVerified +
+                ", active=" + active +
+                '}';
+    }
+    
+    // Override equals and hashCode to prevent issues with collections
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.getId());
+    }
+    
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

@@ -7,11 +7,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -21,9 +22,6 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
-
-    // DTO for safe user serialization
-    public record UserDTO(Long id, String firebaseUid, String email, String displayName, String photoUrl, boolean emailVerified, boolean active, String role) {}
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
@@ -38,8 +36,7 @@ public class UserController {
             @Parameter(description = "ID of the user to retrieve") 
             @PathVariable Long id) {
         Optional<User> user = userRepository.findById(id);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -86,6 +83,7 @@ public class UserController {
             if (userOpt.isEmpty() && emailFromBody != null && !emailFromBody.isBlank()) {
                 userOpt = userRepository.findByEmail(emailFromBody);
             }
+            
             User user;
             if (userOpt.isPresent()) {
                 user = userOpt.get();
@@ -114,8 +112,11 @@ public class UserController {
                     }
                     user.setEmailVerified(emailVerified);
                 }
-                user = userRepository.save(user);
+                
+                // Save the updated user without explicit transaction management
+                user = userRepository.saveAndFlush(user);
             } else {
+                // Create new user
                 user = new User();
                 if (firebaseUid == null || firebaseUid.isBlank()) {
                     firebaseUid = "anonymous-" + System.currentTimeMillis();
@@ -145,8 +146,12 @@ public class UserController {
                 user.setEmailVerified(emailVerified);
                 user.setActive(true);
                 user.setRole(User.UserRole.USER);
-                user = userRepository.save(user);
+                
+                // Save the new user without explicit transaction management
+                user = userRepository.saveAndFlush(user);
             }
+            
+            // Create and return DTO
             UserDTO dto = new UserDTO(
                 user.getId(),
                 user.getFirebaseUid(),
@@ -159,6 +164,8 @@ public class UserController {
             );
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
+            // Log the full error for debugging
+            System.err.println("Error in syncUser: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }
@@ -200,23 +207,52 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/firebase/{firebaseUid}")
-    @Operation(summary = "Get user by Firebase UID", description = "Retrieve a user by their Firebase UID")
-    public ResponseEntity<User> getUserByFirebaseUid(
-            @Parameter(description = "Firebase UID of the user") 
-            @PathVariable String firebaseUid) {
-        Optional<User> user = userRepository.findByFirebaseUid(firebaseUid);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    // DTO class for user data transfer
+    public static class UserDTO {
+        private Long id;
+        private String firebaseUid;
+        private String email;
+        private String displayName;
+        private String photoUrl;
+        private boolean emailVerified;
+        private boolean active;
+        private String role;
 
-    @GetMapping("/email/{email}")
-    @Operation(summary = "Get user by email", description = "Retrieve a user by their email address")
-    public ResponseEntity<User> getUserByEmail(
-            @Parameter(description = "Email address of the user") 
-            @PathVariable String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        return user.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        public UserDTO(Long id, String firebaseUid, String email, String displayName, 
+                      String photoUrl, boolean emailVerified, boolean active, String role) {
+            this.id = id;
+            this.firebaseUid = firebaseUid;
+            this.email = email;
+            this.displayName = displayName;
+            this.photoUrl = photoUrl;
+            this.emailVerified = emailVerified;
+            this.active = active;
+            this.role = role;
+        }
+
+        // Getters and setters
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        
+        public String getFirebaseUid() { return firebaseUid; }
+        public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
+        
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+        
+        public String getPhotoUrl() { return photoUrl; }
+        public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+        
+        public boolean isEmailVerified() { return emailVerified; }
+        public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+        
+        public boolean isActive() { return active; }
+        public void setActive(boolean active) { this.active = active; }
+        
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
     }
 }

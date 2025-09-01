@@ -81,7 +81,7 @@ const AppRoutes: React.FC = () => {
           path="/location-search"
           element={
             <MainLayout>
-              <LocationSearchPage />
+              <ChatBotPage />
             </MainLayout>
           }
         />
