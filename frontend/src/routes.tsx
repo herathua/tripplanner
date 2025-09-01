@@ -142,6 +142,14 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/blog/:id/edit"
+          element={
+            <MainLayout>
+              <BlogBlockEditor />
+            </MainLayout>
+          }
+        />
+        <Route
           path="/blog/:slug"
           element={
             <MainLayout>

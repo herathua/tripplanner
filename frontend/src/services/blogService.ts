@@ -7,11 +7,14 @@ export interface BlogPost {
   tags: string[];
   status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   publicSlug?: string;
+  slug?: string;
   author?: any;
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
   viewCount?: number;
+  views?: number;
+  image?: string;
 }
 
 export interface BlogPostResponse {

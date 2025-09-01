@@ -86,9 +86,9 @@ public class BlogPostController {
     // Delete blog post
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBlogPost(@PathVariable Long id, 
-                                          @RequestParam Long authorId) {
+                                          @RequestParam String firebaseUid) {
         try {
-            blogPostService.deleteBlogPost(id, authorId);
+            blogPostService.deleteBlogPostByFirebaseUid(id, firebaseUid);
             return ResponseEntity.ok(Map.of("message", "Blog post deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

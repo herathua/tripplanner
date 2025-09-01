@@ -60,12 +60,12 @@ const HomePage: React.FC = () => {
         console.error('Error loading user guides:', error);
       });
 
-      // Load published guides from all users
-      blogService.getPublishedBlogPosts(0, 6).then((data) => {
-        setPublishedGuides(data.content || []);
-      }).catch(error => {
-        console.error('Error loading published guides:', error);
-      });
+             // Load published guides from all users
+       blogService.getPublishedBlogPosts(0, 3).then((data) => {
+         setPublishedGuides(data.content || []);
+       }).catch(error => {
+         console.error('Error loading published guides:', error);
+       });
     }
   }, [user, guidePage]);
 
@@ -97,43 +97,22 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      // Send trip details to backend using service
-      try {
-        const createdTrip = await tripService.createTrip({
-          title: tripName.trim(),
-          destination: tripDescription.trim(), // Using description as destination for now
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          budget: budgetValue,
-          status: TripStatus.PLANNING,
-          visibility: TripVisibility.PRIVATE
-        }, user?.uid);
-        
-        console.log('Trip created successfully:', createdTrip);
-        console.log('Trip ID:', createdTrip.id);
-        console.log('Trip object keys:', Object.keys(createdTrip));
-        
-        dispatch(setTripDetails({
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          budget: budgetValue,
-          isConfigured: true,
-          tripName: tripName.trim(),
-          tripDescription: tripDescription.trim()
-        }));
+      // Set trip details in Redux store for the trip planning page
+      dispatch(setTripDetails({
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        budget: budgetValue,
+        isConfigured: true,
+        tripName: tripName.trim(),
+        tripDescription: tripDescription.trim()
+      }));
 
-        // Navigate to the new trip page with the trip ID
-        const navigationUrl = `/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}&tripId=${createdTrip.id}`;
-        console.log('Navigating to:', navigationUrl);
-        navigate(navigationUrl);
-        setIsModalOpen(false);
-      } catch (error: any) {
-        console.error('Failed to create trip:', error);
-        console.error('Error response:', error.response?.data);
-        setError(`Failed to create trip: ${error.response?.data || error.message}`);
-      } finally {
-        setIsLoading(false);
-      }
+      // Navigate to the new trip page without creating the trip yet
+      const navigationUrl = `/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`;
+      console.log('Navigating to:', navigationUrl);
+      navigate(navigationUrl);
+      setIsModalOpen(false);
+      setIsLoading(false);
     }
   };
 
@@ -151,7 +130,7 @@ const HomePage: React.FC = () => {
 
   // Guide management functions
   const handleEditGuide = (guide: BlogPost) => {
-    navigate(`/blog-editor/${guide.id}`);
+    navigate(`/blog/${guide.id}/edit`);
   };
 
   const handleDeleteGuide = async (guideId: number) => {
@@ -196,7 +175,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleCreateNewGuide = () => {
-    navigate('/blog-editor');
+    navigate('/blog/new');
   };
 
   const handleViewAllGuides = () => {
@@ -447,14 +426,14 @@ const HomePage: React.FC = () => {
                     disabled={!startDate || !endDate || !budget || !tripName.trim() || isLoading}
                     className="px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
                   >
-                    {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Creating...
-                      </>
-                    ) : (
-                      'Confirm'
-                    )}
+                                         {isLoading ? (
+                       <>
+                         <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                         Planning...
+                       </>
+                     ) : (
+                       'Start Planning'
+                     )}
                   </button>
                 </div>
               </div>
@@ -561,43 +540,7 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Saved Section */}
-        <section>
-          <h2 className="mb-6 text-xl font-semibold">Popular Destinations</h2>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Destination Cards */}
-            {[
-              { name: 'Taiwan', rating: 4.8, reviews: 256, image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg' },
-              { name: 'Seoul', rating: 4.6, reviews: 189, image: 'https://images.pexels.com/photos/2166554/pexels-photo-2166554.jpeg' },
-              { name: 'Dubai', rating: 4.7, reviews: 234, image: 'https://images.pexels.com/photos/2166555/pexels-photo-2166555.jpeg' }
-            ].map((destination, index) => (
-              <div key={index} className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <div className="relative">
-                  <img 
-                    src={destination.image}
-                    alt={destination.name} 
-                    className="object-cover w-full h-48"
-                  />
-                  <Heart className="absolute w-6 h-6 text-white top-3 right-3" />
-                </div>
-                <div className="p-4">
-                  <h3 className="mb-2 font-semibold text-lg">{destination.name}</h3>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <span className="font-medium">{destination.rating}</span>
-                      <span className="mx-2">•</span>
-                      <span>{destination.reviews} reviews</span>
-                    </div>
-                    <button className="text-blue-600 hover:text-blue-800 font-medium">
-                      Explore
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        
       </main>
     </div>
   );

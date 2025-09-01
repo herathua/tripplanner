@@ -78,6 +78,24 @@ public class BlogPostService {
         //     throw new RuntimeException("Unauthorized to publish this blog post");
         // }
         
+        // Generate public slug if not already set
+        if (blogPost.getPublicSlug() == null || blogPost.getPublicSlug().isEmpty()) {
+            String baseSlug = blogPost.getTitle() != null ? 
+                blogPost.getTitle().toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+", "-") :
+                "post-" + blogPost.getId();
+            
+            String publicSlug = baseSlug;
+            int counter = 1;
+            
+            // Ensure slug is unique
+            while (blogPostRepository.existsByPublicSlug(publicSlug)) {
+                publicSlug = baseSlug + "-" + counter;
+                counter++;
+            }
+            
+            blogPost.setPublicSlug(publicSlug);
+        }
+        
         blogPost.setStatus(BlogPostStatus.PUBLISHED);
         return blogPostRepository.save(blogPost);
     }
@@ -101,6 +119,18 @@ public class BlogPostService {
         
         // Check if user is the author
         if (!blogPost.getAuthor().getId().equals(authorId)) {
+            throw new RuntimeException("Unauthorized to delete this blog post");
+        }
+        
+        blogPostRepository.delete(blogPost);
+    }
+    
+    public void deleteBlogPostByFirebaseUid(Long id, String firebaseUid) {
+        BlogPost blogPost = blogPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Blog post not found"));
+        
+        // Check if user is the author using Firebase UID
+        if (!blogPost.getAuthor().getFirebaseUid().equals(firebaseUid)) {
             throw new RuntimeException("Unauthorized to delete this blog post");
         }
         

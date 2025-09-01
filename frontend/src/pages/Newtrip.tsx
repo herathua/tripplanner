@@ -416,6 +416,8 @@ const NewTrip = () => {
     try {
       await saveTrip();
       alert('Trip saved successfully!');
+      // Navigate back to homepage after saving
+      navigate('/');
     } catch (error) {
       alert('Failed to save trip. Please try again.');
     }
