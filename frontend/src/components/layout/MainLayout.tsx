@@ -41,7 +41,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const navigation = [
-    { name: 'Home', path: '/' },
+    { name: 'Home', path: '/home' },
     { name: 'Travel Guide', path: '/travel-guide' },
     { name: 'AI Travel Assistant', path: '/location-search', action: toggleAIAssistant },
   ];

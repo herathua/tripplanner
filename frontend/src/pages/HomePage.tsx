@@ -202,7 +202,8 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      // Set trip details in Redux store for the trip planning page
+      // First, set trip details in Redux store for the trip planning page
+      console.log('Setting trip details in Redux store...');
       dispatch(setTripDetails({
         startDate: formattedStartDate,
         endDate: formattedEndDate,
@@ -214,7 +215,8 @@ const HomePage: React.FC = () => {
 
       // Navigate to the new trip page without creating the trip yet
       const navigationUrl = `/new-trip?startDate=${formattedStartDate}&endDate=${formattedEndDate}&budget=${budgetValue}&tripName=${encodeURIComponent(tripName.trim())}&tripDescription=${encodeURIComponent(tripDescription.trim())}`;
-      console.log('Navigating to:', navigationUrl);
+      console.log('About to navigate to:', navigationUrl);
+      console.log('Current location before navigation:', window.location.href);
       navigate(navigationUrl);
       setIsModalOpen(false);
       setIsLoading(false);

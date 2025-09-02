@@ -46,6 +46,7 @@ interface TripContextType {
   updateTripName: (name: string) => void;
   updateTripBudget: (budget: number) => void;
   initializeTripFromParams: (params: URLSearchParams) => void;
+  clearTrip: () => void;
 }
 
 // Initial state
@@ -66,56 +67,73 @@ type TripAction =
   | { type: 'ADD_EXPENSE'; payload: Expense }
   | { type: 'REMOVE_EXPENSE'; payload: string }
   | { type: 'UPDATE_TRIP_NAME'; payload: string }
-  | { type: 'UPDATE_TRIP_BUDGET'; payload: number };
+  | { type: 'UPDATE_TRIP_BUDGET'; payload: number }
+  | { type: 'CLEAR_TRIP' };
 
 // Reducer
 const tripReducer = (state: TripState, action: TripAction): TripState => {
+  console.log('🔄 TripContext reducer called with action:', action.type, action.type === 'CLEAR_TRIP' ? 'no payload' : action.payload);
+  
   switch (action.type) {
     case 'SET_CURRENT_TRIP':
+      console.log('📝 Setting current trip:', action.payload);
       return {
         ...state,
         currentTrip: action.payload,
       };
     case 'ADD_PLACE':
-      return {
+      console.log('📍 Adding place to context:', action.payload);
+      const newState = {
         ...state,
         places: [...state.places, action.payload],
       };
+      console.log('✅ New state after adding place:', newState);
+      return newState;
     case 'REMOVE_PLACE':
+      console.log('🗑️ Removing place:', action.payload);
       return {
         ...state,
         places: state.places.filter(place => place.id !== action.payload),
       };
     case 'ADD_ACTIVITY':
+      console.log('🎯 Adding activity:', action.payload);
       return {
         ...state,
         activities: [...state.activities, action.payload],
       };
     case 'REMOVE_ACTIVITY':
+      console.log('🗑️ Removing activity:', action.payload);
       return {
         ...state,
         activities: state.activities.filter(activity => activity.id !== action.payload),
       };
     case 'ADD_EXPENSE':
+      console.log('💰 Adding expense:', action.payload);
       return {
         ...state,
         expenses: [...state.expenses, action.payload],
       };
     case 'REMOVE_EXPENSE':
+      console.log('🗑️ Removing expense:', action.payload);
       return {
         ...state,
         expenses: state.expenses.filter(expense => expense.id !== action.payload),
       };
     case 'UPDATE_TRIP_NAME':
+      console.log('✏️ Updating trip name:', action.payload);
       return {
         ...state,
         currentTrip: state.currentTrip ? { ...state.currentTrip, title: action.payload } : null,
       };
     case 'UPDATE_TRIP_BUDGET':
+      console.log('💰 Updating trip budget:', action.payload);
       return {
         ...state,
         currentTrip: state.currentTrip ? { ...state.currentTrip, budget: action.payload } : null,
       };
+    case 'CLEAR_TRIP':
+      console.log('🧹 Clearing trip state');
+      return initialState;
     default:
       return state;
   }
@@ -194,11 +212,15 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Local state management functions
   const addPlace = (place: Omit<Place, 'id'>) => {
+    console.log('🏗️ addPlace called with:', place);
     const newPlace: Place = {
       ...place,
       id: Math.random().toString(36).substr(2, 9),
     };
+    console.log('🆔 Generated new place with ID:', newPlace.id);
+    console.log('📤 Dispatching ADD_PLACE action...');
     dispatch({ type: 'ADD_PLACE', payload: newPlace });
+    console.log('✅ ADD_PLACE action dispatched');
   };
 
   const removePlace = (placeId: string) => {
@@ -238,6 +260,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'UPDATE_TRIP_BUDGET', payload: budget });
   };
 
+  const clearTrip = () => {
+    console.log('Clearing trip state - starting fresh');
+    dispatch({ type: 'CLEAR_TRIP' });
+  };
+
   const value: TripContextType = {
     state,
     createTrip,
@@ -252,6 +279,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateTripName,
     updateTripBudget,
     initializeTripFromParams,
+    clearTrip,
   };
 
   return <TripContext.Provider value={value}>{children}</TripContext.Provider>;

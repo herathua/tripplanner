@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate('/home');
     }
   }, [isAuthenticated, navigate]);
 
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
       } else {
         await dispatch(register({ email, password })).unwrap();
       }
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       // Error is handled by the error effect
     }
@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await dispatch(loginWithGoogle()).unwrap();
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       // Error is handled by the error effect
     }
@@ -67,7 +67,7 @@ const LoginPage: React.FC = () => {
   const handleAnonymousLogin = async () => {
     try {
       await dispatch(loginAnonymously()).unwrap();
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       // Error is handled by the error effect
     }

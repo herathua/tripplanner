@@ -22,6 +22,7 @@ export interface Activity {
   status: ActivityStatus;
   tripId?: number;
   itineraryId?: number;
+  dayNumber?: number; // Add dayNumber for local state activities
   placeId?: string;
   createdAt?: string;
   updatedAt?: string;

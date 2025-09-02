@@ -11,6 +11,7 @@ interface ItinerarySectionProps {
   tripDays: TripDay[];
   activities: Activity[];
   itineraries: Itinerary[];
+  selectedDay?: number; // Add selectedDay prop
   onAddActivity: (dayNumber: number) => void;
   onEditActivity: (activity: Activity) => void;
   onDeleteActivity: (activityId: string) => void;
@@ -23,6 +24,7 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
   tripDays,
   activities,
   itineraries,
+  selectedDay, // Add selectedDay parameter
   onAddActivity,
   onEditActivity,
   onDeleteActivity,
@@ -32,12 +34,30 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
 }) => {
   // Helper function to get activities for a specific day
   const getActivitiesForDay = (dayNumber: number) => {
-    // Find the itinerary for this day
+    // First try to find activities by itineraryId (for backend activities)
     const dayItinerary = itineraries.find(itinerary => itinerary.dayNumber === dayNumber);
-    if (!dayItinerary) return [];
+    if (dayItinerary) {
+      const itineraryActivities = activities.filter(activity => activity.itineraryId === dayItinerary.id);
+      if (itineraryActivities.length > 0) {
+        return itineraryActivities;
+      }
+    }
     
-    // Return activities that belong to this itinerary
-    return activities.filter(activity => activity.itineraryId === dayItinerary.id);
+    // For TripContext activities, check if they have dayNumber property
+    const localActivities = activities.filter(activity => 
+      !activity.itineraryId && activity.dayNumber === dayNumber
+    );
+    
+    if (localActivities.length > 0) {
+      return localActivities;
+    }
+    
+    // Fallback: for TripContext activities without itineraryId or dayNumber, show them on the selected day
+    if (dayNumber === selectedDay) {
+      return activities.filter(activity => !activity.itineraryId && !activity.dayNumber);
+    }
+    
+    return [];
   };
 
   // Helper function to format time

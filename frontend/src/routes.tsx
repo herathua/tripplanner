@@ -5,6 +5,7 @@ import MainLayout from './components/layout/MainLayout';
 import { Loader2 } from 'lucide-react';
 
 // Lazy load pages for better performance
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const PlanningPage = React.lazy(() => import('./pages/PlanningPage'));
@@ -32,20 +33,26 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Allow access to new-trip page even without trip details
+  // Trip details will be set during the navigation process
+  if (location.pathname === '/new-trip') {
+    return <MainLayout>{children}</MainLayout>;
+  }
+
   // Check if trying to access trip planning page without trip details
-  if (location.pathname === '/new-trip' && (!tripDetails || !tripDetails.isConfigured)) {
-    return <Navigate to="/" replace />;
+  if (location.pathname === '/planning' && (!tripDetails || !tripDetails.isConfigured)) {
+    return <Navigate to="/home" replace />;
   }
 
   return <MainLayout>{children}</MainLayout>;
 };
 
-// Public Route component
+// Public Route component (only for unauthenticated users)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
@@ -58,11 +65,35 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Landing Page Route (redirects authenticated users to home)
+const LandingPageRoute: React.FC = () => {
+  const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
+
+  // Don't redirect while loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return <LandingPage />;
+};
+
 const AppRoutes: React.FC = () => {
   return (
     <React.Suspense fallback={<LoadingFallback />}>
       <Routes>
         {/* Public Routes */}
+        <Route
+          path="/"
+          element={<LandingPageRoute />}
+        />
         <Route
           path="/login"
           element={
@@ -164,7 +195,7 @@ const AppRoutes: React.FC = () => {
 
         {/* Protected Routes */}
         <Route
-          path="/"
+          path="/home"
           element={
             <ProtectedRoute>
               <HomePage />

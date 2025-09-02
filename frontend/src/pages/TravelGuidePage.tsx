@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Star, ArrowRight, Eye, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
+import CardImageService from '../utils/cardImageService';
 
 const TravelGuidePage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +10,90 @@ const TravelGuidePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
+
+  // Dynamic Guide Card Component
+  const DynamicGuideCard: React.FC<{ post: BlogPost }> = ({ post }) => {
+    const [imageData, setImageData] = useState<{
+      url: string;
+      alt: string;
+      credit: string;
+    } | null>(null);
+    const [isImageLoading, setIsImageLoading] = useState(true);
+
+    useEffect(() => {
+      const loadImage = async () => {
+        try {
+          setIsImageLoading(true);
+          // Use title or tags to determine guide type and destination
+          const guideType = post.tags?.[0] || 'travel';
+          const destination = post.title?.split(' ')[0] || 'Travel'; // Simple extraction
+          const image = await CardImageService.getGuideCardImage(destination, guideType);
+          setImageData(image);
+        } catch (error) {
+          console.error('Failed to load guide image:', error);
+          // Fallback to default image
+          setImageData({
+            url: '/src/assets/logo.png',
+            alt: 'Travel guide',
+            credit: 'Default image'
+          });
+        } finally {
+          setIsImageLoading(false);
+        }
+      };
+
+      loadImage();
+    }, [post.title, post.tags]);
+
+    return (
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewGuide(post)}>
+        <div className="relative h-48">
+          {isImageLoading ? (
+            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+              <div className="text-gray-500">Loading...</div>
+            </div>
+          ) : (
+            <img 
+              src={imageData?.url || '/src/assets/logo.png'}
+              alt={imageData?.alt || post.title || 'Travel guide'}
+              className="w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute top-3 right-3 flex space-x-2">
+            {post.status === 'PUBLISHED' && (
+              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                PUBLISHED
+              </span>
+            )}
+            <Heart className="w-5 h-5 text-white" />
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold line-clamp-1">
+              {post.title || 'Untitled Guide'}
+            </h3>
+            <div className="flex items-center">
+              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+              <span className="ml-1 text-sm">4.8</span>
+            </div>
+          </div>
+          <div className="text-sm text-gray-600 mb-2">
+            By {post.author?.name || 'Anonymous'} • {post.createdAt ? formatDate(post.createdAt) : 'Recently'}
+          </div>
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center">
+              <Eye className="w-4 h-4 mr-1" />
+              <span>{post.views || 0} views</span>
+            </div>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center">
+              View Guide <ArrowRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Load all published blog posts
   useEffect(() => {
@@ -63,20 +148,8 @@ const TravelGuidePage: React.FC = () => {
     // If post has an image, use it
     if (post.image) return post.image;
     
-    // Otherwise use a default travel image based on post title or content
-    const defaultImages = [
-      'https://images.pexels.com/photos/1802255/pexels-photo-1802255.jpeg', // Bali
-      'https://images.pexels.com/photos/1010657/pexels-photo-1010657.jpeg', // Santorini
-      'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg', // Tokyo
-      'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg', // General travel
-      'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg', // Temple
-      'https://images.pexels.com/photos/2166554/pexels-photo-2166554.jpeg', // City
-      'https://images.pexels.com/photos/2166555/pexels-photo-2166555.jpeg', // Nature
-    ];
-    
-    // Use post ID to consistently assign the same image to the same post
-    const index = (post.id || 0) % defaultImages.length;
-    return defaultImages[index];
+    // Return a placeholder that will be replaced by dynamic images
+    return '/src/assets/logo.png';
   };
 
   const formatDate = (dateString: string) => {
@@ -92,7 +165,7 @@ const TravelGuidePage: React.FC = () => {
       {/* Hero Section */}
       <div className="relative h-[400px]">
         <img 
-          src="https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg"
+          src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
           alt="Travel destinations"
           className="w-full h-full object-cover"
         />
@@ -150,46 +223,7 @@ const TravelGuidePage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
-              <div key={post.id} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewGuide(post)}>
-                <div className="relative h-48">
-                  <img 
-                    src={getDefaultImage(post)}
-                    alt={post.title || 'Travel guide'}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 flex space-x-2">
-                    {post.status === 'PUBLISHED' && (
-                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                        PUBLISHED
-                      </span>
-                    )}
-                    <Heart className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold line-clamp-1">
-                      {post.title || 'Untitled Guide'}
-                    </h3>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="ml-1 text-sm">4.8</span>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    By {post.author?.name || 'Anonymous'} • {post.createdAt ? formatDate(post.createdAt) : 'Recently'}
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Eye className="w-4 h-4 mr-1" />
-                      <span>{post.views || 0} views</span>
-                    </div>
-                    <button className="text-blue-600 hover:text-blue-700 flex items-center">
-                      View Guide <ArrowRight className="w-4 h-4 ml-1" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <DynamicGuideCard key={post.id} post={post} />
             ))}
           </div>
         )}
