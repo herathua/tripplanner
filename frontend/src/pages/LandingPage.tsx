@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plane, 
@@ -33,10 +33,10 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [heroImage, setHeroImage] = useState<string>('');
   const [isImageLoading, setIsImageLoading] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
+
 
   // Load hero image on component mount
-  useEffect(() => {
+  React.useEffect(() => {
     const loadHeroImage = async () => {
       try {
         setIsImageLoading(true);
@@ -50,10 +50,6 @@ const LandingPage: React.FC = () => {
       }
     };
     loadHeroImage();
-    
-    // Trigger animations
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
   }, []);
 
   const handleGetStarted = () => {
@@ -67,7 +63,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+      <nav className="fixed top-0 left-0 right-0 z-50">
         <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -101,7 +97,7 @@ const LandingPage: React.FC = () => {
         {/* Animated Background */}
         <div className="absolute inset-0">
           {isImageLoading ? (
-            <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 animate-pulse" />
+            <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
           ) : (
             <>
               <img
@@ -113,36 +109,26 @@ const LandingPage: React.FC = () => {
             </>
           )}
           
-          {/* Floating Elements */}
-          <div className="absolute top-20 left-10 w-20 h-20 bg-blue-400/20 rounded-full blur-xl animate-bounce"></div>
-          <div className="absolute top-40 right-20 w-32 h-32 bg-purple-400/20 rounded-full blur-xl animate-bounce" style={{animationDelay: '1s'}}></div>
-          <div className="absolute bottom-40 left-20 w-24 h-24 bg-pink-400/20 rounded-full blur-xl animate-bounce" style={{animationDelay: '2s'}}></div>
+
         </div>
 
         {/* Hero Content */}
-        <div className={`relative z-10 text-center text-white px-4 max-w-6xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="flex justify-center mb-8 animate-pulse">
-            <div className="relative">
-              <img src={logo} alt="TripPlanner Logo" className="w-28 h-28 md:w-36 md:h-36 drop-shadow-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl animate-ping"></div>
-            </div>
-          </div>
-          
+        <div className="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
           <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
-            <span className="block animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+            <span className="block">
               Plan Your Dream
             </span>
-            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Adventure
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+          <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-4xl mx-auto leading-relaxed">
             Transform your travel dreams into reality with our AI-powered trip planning platform. 
             Create personalized itineraries, discover hidden gems, and connect with fellow travelers worldwide.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button
               onClick={handleGetStarted}
               className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-500 shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2"
@@ -162,9 +148,9 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
           <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+            <div className="w-1 h-3 bg-white rounded-full mt-2"></div>
           </div>
         </div>
       </section>
@@ -415,29 +401,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Statistics Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div className="group">
-              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">50K+</div>
-              <div className="text-xl text-blue-100">Happy Travelers</div>
-            </div>
-            <div className="group">
-              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">200+</div>
-              <div className="text-xl text-blue-100">Countries Covered</div>
-            </div>
-            <div className="group">
-              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">10K+</div>
-              <div className="text-xl text-blue-100">Trips Planned</div>
-            </div>
-            <div className="group">
-              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">99.9%</div>
-              <div className="text-xl text-blue-100">Uptime</div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* About Section */}
       <section id="about" className="py-24 bg-gray-50">

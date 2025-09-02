@@ -2,102 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations for landing page */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
-  }
-}
-
-@keyframes slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Animation classes */
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-slide-in-left {
-  animation: slide-in-left 0.8s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.8s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.6s ease-out forwards;
-}
-
-/* Staggered animations for grid items */
-.animate-stagger-1 { animation-delay: 0.1s; }
-.animate-stagger-2 { animation-delay: 0.2s; }
-.animate-stagger-3 { animation-delay: 0.3s; }
-.animate-stagger-4 { animation-delay: 0.4s; }
-.animate-stagger-5 { animation-delay: 0.5s; }
-.animate-stagger-6 { animation-delay: 0.6s; }
-
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -126,19 +30,6 @@ html {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Gradient text animations */
-.gradient-text {
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
-  background-size: 200% 200%;
-  animation: gradient-shift 3s ease infinite;
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 /* Hover effects */
@@ -180,45 +71,6 @@ html {
 .card-hover:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-}
-
-/* Floating elements */
-.floating {
-  animation: float 6s ease-in-out infinite;
-}
-
-.floating-delay-1 {
-  animation-delay: 1s;
-}
-
-.floating-delay-2 {
-  animation-delay: 2s;
-}
-
-.floating-delay-3 {
-  animation-delay: 3s;
-}
-
-/* Responsive text sizing */
-@media (max-width: 640px) {
-  .hero-title {
-    font-size: 2.5rem;
-    line-height: 1.2;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  .hero-title {
-    font-size: 4rem;
-    line-height: 1.1;
-  }
-}
-
-@media (min-width: 1025px) {
-  .hero-title {
-    font-size: 6rem;
-    line-height: 1;
-  }
 }
 
 /* Leaflet Map Marker Styles */
