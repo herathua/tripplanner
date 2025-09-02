@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
 import EditorJS from '@editorjs/editorjs';
+import Header from '@editorjs/header';
+import ImageTool from '@editorjs/image';
+import List from '@editorjs/list';
+import Quote from '@editorjs/quote';
+import CodeTool from '@editorjs/code';
+import Embed from '@editorjs/embed';
+import Marker from '@editorjs/marker';
 
 const BlogPostViewer: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -38,6 +45,15 @@ const BlogPostViewer: React.FC = () => {
           data: content,
           readOnly: true,
           holder: 'blog-content-viewer',
+          tools: {
+            header: Header as any,
+            image: ImageTool as any,
+            list: List as any,
+            quote: Quote as any,
+            code: CodeTool as any,
+            embed: Embed as any,
+            marker: Marker as any,
+          },
         });
 
         setEditorInstance(editor);

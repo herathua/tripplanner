@@ -57,11 +57,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <Link to="/" className="flex items-center gap-2">
                 <img
                   src="/src/assets/logo.png"
-                  alt="Itinero Logo"
-                  title="Itinero"
+                  alt="TripPlanner Logo"
+                  title="TripPlanner"
                   className="object-contain w-8 h-8"
                 />
-                <span className="text-2xl font-bold text-black-500">Itinero</span>
+                <span className="text-2xl font-bold text-black-500">TripPlanner</span>
               </Link>
             </div>
 
