@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plane, 
@@ -13,17 +13,30 @@ import {
   Camera,
   BookOpen,
   Shield,
-  Zap
+  Zap,
+  CheckCircle,
+  TrendingUp,
+  Award,
+  Map,
+  Smartphone,
+  Cloud,
+  Lock,
+  Sparkles,
+  Target,
+  Clock,
+  DollarSign
 } from 'lucide-react';
 import CardImageService from '../utils/cardImageService';
+import logo from '../assets/logo.png';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [heroImage, setHeroImage] = useState<string>('');
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Load hero image on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     const loadHeroImage = async () => {
       try {
         setIsImageLoading(true);
@@ -31,12 +44,16 @@ const LandingPage: React.FC = () => {
         setHeroImage(image.url);
       } catch (error) {
         console.error('Failed to load hero image:', error);
-        setHeroImage('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+        setHeroImage('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
       } finally {
         setIsImageLoading(false);
       }
     };
     loadHeroImage();
+    
+    // Trigger animations
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleGetStarted = () => {
@@ -44,76 +61,100 @@ const LandingPage: React.FC = () => {
   };
 
   const handleLearnMore = () => {
-    document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Compass className="w-6 h-6 text-white" />
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3 group cursor-pointer">
+                <div className="relative">
+                  <img src={logo} alt="TripPlanner Logo" className="w-12 h-12 transition-transform duration-300 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  TripPlanner
+                </span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                TripPlanner
-              </span>
+              <div className="hidden md:flex items-center space-x-8">
+                <a href="#features" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">Features</a>
+                <a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">How It Works</a>
+                <a href="#about" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">About</a>
+              </div>
+              <button
+                onClick={handleGetStarted}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1"
+              >
+                Get Started
+              </button>
             </div>
-             <div className="hidden md:flex items-center space-x-8">
-               <a href="#services" className="text-gray-600 hover:text-blue-600 transition-colors">Services</a>
-               <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">About</a>
-             </div>
-            <button
-              onClick={handleGetStarted}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Get Started
-            </button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+        {/* Animated Background */}
         <div className="absolute inset-0">
           {isImageLoading ? (
-            <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50" />
+            <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 animate-pulse" />
           ) : (
-            <img
-              src={heroImage}
-              alt="Beautiful travel destinations"
-              className="w-full h-full object-cover"
-            />
+            <>
+              <img
+                src={heroImage}
+                alt="Beautiful travel destinations"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
+            </>
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
+          
+          {/* Floating Elements */}
+          <div className="absolute top-20 left-10 w-20 h-20 bg-blue-400/20 rounded-full blur-xl animate-bounce"></div>
+          <div className="absolute top-40 right-20 w-32 h-32 bg-purple-400/20 rounded-full blur-xl animate-bounce" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-40 left-20 w-24 h-24 bg-pink-400/20 rounded-full blur-xl animate-bounce" style={{animationDelay: '2s'}}></div>
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            Plan Your Dream
-            <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <div className={`relative z-10 text-center text-white px-4 max-w-6xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex justify-center mb-8 animate-pulse">
+            <div className="relative">
+              <img src={logo} alt="TripPlanner Logo" className="w-28 h-28 md:w-36 md:h-36 drop-shadow-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl animate-ping"></div>
+            </div>
+          </div>
+          
+          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
+            <span className="block animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+              Plan Your Dream
+            </span>
+            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-fade-in-up" style={{animationDelay: '0.4s'}}>
               Adventure
             </span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-200 max-w-3xl mx-auto leading-relaxed">
-            Discover amazing destinations, create personalized itineraries, and connect with fellow travelers. 
-            Your next unforgettable journey starts here.
+          
+          <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-4xl mx-auto leading-relaxed animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+            Transform your travel dreams into reality with our AI-powered trip planning platform. 
+            Create personalized itineraries, discover hidden gems, and connect with fellow travelers worldwide.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up" style={{animationDelay: '0.8s'}}>
             <button
               onClick={handleGetStarted}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-500 shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2"
             >
-              Start Planning Now
-              <ArrowRight className="w-5 h-5 ml-2 inline" />
+              <span className="flex items-center">
+                Start Planning Now
+                <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
+              </span>
             </button>
             <button
               onClick={handleLearnMore}
-              className="border-2 border-white text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-white hover:text-gray-900 transition-all duration-300"
+              className="border-2 border-white text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:bg-white hover:text-gray-900 transition-all duration-500 backdrop-blur-sm hover:backdrop-blur-none"
             >
               Learn More
             </button>
@@ -128,173 +169,173 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-20 bg-gray-50">
+      {/* Features Section */}
+      <section id="features" className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Everything You Need for
+          <div className="text-center mb-20">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Why Choose
               <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Perfect Travel
+                TripPlanner?
               </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From trip planning to local guides, we've got you covered with comprehensive travel solutions.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Our platform combines cutting-edge technology with human expertise to create the ultimate travel planning experience.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* AI Travel Assistant */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                <Zap className="w-8 h-8 text-white" />
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Travel Assistant</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Get personalized travel recommendations, weather updates, and local insights powered by AI. 
-                Your intelligent travel companion.
+                Get personalized travel recommendations, weather updates, and local insights powered by advanced AI. 
+                Your intelligent travel companion that learns your preferences.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-blue-500 mr-2" />
-                  Weather forecasts for any destination
+                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  Smart destination recommendations
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-blue-500 mr-2" />
-                  Local attractions and hidden gems
+                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  Real-time weather forecasts
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-blue-500 mr-2" />
-                  Cultural insights and tips
+                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  Local culture insights
                 </li>
               </ul>
             </div>
 
-            {/* Trip Planning */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6">
-                <Calendar className="w-8 h-8 text-white" />
+            {/* Smart Trip Planning */}
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Smart Trip Planning</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Create detailed itineraries with our intuitive planning tools. 
-                Budget tracking, date management, and collaborative planning.
+                Budget tracking, date management, and collaborative planning for groups.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-purple-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
                   Interactive itinerary builder
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-purple-500 mr-2" />
-                  Budget management tools
+                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
+                  Advanced budget management
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-purple-500 mr-2" />
-                  Group collaboration features
+                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
+                  Group collaboration tools
                 </li>
               </ul>
             </div>
 
             {/* Travel Guides */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6">
-                <BookOpen className="w-8 h-8 text-white" />
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <BookOpen className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Expert Travel Guides</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Access comprehensive guides written by experienced travelers. 
-                Local knowledge, insider tips, and authentic experiences.
+                Access comprehensive guides written by experienced travelers and local experts. 
+                Discover hidden gems and authentic experiences.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-green-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
                   Local expert insights
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-green-500 mr-2" />
-                  Off-the-beaten-path recommendations
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  Off-the-beaten-path spots
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-green-500 mr-2" />
-                  Cultural and historical context
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  Cultural context & tips
                 </li>
               </ul>
             </div>
 
             {/* Dynamic Images */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6">
-                <Camera className="w-8 h-8 text-white" />
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Camera className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Beautiful Visuals</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Stunning destination images that automatically update based on your content. 
-                Professional photography from Unsplash.
+                Professional photography from Unsplash integration.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-orange-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
                   High-quality destination photos
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-orange-500 mr-2" />
-                  Automatic image matching
+                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
+                  Smart image matching
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-orange-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
                   Professional travel imagery
                 </li>
               </ul>
             </div>
 
             {/* Community */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6">
-                <Users className="w-8 h-8 text-white" />
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Travel Community</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Connect with fellow travelers, share experiences, and discover new destinations 
-                through our vibrant community.
+                through our vibrant global community.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-pink-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
                   Share travel stories
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-pink-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
                   Connect with travelers
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-pink-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
                   Discover new destinations
                 </li>
               </ul>
             </div>
 
             {/* Security */}
-            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                <Shield className="w-8 h-8 text-white" />
+            <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Shield className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Secure & Reliable</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Your travel data is safe with us. Secure cloud storage, 
-                privacy protection, and reliable backup systems.
+                Your travel data is safe with enterprise-grade security. 
+                Encrypted storage, privacy protection, and reliable backup systems.
               </p>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-indigo-500 mr-2" />
-                  Encrypted data storage
+                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
+                  End-to-end encryption
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-indigo-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
                   Privacy protection
                 </li>
                 <li className="flex items-center">
-                  <Star className="w-4 h-4 text-indigo-500 mr-2" />
+                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
                   Automatic backups
                 </li>
               </ul>
@@ -303,76 +344,174 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              How
+              <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                TripPlanner Works
+              </span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Get started in minutes with our simple 4-step process
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center group">
+              <div className="relative mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl font-bold text-white">1</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Choose Destination</h3>
+              <p className="text-gray-600">Pick from thousands of destinations worldwide or let AI suggest the perfect spot for you.</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="relative mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl font-bold text-white">2</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Plan Itinerary</h3>
+              <p className="text-gray-600">Use our smart tools to create detailed day-by-day plans with activities and attractions.</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="relative mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl font-bold text-white">3</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Manage Budget</h3>
+              <p className="text-gray-600">Track expenses, set spending limits, and get cost-saving recommendations.</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="relative mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-3xl font-bold text-white">4</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center">
+                  <Plane className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Travel & Share</h3>
+              <p className="text-gray-600">Enjoy your trip and share experiences with the community. Get real-time updates and tips.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div className="group">
+              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">50K+</div>
+              <div className="text-xl text-blue-100">Happy Travelers</div>
+            </div>
+            <div className="group">
+              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">200+</div>
+              <div className="text-xl text-blue-100">Countries Covered</div>
+            </div>
+            <div className="group">
+              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">10K+</div>
+              <div className="text-xl text-blue-100">Trips Planned</div>
+            </div>
+            <div className="group">
+              <div className="text-5xl md:text-6xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300">99.9%</div>
+              <div className="text-xl text-blue-100">Uptime</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
-      <section id="about" className="py-20 bg-white">
+      <section id="about" className="py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Why Choose
+              <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8">
+                About
                 <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  TripPlanner?
+                  TripPlanner
                 </span>
               </h2>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                We're passionate about making travel planning effortless and enjoyable. 
-                Our platform combines cutting-edge technology with human expertise to 
-                create the ultimate travel planning experience.
+                TripPlanner is more than just a travel planning app – it's your personal travel companion 
+                that combines the power of artificial intelligence with human expertise to create unforgettable journeys.
+              </p>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Founded by passionate travelers, we understand the challenges of planning the perfect trip. 
+                That's why we've built a platform that makes travel planning effortless, enjoyable, and accessible to everyone.
               </p>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-6 h-6 text-blue-600" />
+                  <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-7 h-7 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Made with Love</h3>
-                    <p className="text-gray-600">Built by travelers, for travelers. We understand your needs.</p>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Made with Love</h3>
+                    <p className="text-gray-600">Built by travelers, for travelers. We understand your needs and desires.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-6 h-6 text-purple-600" />
+                  <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-7 h-7 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Coverage</h3>
-                    <p className="text-gray-600">Plan trips to any destination worldwide with confidence.</p>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Global Coverage</h3>
+                    <p className="text-gray-600">Plan trips to any destination worldwide with confidence and local expertise.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-6 h-6 text-green-600" />
+                  <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-7 h-7 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Always Evolving</h3>
-                    <p className="text-gray-600">Continuous updates and new features based on user feedback.</p>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Always Evolving</h3>
+                    <p className="text-gray-600">Continuous updates and new features based on user feedback and travel trends.</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl p-6 text-white">
-                    <Plane className="w-8 h-8 mb-3" />
-                    <h3 className="font-semibold">Smart Planning</h3>
-                    <p className="text-sm opacity-90">AI-powered recommendations</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                    <Plane className="w-10 h-10 mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Smart Planning</h3>
+                    <p className="text-sm opacity-90">AI-powered recommendations and intelligent itinerary building</p>
                   </div>
-                  <div className="bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl p-6 text-white">
-                    <MapPin className="w-8 h-8 mb-3" />
-                    <h3 className="font-semibold">Global Destinations</h3>
-                    <p className="text-sm opacity-90">Worldwide coverage</p>
+                  <div className="bg-gradient-to-br from-green-400 to-blue-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                    <MapPin className="w-10 h-10 mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Global Destinations</h3>
+                    <p className="text-sm opacity-90">Comprehensive coverage of worldwide locations</p>
                   </div>
                 </div>
-                <div className="space-y-4 mt-8">
-                  <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl p-6 text-white">
-                    <Users className="w-8 h-8 mb-3" />
-                    <h3 className="font-semibold">Community</h3>
-                    <p className="text-sm opacity-90">Connect with travelers</p>
+                <div className="space-y-6 mt-12">
+                  <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                    <Users className="w-10 h-10 mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Community</h3>
+                    <p className="text-sm opacity-90">Connect with fellow travelers worldwide</p>
                   </div>
-                  <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl p-6 text-white">
-                    <BookOpen className="w-8 h-8 mb-3" />
-                    <h3 className="font-semibold">Expert Guides</h3>
-                    <p className="text-sm opacity-90">Local insights</p>
+                  <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                    <BookOpen className="w-10 h-10 mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Expert Guides</h3>
+                    <p className="text-sm opacity-90">Local insights and cultural knowledge</p>
                   </div>
                 </div>
               </div>
@@ -381,55 +520,84 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-
+      {/* CTA Section */}
+      <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-5xl md:text-6xl font-bold mb-6">
+            Ready to Start Your
+            <span className="block bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+              Adventure?
+            </span>
+          </h2>
+          <p className="text-xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed">
+            Join thousands of travelers who are already planning their dream trips with TripPlanner. 
+            Start creating your perfect itinerary today!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <button
+              onClick={handleGetStarted}
+              className="group bg-white text-blue-600 px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/25 transform hover:scale-105 hover:-translate-y-2"
+            >
+              <span className="flex items-center">
+                Get Started Free
+                <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
+              </span>
+            </button>
+            <button
+              onClick={handleLearnMore}
+              className="border-2 border-white text-white px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 backdrop-blur-sm"
+            >
+              Learn More
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
+      <footer className="bg-gray-900 text-white py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center space-x-2 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Compass className="w-6 h-6 text-white" />
-                </div>
+              <div className="flex items-center space-x-3 mb-6">
+                <img src={logo} alt="TripPlanner Logo" className="w-12 h-12" />
                 <span className="text-2xl font-bold">TripPlanner</span>
               </div>
-              <p className="text-gray-400 mb-6 max-w-md">
+              <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
                 Your ultimate travel planning companion. Discover destinations, create itineraries, 
-                and connect with fellow travelers worldwide.
+                and connect with fellow travelers worldwide. Start your journey today.
               </p>
               <div className="flex space-x-4">
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
-                  <span className="text-sm font-semibold">f</span>
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 cursor-pointer group">
+                  <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">f</span>
                 </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors cursor-pointer">
-                  <span className="text-sm font-semibold">t</span>
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-all duration-300 cursor-pointer group">
+                  <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">t</span>
                 </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-colors cursor-pointer">
-                  <span className="text-sm font-semibold">in</span>
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-all duration-300 cursor-pointer group">
+                  <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">in</span>
                 </div>
               </div>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#services" className="hover:text-white transition-colors">Services</a></li>
-                <li><a href="#about" className="hover:text-white transition-colors">About Us</a></li>
-
-                <li><button onClick={handleGetStarted} className="hover:text-white transition-colors">Login</button></li>
+              <h4 className="text-lg font-semibold mb-6">Quick Links</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors duration-300">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors duration-300">How It Works</a></li>
+                <li><a href="#about" className="hover:text-white transition-colors duration-300">About Us</a></li>
+                <li><button onClick={handleGetStarted} className="hover:text-white transition-colors duration-300">Login</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+              <h4 className="text-lg font-semibold mb-6">Support</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors duration-300">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors duration-300">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white transition-colors duration-300">FAQ</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+          <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-400">
             <p>&copy; 2024 TripPlanner. All rights reserved. Made with ❤️ for travelers worldwide.</p>
           </div>
         </div>

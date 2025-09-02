@@ -65,34 +65,20 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Landing Page Route (redirects authenticated users to home)
-const LandingPageRoute: React.FC = () => {
-  const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
 
-  // Don't redirect while loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/home" replace />;
-  }
-
-  return <LandingPage />;
-};
 
 const AppRoutes: React.FC = () => {
   return (
     <React.Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes - Accessible to everyone */}
         <Route
           path="/"
-          element={<LandingPageRoute />}
+          element={<LandingPage />}
+        />
+        <Route
+          path="/landing"
+          element={<LandingPage />}
         />
         <Route
           path="/login"
