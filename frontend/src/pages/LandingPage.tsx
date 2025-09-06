@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plane, 
@@ -6,51 +6,22 @@ import {
   Calendar, 
   Users, 
   Globe, 
-  Star, 
   ArrowRight, 
   Heart,
-  Compass,
   Camera,
   BookOpen,
   Shield,
   Zap,
   CheckCircle,
-  TrendingUp,
-  Award,
-  Map,
-  Smartphone,
-  Cloud,
-  Lock,
   Sparkles,
   Target,
-  Clock,
   DollarSign
 } from 'lucide-react';
-import CardImageService from '../utils/cardImageService';
+import TravelCarousel from '../components/TravelCarousel';
 import logo from '../assets/logo.png';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [heroImage, setHeroImage] = useState<string>('');
-  const [isImageLoading, setIsImageLoading] = useState(true);
-
-
-  // Load hero image on component mount
-  React.useEffect(() => {
-    const loadHeroImage = async () => {
-      try {
-        setIsImageLoading(true);
-        const image = await CardImageService.getTripCardImage('Santorini', 'island');
-        setHeroImage(image.url);
-      } catch (error) {
-        console.error('Failed to load hero image:', error);
-        setHeroImage('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
-      } finally {
-        setIsImageLoading(false);
-      }
-    };
-    loadHeroImage();
-  }, []);
 
   const handleGetStarted = () => {
     navigate('/login');
@@ -92,67 +63,9 @@ const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          {isImageLoading ? (
-            <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
-          ) : (
-            <>
-              <img
-                src={heroImage}
-                alt="Beautiful travel destinations"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
-            </>
-          )}
-          
-
-        </div>
-
-        {/* Hero Content */}
-        <div className="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
-          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
-            <span className="block">
-              Plan Your Dream
-            </span>
-            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Adventure
-            </span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl mb-10 text-gray-200 max-w-4xl mx-auto leading-relaxed">
-            Transform your travel dreams into reality with our AI-powered trip planning platform. 
-            Create personalized itineraries, discover hidden gems, and connect with fellow travelers worldwide.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <button
-              onClick={handleGetStarted}
-              className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-500 shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2"
-            >
-              <span className="flex items-center">
-                Start Planning Now
-                <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform duration-300" />
-              </span>
-            </button>
-            <button
-              onClick={handleLearnMore}
-              className="border-2 border-white text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:bg-white hover:text-gray-900 transition-all duration-500 backdrop-blur-sm hover:backdrop-blur-none"
-            >
-              Learn More
-            </button>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white rounded-full mt-2"></div>
-          </div>
-        </div>
+      {/* Hero Section with Travel Carousel */}
+      <section className="relative min-h-screen overflow-hidden">
+        <TravelCarousel />
       </section>
 
       {/* Features Section */}
