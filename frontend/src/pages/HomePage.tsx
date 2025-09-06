@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, X, DollarSign, Plus, ArrowRight, Edit, Trash2 } from 'lucide-react';
+import { X, DollarSign, Plus, ArrowRight, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useAppDispatch, useAppSelector } from '../store';
 import { setTripDetails } from '../store/slices/tripSlice';
 import GuideCard from '../components/GuideCard';
-import { tripService, TripStatus, TripVisibility } from '../services/tripService';
+import { tripService } from '../services/tripService';
 import { blogService, BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
 
@@ -69,7 +69,7 @@ const HomePage: React.FC = () => {
               className="object-cover w-full h-48"
             />
           )}
-          <div className="absolute top-3 right-3 flex space-x-2">
+          <div className="absolute top-3 right-3">
             <span className={`px-2 py-1 text-xs rounded-full ${
               trip.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
               trip.status === 'PLANNING' ? 'bg-yellow-100 text-yellow-800' :
@@ -77,7 +77,6 @@ const HomePage: React.FC = () => {
             }`}>
               {trip.status || 'PLANNING'}
             </span>
-            <Heart className="w-6 h-6 text-white" />
           </div>
         </div>
         <div className="p-4">
@@ -286,11 +285,11 @@ const HomePage: React.FC = () => {
   };
 
   const handleViewAllGuides = () => {
-    navigate('/guides');
+    navigate('/user/my-blogs');
   };
 
   const handleViewAllTrips = () => {
-    navigate('/trips');
+    navigate('/user/travel-guides');
   };
 
   return (

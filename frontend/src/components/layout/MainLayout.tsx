@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../store';
-import { logout } from '../../store/slices/authSlice';
-import { clearTripDetails } from '../../store/slices/tripSlice';
-import { addNotification } from '../../store/slices/uiSlice';
+import { Link, useLocation } from 'react-router-dom';
+import { useAppSelector } from '../../store';
+import UserProfileDropdown from '../UserProfileDropdown';
 import FloatingAIAssistant from '../chatbot/FloatingAIAssistant';
 
 interface MainLayoutProps {
@@ -12,8 +10,6 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
 
@@ -21,24 +17,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setIsAIAssistantOpen(!isAIAssistantOpen);
   };
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logout()).unwrap();
-      dispatch(clearTripDetails());
-      dispatch(addNotification({
-        type: 'success',
-        message: 'Successfully logged out',
-        duration: 3000,
-      }));
-      navigate('/login');
-    } catch (error) {
-      dispatch(addNotification({
-        type: 'error',
-        message: 'Failed to logout',
-        duration: 3000,
-      }));
-    }
-  };
 
   const navigation = [
     { name: 'Home', path: '/home' },
@@ -97,12 +75,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {/* User Menu */}
             <div className="flex items-center">
               {isAuthenticated ? (
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 ml-4 text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  Sign out
-                </button>
+                <UserProfileDropdown />
               ) : (
                 <Link
                   to="/login"

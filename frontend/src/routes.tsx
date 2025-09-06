@@ -21,6 +21,7 @@ const ImageTestPage = React.lazy(() => import('./pages/ImageTestPage'));
 const BlogBlockEditor = React.lazy(() => import('./pages/BlogBlockEditor'));
 const BlogPostViewer = React.lazy(() => import('./pages/BlogPostViewer'));
 const BlogListPage = React.lazy(() => import('./pages/BlogListPage'));
+const UserSettingsPage = React.lazy(() => import('./pages/UserSettingsPage'));
 
 
 // Protected Route component
@@ -176,6 +177,40 @@ const AppRoutes: React.FC = () => {
             <MainLayout>
               <BlogPostViewer />
             </MainLayout>
+          }
+        />
+
+        {/* User Settings Routes */}
+        <Route
+          path="/user-settings"
+          element={
+            <ProtectedRoute>
+              <UserSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/travel-guides"
+          element={
+            <ProtectedRoute>
+              <UserSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/favorite-blogs"
+          element={
+            <ProtectedRoute>
+              <UserSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/my-blogs"
+          element={
+            <ProtectedRoute>
+              <UserSettingsPage />
+            </ProtectedRoute>
           }
         />
 

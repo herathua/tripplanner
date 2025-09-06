@@ -74,5 +74,11 @@ export const placeService = {
   async getPlacesByMinRating(minRating: number): Promise<Place[]> {
     const response = await apiClient.get(`/places/rating/${minRating}`);
     return response.data;
+  },
+
+  // Get places by trip ID
+  async getPlacesByTripId(tripId: number): Promise<Place[]> {
+    const response = await apiClient.get(`/places/trip/${tripId}`);
+    return response.data;
   }
 };

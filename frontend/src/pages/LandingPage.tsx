@@ -17,7 +17,7 @@ import {
   Target,
   DollarSign
 } from 'lucide-react';
-import TravelCarousel from '../components/TravelCarousel';
+import SimpleTravelCarousel from '../components/SimpleTravelCarousel';
 import logo from '../assets/logo.png';
 
 const LandingPage: React.FC = () => {
@@ -65,7 +65,7 @@ const LandingPage: React.FC = () => {
 
       {/* Hero Section with Travel Carousel */}
       <section className="relative min-h-screen overflow-hidden">
-        <TravelCarousel />
+        <SimpleTravelCarousel />
       </section>
 
       {/* Features Section */}

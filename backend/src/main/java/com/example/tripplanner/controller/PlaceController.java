@@ -1,6 +1,7 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.Place;
+import com.example.tripplanner.model.Trip;
 import com.example.tripplanner.repository.PlaceRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -109,6 +110,18 @@ public class PlaceController {
             @Parameter(description = "Minimum rating value") 
             @PathVariable Integer minRating) {
         List<Place> places = placeRepository.findByRatingGreaterThanEqual(minRating);
+        return ResponseEntity.ok(places);
+    }
+
+    @GetMapping("/trip/{tripId}")
+    @Operation(summary = "Get places by trip ID", description = "Retrieve all places associated with a specific trip")
+    public ResponseEntity<List<Place>> getPlacesByTripId(
+            @Parameter(description = "ID of the trip") 
+            @PathVariable Long tripId) {
+        // We need to create a Trip object with just the ID to use the repository method
+        Trip trip = new Trip();
+        trip.setId(tripId);
+        List<Place> places = placeRepository.findByTrip(trip);
         return ResponseEntity.ok(places);
     }
 }

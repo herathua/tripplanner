@@ -18,6 +18,7 @@ import { itineraryService, Itinerary } from '../services/itineraryService';
 import { activityService } from '../services/activityService';
 import { locationService } from '../services/locationService';
 import { expenseService, Expense as BackendExpense, ExpenseCategory, Currency, ExpenseStatus } from '../services/expenseService';
+import { placeService, Place as BackendPlace } from '../services/placeService';
 
 // Import extracted components
 import Modal from '../components/modals/Modal';
@@ -56,6 +57,7 @@ const NewTrip = () => {
       removeExpense, 
       updateTripName, 
       saveTrip,
+      loadTrip,
       clearTrip
     } = useTrip();
     
@@ -148,6 +150,15 @@ const NewTrip = () => {
           return;
         }
 
+        // Clear any existing places to start fresh
+        const placesToRemove = [...state.places];
+        placesToRemove.forEach(place => {
+          if (place.id) {
+            removePlace(place.id);
+          }
+        });
+        console.log('Cleared places for new trip');
+
         // Generate array of days between start and end date
         const days = generateTripDays(startDate, endDate);
         setTripDays(days);
@@ -168,6 +179,20 @@ const NewTrip = () => {
         setTripId(id);
         console.log('Set tripId to:', id);
         
+        // Update TripContext with the loaded trip
+        await loadTrip(id);
+        console.log('Updated TripContext with trip data');
+        
+        // Clear only places from context to avoid showing places from other trips
+        // We need to clear places but keep the trip data for saving
+        const placesToRemove = [...state.places];
+        placesToRemove.forEach(place => {
+          if (place.id) {
+            removePlace(place.id);
+          }
+        });
+        console.log('Cleared places from context to avoid cross-trip data');
+        
         // Load itineraries for this trip
         const tripItineraries = await itineraryService.getItinerariesByTripId(id);
         console.log('Loaded itineraries:', tripItineraries);
@@ -176,15 +201,40 @@ const NewTrip = () => {
         // Load activities for this trip
         const tripActivities = await activityService.getActivitiesByTripId(id);
         console.log('Loaded activities:', tripActivities);
+        console.log('Activities count:', tripActivities.length);
         setBackendActivities(tripActivities as Activity[]);
         
         // Load expenses for this trip
         const tripExpenses = await expenseService.getExpensesByTripId(id);
         console.log('Loaded expenses:', tripExpenses);
+        console.log('Expenses count:', tripExpenses.length);
         setBackendExpenses(tripExpenses);
         
-        // Update context with trip data
-        // Note: You might need to update the context to handle this
+        // Load places for this trip
+        const tripPlaces: BackendPlace[] = await placeService.getPlacesByTripId(id);
+        console.log('Loaded places:', tripPlaces);
+        console.log('Places count:', tripPlaces.length);
+        
+        // Add places to the context
+        tripPlaces.forEach(place => {
+          const contextPlace: Place = {
+            id: place.id?.toString() || Math.random().toString(36).substr(2, 9),
+            name: place.name,
+            location: place.location,
+            description: place.description || '',
+            category: place.category,
+            rating: place.rating || 5,
+            cost: place.cost || 0,
+            duration: place.duration || 2,
+            coordinates: { 
+              lat: place.latitude || 0, 
+              lng: place.longitude || 0 
+            },
+            photos: place.photos || []
+          };
+          addPlace(contextPlace);
+        });
+        console.log('Added places to context');
         
         // Generate trip days from trip dates
         if (trip.startDate && trip.endDate) {
