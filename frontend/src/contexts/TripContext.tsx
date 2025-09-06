@@ -142,6 +142,27 @@ const tripReducer = (state: TripState, action: TripAction): TripState => {
 // Create context
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
+// Helper function to map frontend categories to backend categories
+const mapCategoryToBackend = (frontendCategory: string): string => {
+  const categoryMap: { [key: string]: string } = {
+    'hotel': 'HOTEL',
+    'restaurant': 'RESTAURANT',
+    'attraction': 'ATTRACTION',
+    'transport': 'TRANSPORT',
+    'shopping': 'SHOPPING',
+    'entertainment': 'ENTERTAINMENT',
+    'cultural': 'CULTURAL',
+    'nature': 'NATURE',
+    'sports': 'SPORTS',
+    'religious': 'RELIGIOUS',
+    'historical': 'HISTORICAL',
+    'region': 'OTHER', // Map region to OTHER
+    'other': 'OTHER'
+  };
+  
+  return categoryMap[frontendCategory.toLowerCase()] || 'OTHER';
+};
+
 // Provider component
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(tripReducer, initialState);
@@ -165,6 +186,57 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const trip = await tripService.getTripById(id);
       dispatch({ type: 'SET_CURRENT_TRIP', payload: trip });
+      
+      // Load places if they exist in the trip data
+      if (trip.places && trip.places.length > 0) {
+        console.log('Loading places from trip data:', trip.places);
+        trip.places.forEach((place: any) => {
+          const contextPlace: Place = {
+            id: place.id?.toString() || Math.random().toString(36).substr(2, 9),
+            name: place.name,
+            location: place.location,
+            description: place.description || '',
+            category: place.category,
+            rating: place.rating || 5,
+            cost: place.cost || 0,
+            duration: place.duration || 2,
+            coordinates: { 
+              lat: place.latitude || 0, 
+              lng: place.longitude || 0 
+            },
+            photos: place.photos || []
+          };
+          dispatch({ type: 'ADD_PLACE', payload: contextPlace });
+        });
+      }
+
+      // Activities are loaded separately via itinerary service in Newtrip.tsx
+
+      // Load expenses if they exist in the trip data
+      if (trip.expenses && trip.expenses.length > 0) {
+        console.log('Loading expenses from trip data:', trip.expenses);
+        trip.expenses.forEach((expense: any) => {
+          const contextExpense: Expense = {
+            id: expense.id?.toString() || Math.random().toString(36).substr(2, 9),
+            dayNumber: expense.dayNumber || 1,
+            expenseDate: expense.expenseDate || new Date().toISOString().split('T')[0],
+            category: expense.category || 'OTHER',
+            description: expense.description || '',
+            amount: expense.amount || 0,
+            currency: expense.currency || 'USD',
+            receiptUrl: expense.receiptUrl,
+            paymentMethod: expense.paymentMethod,
+            vendor: expense.vendor,
+            location: expense.location,
+            notes: expense.notes,
+            reimbursable: expense.reimbursable || false,
+            reimbursed: expense.reimbursed || false,
+            reimbursementReference: expense.reimbursementReference,
+            status: expense.status || 'PAID'
+          };
+          dispatch({ type: 'ADD_EXPENSE', payload: contextExpense });
+        });
+      }
     } catch (error) {
       console.error('Error loading trip:', error);
       throw error;
@@ -175,13 +247,51 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!state.currentTrip) return;
     
     try {
+      // Create trip data with places, activities, and expenses included
+      const tripData = {
+        ...state.currentTrip,
+        // Ensure destination is not empty
+        destination: state.currentTrip.destination || 'Unknown Destination',
+        places: state.places.map(place => ({
+          name: place.name,
+          location: place.location || 'Unknown Location',
+          description: place.description,
+          category: mapCategoryToBackend(place.category),
+          rating: place.rating,
+          cost: place.cost,
+          duration: place.duration,
+          latitude: place.coordinates.lat,
+          longitude: place.coordinates.lng,
+          photos: place.photos
+        })),
+        // Activities are handled separately via itinerary service
+        // They will be loaded when the trip is loaded
+        expenses: state.expenses.map(expense => ({
+          dayNumber: expense.dayNumber,
+          expenseDate: expense.expenseDate,
+          category: expense.category,
+          description: expense.description,
+          amount: expense.amount,
+          currency: expense.currency,
+          receiptUrl: expense.receiptUrl,
+          paymentMethod: expense.paymentMethod,
+          vendor: expense.vendor,
+          location: expense.location,
+          notes: expense.notes,
+          reimbursable: expense.reimbursable,
+          reimbursed: expense.reimbursed,
+          reimbursementReference: expense.reimbursementReference,
+          status: expense.status
+        }))
+      };
+      
       if (state.currentTrip.id) {
-        await tripService.updateTrip(state.currentTrip.id, state.currentTrip);
+        await tripService.updateTrip(state.currentTrip.id, tripData);
       } else {
         if (!user?.uid) {
           throw new Error('User not authenticated');
         }
-        await tripService.createTrip(state.currentTrip, user.uid);
+        await tripService.createTrip(tripData, user.uid);
       }
     } catch (error) {
       console.error('Error saving trip:', error);

@@ -12,6 +12,8 @@ export interface Trip {
   visibility?: TripVisibility;
   createdAt?: string;
   updatedAt?: string;
+  places?: any[]; // Include places in the trip interface
+  expenses?: any[]; // Include expenses in the trip interface
 }
 
 export enum TripStatus {

@@ -210,31 +210,8 @@ const NewTrip = () => {
         console.log('Expenses count:', tripExpenses.length);
         setBackendExpenses(tripExpenses);
         
-        // Load places for this trip
-        const tripPlaces: BackendPlace[] = await placeService.getPlacesByTripId(id);
-        console.log('Loaded places:', tripPlaces);
-        console.log('Places count:', tripPlaces.length);
-        
-        // Add places to the context
-        tripPlaces.forEach(place => {
-          const contextPlace: Place = {
-            id: place.id?.toString() || Math.random().toString(36).substr(2, 9),
-            name: place.name,
-            location: place.location,
-            description: place.description || '',
-            category: place.category,
-            rating: place.rating || 5,
-            cost: place.cost || 0,
-            duration: place.duration || 2,
-            coordinates: { 
-              lat: place.latitude || 0, 
-              lng: place.longitude || 0 
-            },
-            photos: place.photos || []
-          };
-          addPlace(contextPlace);
-        });
-        console.log('Added places to context');
+        // Places are now loaded automatically with the trip data in TripContext
+        console.log('Places will be loaded automatically with trip data');
         
         // Generate trip days from trip dates
         if (trip.startDate && trip.endDate) {

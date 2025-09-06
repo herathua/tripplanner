@@ -1,5 +1,7 @@
 package com.example.tripplanner.controller;
 
+import com.example.tripplanner.model.Expense;
+import com.example.tripplanner.model.Place;
 import com.example.tripplanner.model.Trip;
 import com.example.tripplanner.model.User;
 import com.example.tripplanner.repository.TripRepository;
@@ -100,6 +102,24 @@ public class TripController {
             // Set the user for the trip
             trip.setUser(user);
             
+            // Handle places if they exist in the trip data
+            if (trip.getPlaces() != null && !trip.getPlaces().isEmpty()) {
+                System.out.println("Processing " + trip.getPlaces().size() + " places for the trip");
+                for (Place place : trip.getPlaces()) {
+                    place.setTrip(trip);
+                }
+            }
+            
+            // Activities are handled separately via itinerary service
+            
+            // Handle expenses if they exist in the trip data
+            if (trip.getExpenses() != null && !trip.getExpenses().isEmpty()) {
+                System.out.println("Processing " + trip.getExpenses().size() + " expenses for the trip");
+                for (Expense expense : trip.getExpenses()) {
+                    expense.setTrip(trip);
+                }
+            }
+            
             Trip savedTrip = tripRepository.save(trip);
             System.out.println("Successfully saved trip with ID: " + savedTrip.getId());
             return ResponseEntity.ok(savedTrip);
@@ -130,6 +150,30 @@ public class TripController {
             trip.setDescription(tripDetails.getDescription());
             trip.setStatus(tripDetails.getStatus());
             trip.setVisibility(tripDetails.getVisibility());
+            
+            // Handle places update
+            if (tripDetails.getPlaces() != null) {
+                System.out.println("Updating places for trip ID: " + id);
+                // Clear existing places and add new ones
+                trip.getPlaces().clear();
+                for (Place place : tripDetails.getPlaces()) {
+                    place.setTrip(trip);
+                    trip.getPlaces().add(place);
+                }
+            }
+            
+            // Handle expenses update
+            if (tripDetails.getExpenses() != null) {
+                System.out.println("Updating expenses for trip ID: " + id);
+                // Clear existing expenses and add new ones
+                trip.getExpenses().clear();
+                for (Expense expense : tripDetails.getExpenses()) {
+                    expense.setTrip(trip);
+                    trip.getExpenses().add(expense);
+                }
+            }
+            
+            // Activities are handled separately via itinerary service
             
             Trip updatedTrip = tripRepository.save(trip);
             return ResponseEntity.ok(updatedTrip);
