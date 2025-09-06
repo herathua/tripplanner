@@ -174,17 +174,7 @@ const NewTrip = () => {
       console.log('loadExistingTrip called with ID:', id);
       setIsLoading(true);
       try {
-        const trip = await tripService.getTripById(id);
-        console.log('Loaded trip:', trip);
-        setTripId(id);
-        console.log('Set tripId to:', id);
-        
-        // Update TripContext with the loaded trip
-        await loadTrip(id);
-        console.log('Updated TripContext with trip data');
-        
-        // Clear only places from context to avoid showing places from other trips
-        // We need to clear places but keep the trip data for saving
+        // Clear existing places from context to avoid showing places from other trips
         const placesToRemove = [...state.places];
         placesToRemove.forEach(place => {
           if (place.id) {
@@ -192,6 +182,15 @@ const NewTrip = () => {
           }
         });
         console.log('Cleared places from context to avoid cross-trip data');
+
+        const trip = await tripService.getTripById(id);
+        console.log('Loaded trip:', trip);
+        setTripId(id);
+        console.log('Set tripId to:', id);
+        
+        // Update TripContext with the loaded trip (now includes places, activities, expenses)
+        await loadTrip(id);
+        console.log('Updated TripContext with trip data');
         
         // Load itineraries for this trip
         const tripItineraries = await itineraryService.getItinerariesByTripId(id);

@@ -224,7 +224,8 @@ public class TripController {
         User user = userOpt.get();
         LocalDate today = LocalDate.now();
         Pageable pageable = PageRequest.of(page, size);
-        Page<Trip> tripPage = tripRepository.findByUserAndStartDateAfter(user, today.minusDays(1), pageable);
+        // Use the proper upcoming trips method that includes today
+        Page<Trip> tripPage = tripRepository.findByUserAndStartDateAfter(user, today, pageable);
         return ResponseEntity.ok(tripPage);
     }
 }
