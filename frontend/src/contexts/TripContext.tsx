@@ -41,6 +41,7 @@ interface TripContextType {
   addPlace: (place: Omit<Place, 'id'>) => void;
   removePlace: (placeId: string) => void;
   addActivity: (activity: Omit<Activity, 'id'>) => void;
+  updateActivity: (activity: Activity) => void;
   removeActivity: (activityId: string) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => void;
   removeExpense: (expenseId: string) => void;
@@ -67,6 +68,7 @@ type TripAction =
   | { type: 'REMOVE_PLACE'; payload: string }
   | { type: 'CLEAR_PLACES' }
   | { type: 'ADD_ACTIVITY'; payload: Activity }
+  | { type: 'UPDATE_ACTIVITY'; payload: Activity }
   | { type: 'REMOVE_ACTIVITY'; payload: string }
   | { type: 'ADD_EXPENSE'; payload: Expense }
   | { type: 'REMOVE_EXPENSE'; payload: string }
@@ -123,9 +125,73 @@ const tripReducer = (state: TripState, action: TripAction): TripState => {
       const newActivities = [...state.activities, action.payload];
       console.log('📊 New activities count:', newActivities.length);
       
+      // Automatically create expense entry for the activity if it has a cost
+      let newExpenses = [...state.expenses];
+      if (action.payload.cost && action.payload.cost > 0) {
+        const activityExpense: Expense = {
+          id: `expense_${action.payload.id}`,
+          description: `${action.payload.name} - Activity`,
+          amount: action.payload.cost,
+          category: 'activities', // Map activity to activities expense category
+          date: new Date().toISOString(),
+          dayNumber: action.payload.dayNumber
+        };
+        
+        // Check if expense for this activity already exists
+        const existingExpense = newExpenses.find(e => e.id === activityExpense.id);
+        if (!existingExpense) {
+          newExpenses.push(activityExpense);
+          console.log('💰 Auto-created expense for activity:', activityExpense);
+        }
+      }
+      
       return {
         ...state,
         activities: newActivities,
+        expenses: newExpenses,
+        // Update itinerary data
+        itineraryData: itineraryService.addActivityToDay(state.itineraryData, action.payload.dayNumber, action.payload),
+      };
+    case 'UPDATE_ACTIVITY':
+      console.log('🔄 UPDATE_ACTIVITY action:', action.payload);
+      
+      // Update the activity in the activities array
+      const updatedActivities = state.activities.map(activity => 
+        activity.id === action.payload.id ? action.payload : activity
+      );
+      
+      // Update the corresponding expense if the activity has a cost
+      let updatedExpensesForActivity = [...state.expenses];
+      const expenseId = `expense_${action.payload.id}`;
+      
+      if (action.payload.cost && action.payload.cost > 0) {
+        // Update or create the expense
+        const existingExpenseIndex = updatedExpensesForActivity.findIndex(e => e.id === expenseId);
+        const activityExpense: Expense = {
+          id: expenseId,
+          description: `${action.payload.name} - Activity`,
+          amount: action.payload.cost,
+          category: 'activities',
+          date: new Date().toISOString(),
+          dayNumber: action.payload.dayNumber
+        };
+        
+        if (existingExpenseIndex >= 0) {
+          updatedExpensesForActivity[existingExpenseIndex] = activityExpense;
+        } else {
+          updatedExpensesForActivity.push(activityExpense);
+        }
+        console.log('💰 Updated expense for activity:', activityExpense);
+      } else {
+        // Remove the expense if activity has no cost
+        updatedExpensesForActivity = updatedExpensesForActivity.filter(e => e.id !== expenseId);
+        console.log('🗑️ Removed expense for activity with no cost');
+      }
+      
+      return {
+        ...state,
+        activities: updatedActivities,
+        expenses: updatedExpensesForActivity,
         // Update itinerary data
         itineraryData: itineraryService.addActivityToDay(state.itineraryData, action.payload.dayNumber, action.payload),
       };
@@ -134,9 +200,16 @@ const tripReducer = (state: TripState, action: TripAction): TripState => {
       const activityToRemove = state.activities.find(activity => activity.id === action.payload);
       const dayNumber = activityToRemove?.dayNumber || 1;
       
+      // Automatically remove the corresponding expense for this activity
+      const expenseIdToRemove = `expense_${action.payload}`;
+      const updatedExpenses = state.expenses.filter(expense => expense.id !== expenseIdToRemove);
+      
+      console.log('🗑️ Removing activity and its expense:', action.payload, expenseIdToRemove);
+      
       return {
         ...state,
         activities: state.activities.filter(activity => activity.id !== action.payload),
+        expenses: updatedExpenses,
         // Update itinerary data
         itineraryData: itineraryService.removeActivityFromDay(state.itineraryData, dayNumber, action.payload),
       };
@@ -253,6 +326,23 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('✅ Parsed itinerary data:', itineraryData);
         console.log('🎯 Activities found:', itineraryData.days.flatMap(day => day.activities));
         dispatch({ type: 'SET_ITINERARY_DATA', payload: itineraryData });
+        
+        // Automatically create expenses for activities that have costs
+        const allActivities = itineraryData.days.flatMap(day => day.activities);
+        allActivities.forEach(activity => {
+          if (activity.cost && activity.cost > 0) {
+            const activityExpense: Expense = {
+              id: `expense_${activity.id}`,
+              description: `${activity.name} - Activity`,
+              amount: activity.cost,
+              category: 'activities',
+              date: new Date().toISOString(),
+              dayNumber: activity.dayNumber
+            };
+            console.log('💰 Auto-creating expense for loaded activity:', activityExpense);
+            dispatch({ type: 'ADD_EXPENSE', payload: activityExpense });
+          }
+        });
       } else {
         console.log('⚠️ No itinerary data found in trip');
       }
@@ -394,6 +484,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'ADD_ACTIVITY', payload: newActivity });
   };
 
+  const updateActivity = (activity: Activity) => {
+    dispatch({ type: 'UPDATE_ACTIVITY', payload: activity });
+  };
+
   const removeActivity = (activityId: string) => {
     dispatch({ type: 'REMOVE_ACTIVITY', payload: activityId });
   };
@@ -431,6 +525,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addPlace,
     removePlace,
     addActivity,
+    updateActivity,
     removeActivity,
     addExpense,
     removeExpense,

@@ -43,6 +43,7 @@ const NewTrip = () => {
     addPlace, 
     removePlace, 
     addActivity, 
+    updateActivity,
     removeActivity, 
     addExpense, 
     removeExpense, 
@@ -260,13 +261,13 @@ const NewTrip = () => {
           // Update existing activity in local state
           console.log('🔄 Updating existing activity:', editingActivity.id);
           
-          // For now, we'll handle updates by removing the old activity and adding the new one
-          // This is a simplified approach for the JSON-based architecture
-          removeActivity(editingActivity.id!);
-          addActivity({
+          // Use the new updateActivity function which handles expense updates automatically
+          const updatedActivity = {
+            ...editingActivity,
             ...activity,
             dayNumber: selectedDay || 1
-          });
+          };
+          updateActivity(updatedActivity);
           
           // Show success notification
           dispatch(addNotification({
