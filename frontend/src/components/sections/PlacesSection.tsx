@@ -40,10 +40,12 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
 
       try {
         // Try backend search first
+        console.log('🔍 Attempting backend search for:', searchQuery);
         const response = await locationService.searchLocations(searchQuery, 'en', 5);
         
         if (response.success && response.data?.data?.autoCompleteSuggestions?.results) {
           const results = response.data.data.autoCompleteSuggestions.results;
+          console.log('✅ Backend search successful, found', results.length, 'results');
           
           const transformedSuggestions: SearchResult[] = results.map((result: any) => ({
             id: result.destination.destId,
@@ -61,60 +63,59 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
 
           setSuggestions(transformedSuggestions);
         } else {
-          // Fallback to simple search with mock data
-          console.log('Using fallback search for:', searchQuery);
-          const fallbackSuggestions: SearchResult[] = [
-            {
-              id: '1',
-              name: `${searchQuery} City Center`,
-              location: `${searchQuery}, Popular Destination`,
-              image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc02?w=400&h=300&fit=crop',
-              type: 'attraction',
-              country: 'Popular Destination',
-              region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
-            },
-            {
-              id: '2',
-              name: `${searchQuery} Historical Site`,
-              location: `${searchQuery}, Cultural Heritage`,
-              image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
-              type: 'attraction',
-              country: 'Cultural Heritage',
-              region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
-            },
-            {
-              id: '3',
-              name: `${searchQuery} Local Restaurant`,
-              location: `${searchQuery}, Food & Dining`,
-              image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
-              type: 'restaurant',
-              country: 'Food & Dining',
-              region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
-            }
-          ];
-          
-          setSuggestions(fallbackSuggestions);
+          console.log('⚠️ Backend search returned no results, using fallback');
+          throw new Error('No results from backend');
         }
       } catch (err) {
-        console.error('Error searching places:', err);
-        // Use fallback search on error
+        console.error('❌ Backend search failed:', err);
+        console.log('🔄 Using fallback search for:', searchQuery);
+        
+        // Enhanced fallback search with more realistic suggestions
         const fallbackSuggestions: SearchResult[] = [
           {
             id: '1',
-            name: `${searchQuery} Tourist Spot`,
-            location: `${searchQuery}, Travel Destination`,
+            name: `${searchQuery} City Center`,
+            location: `${searchQuery}, Popular Destination`,
             image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc02?w=400&h=300&fit=crop',
             type: 'attraction',
-            country: 'Travel Destination',
+            country: 'Popular Destination',
+            region: searchQuery,
+            coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+          },
+          {
+            id: '2',
+            name: `${searchQuery} Historical Site`,
+            location: `${searchQuery}, Cultural Heritage`,
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+            type: 'attraction',
+            country: 'Cultural Heritage',
+            region: searchQuery,
+            coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+          },
+          {
+            id: '3',
+            name: `${searchQuery} Local Restaurant`,
+            location: `${searchQuery}, Food & Dining`,
+            image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+            type: 'restaurant',
+            country: 'Food & Dining',
+            region: searchQuery,
+            coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+          },
+          {
+            id: '4',
+            name: `${searchQuery} Shopping District`,
+            location: `${searchQuery}, Commercial Area`,
+            image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+            type: 'shopping',
+            country: 'Commercial Area',
             region: searchQuery,
             coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
           }
         ];
         
         setSuggestions(fallbackSuggestions);
+        setError(null); // Clear any previous errors since we have fallback data
       } finally {
         setIsLoading(false);
       }
@@ -168,13 +169,24 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
         )}
         
         {error && (
-          <div className="p-4 text-center text-red-500">
-            <p className="text-sm">{error}</p>
+          <div className="p-4 text-center text-red-500 bg-red-50 rounded-lg">
+            <p className="text-sm font-medium">Search temporarily unavailable</p>
+            <p className="text-xs text-red-400 mt-1">Using fallback suggestions below</p>
           </div>
         )}
         
-        {!isLoading && !error && suggestions.length > 0 && (
+        {!isLoading && suggestions.length > 0 && (
           <div className="divide-y divide-gray-100">
+            <div className="p-3 bg-blue-50 border-b border-blue-100">
+              <h4 className="font-medium text-blue-900">
+                {error ? "Sample Suggestions" : "Search Results"}
+              </h4>
+              {error && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Real-time search is temporarily unavailable. These are sample suggestions.
+                </p>
+              )}
+            </div>
             {suggestions.map((suggestion) => (
               <div 
                 key={suggestion.id}

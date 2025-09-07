@@ -101,10 +101,7 @@ public class Expense {
     @JsonIgnore
     private Trip trip;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activity_id")
-    @JsonIgnore
-    private Activity activity;
+    // Activity relationship removed - activities are now stored as JSON in trip
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id")

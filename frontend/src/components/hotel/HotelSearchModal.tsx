@@ -1,19 +1,6 @@
 import React from 'react';
 import { Search, Hotel, X } from 'lucide-react';
-
-interface HotelDestination {
-  dest_id: string;
-  name: string;
-  label: string;
-  dest_type: string;
-  region: string;
-  city_name: string;
-  country: string;
-  hotels: number;
-  latitude: number;
-  longitude: number;
-  image_url?: string;
-}
+import { HotelDestination } from '../../hooks/useHotelSearch';
 
 interface HotelSearchModalProps {
   isOpen: boolean;
@@ -83,7 +70,7 @@ const HotelSearchModal: React.FC<HotelSearchModalProps> = ({
           <div className="space-y-3">
             <h4 className="font-medium text-gray-900">Search Results</h4>
             {destinations.map((hotel) => (
-              <div key={hotel.dest_id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => onAddHotel(hotel)}>
+              <div key={hotel.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => onAddHotel(hotel)}>
                 <div className="flex-shrink-0 w-16 h-16">
                   {hotel.image_url ? (
                     <img 
@@ -99,7 +86,7 @@ const HotelSearchModal: React.FC<HotelSearchModalProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h5 className="text-sm font-medium text-gray-900 truncate">{hotel.name}</h5>
-                  <p className="text-sm text-gray-500">{hotel.label}</p>
+                  <p className="text-sm text-gray-500">{hotel.city_name}, {hotel.country}</p>
                   <div className="flex items-center space-x-4 mt-1">
                     <span className="text-xs text-gray-400 capitalize">{hotel.dest_type}</span>
                     <span className="text-xs text-blue-600">{hotel.hotels} hotels</span>

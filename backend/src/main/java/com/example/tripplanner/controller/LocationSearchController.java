@@ -29,10 +29,61 @@ public class LocationSearchController {
             @RequestParam(defaultValue = "3") int limit) {
         
         try {
-            Map<String, Object> results = locationSearchService.searchLocations(query, languageCode, limit);
+            System.out.println("Location search request - Query: " + query + ", Language: " + languageCode + ", Limit: " + limit);
+            
+            // Validate input
+            if (query == null || query.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Query parameter is required and cannot be empty"
+                ));
+            }
+            
+            if (query.trim().length() < 2) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Query must be at least 2 characters long"
+                ));
+            }
+            
+            Map<String, Object> results = locationSearchService.searchLocations(query.trim(), languageCode, limit);
             return ResponseEntity.ok(results);
+            
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            System.err.println("Error in location search controller: " + e.getMessage());
+            e.printStackTrace();
+            
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "error", "Failed to search locations: " + e.getMessage()
+            ));
+        }
+    }
+    
+    @GetMapping("/test")
+    @Operation(summary = "Test location search", description = "Test endpoint to verify location search is working")
+    public ResponseEntity<Map<String, Object>> testLocationSearch() {
+        try {
+            System.out.println("Testing location search endpoint...");
+            
+            // Test with a simple query
+            Map<String, Object> results = locationSearchService.searchLocations("paris", "en", 3);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Location search test successful",
+                "testResults", results
+            ));
+            
+        } catch (Exception e) {
+            System.err.println("Location search test failed: " + e.getMessage());
+            e.printStackTrace();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", false,
+                "message", "Location search test failed",
+                "error", e.getMessage()
+            ));
         }
     }
 }

@@ -19,6 +19,7 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
   selectedPlace,
   editingActivity
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: editingActivity?.name || selectedPlace?.name || '',
     description: editingActivity?.description || '',
@@ -47,20 +48,33 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create the activity object matching the backend structure
-    const activity: Omit<Activity, 'id'> = {
-      name: formData.name,
-      description: formData.description,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      cost: formData.cost,
-      durationHours: formData.durationHours,
-      type: formData.type,
-      status: formData.status,
-      placeId: formData.placeId
-    };
+    if (isSubmitting) {
+      console.log('⚠️ Form already submitting, ignoring duplicate submission');
+      return;
+    }
     
-    onSubmit(activity);
+    setIsSubmitting(true);
+    
+    try {
+      // Create the activity object matching the backend structure
+      const activity: Omit<Activity, 'id'> = {
+        name: formData.name,
+        description: formData.description,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        cost: formData.cost,
+        durationHours: formData.durationHours,
+        type: formData.type,
+        status: formData.status,
+        placeId: formData.placeId
+      };
+      
+      console.log('📝 Submitting activity:', activity);
+      onSubmit(activity);
+    } catch (error) {
+      console.error('❌ Error submitting activity:', error);
+      setIsSubmitting(false);
+    }
   };
 
   const activityTypeOptions = Object.values(ActivityType).map(type => ({
@@ -193,9 +207,19 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          disabled={isSubmitting}
+          className={`px-4 py-2 text-white rounded-md ${
+            isSubmitting 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
         >
-          {editingActivity ? 'Update Activity' : 'Add Activity'}
+          {isSubmitting 
+            ? 'Adding...' 
+            : editingActivity 
+              ? 'Update Activity' 
+              : 'Add Activity'
+          }
         </button>
       </div>
     </form>

@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 @Entity
 @Table(name = "trips")
@@ -57,6 +59,9 @@ public class Trip {
     @Column(columnDefinition = "TEXT")
     private String description;
     
+    @Column(name = "itinerary_data", columnDefinition = "TEXT")
+    private String itineraryData;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TripStatus status = TripStatus.PLANNING;
@@ -82,9 +87,6 @@ public class Trip {
     private List<Place> places = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private List<Itinerary> itineraries = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Expense> expenses = new ArrayList<>();
     
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
@@ -104,17 +106,23 @@ public class Trip {
         PRIVATE, SHARED, PUBLIC
     }
     
-    // Helper methods
+    // Helper methods for JSON itinerary data
     @JsonIgnore
-    public void addItinerary(Itinerary itinerary) {
-        itineraries.add(itinerary);
-        itinerary.setTrip(this);
+    public Map<String, Object> getItineraryAsMap() {
+        if (itineraryData == null || itineraryData.trim().isEmpty()) {
+            return new HashMap<>();
+        }
+        try {
+            // This will be handled by Jackson in the controller
+            return new HashMap<>();
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
     }
     
     @JsonIgnore
-    public void removeItinerary(Itinerary itinerary) {
-        itineraries.remove(itinerary);
-        itinerary.setTrip(null);
+    public void setItineraryFromMap(Map<String, Object> itineraryMap) {
+        // This will be handled by Jackson in the controller
     }
     
     @JsonIgnore

@@ -1,51 +1,108 @@
-import apiClient from '../config/api';
-import { Activity, ActivityType, ActivityStatus } from './itineraryService';
+import { Activity, ActivityType, ActivityStatus, ItineraryData } from './itineraryService';
 
 export const activityService = {
-  // Get all activities for a trip
-  async getActivitiesByTripId(tripId: number): Promise<Activity[]> {
-    const response = await apiClient.get(`/activities/trip/${tripId}`);
-    return response.data;
+  // Generate a unique ID for local activities
+  generateActivityId(): string {
+    return 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   },
 
-  // Get activities for a specific itinerary
-  async getActivitiesByItineraryId(itineraryId: number): Promise<Activity[]> {
-    const response = await apiClient.get(`/activities/itinerary/${itineraryId}`);
-    return response.data;
+  // Create a new activity with default values
+  createActivity(data: Partial<Activity>): Activity {
+    return {
+      id: this.generateActivityId(),
+      name: data.name || '',
+      description: data.description || '',
+      startTime: data.startTime || '',
+      endTime: data.endTime || '',
+      cost: data.cost || 0,
+      durationHours: data.durationHours || 2,
+      type: data.type || ActivityType.SIGHTSEEING,
+      status: data.status || ActivityStatus.PLANNED,
+      dayNumber: data.dayNumber || 1,
+      placeId: data.placeId || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
   },
 
-  // Get activity by ID
-  async getActivityById(id: number): Promise<Activity> {
-    const response = await apiClient.get(`/activities/${id}`);
-    return response.data;
+  // Update an activity
+  updateActivity(activity: Activity, updates: Partial<Activity>): Activity {
+    return {
+      ...activity,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
   },
 
-  // Create a new activity
-  async createActivity(activity: Omit<Activity, 'id'>): Promise<Activity> {
-    const response = await apiClient.post('/activities', activity);
-    return response.data;
+  // Validate activity data
+  validateActivity(activity: Activity): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!activity.name || activity.name.trim() === '') {
+      errors.push('Activity name is required');
+    }
+
+    if (!activity.type) {
+      errors.push('Activity type is required');
+    }
+
+    if (!activity.status) {
+      errors.push('Activity status is required');
+    }
+
+    if (activity.dayNumber < 1) {
+      errors.push('Day number must be at least 1');
+    }
+
+    if (activity.cost && activity.cost < 0) {
+      errors.push('Cost cannot be negative');
+    }
+
+    if (activity.durationHours && activity.durationHours < 0) {
+      errors.push('Duration cannot be negative');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   },
 
-  // Update activity
-  async updateActivity(id: number, activity: Partial<Activity>): Promise<Activity> {
-    const response = await apiClient.put(`/activities/${id}`, activity);
-    return response.data;
+  // Filter activities by various criteria
+  filterActivities(activities: Activity[], filters: {
+    type?: ActivityType;
+    status?: ActivityStatus;
+    dayNumber?: number;
+    minCost?: number;
+    maxCost?: number;
+  }): Activity[] {
+    return activities.filter(activity => {
+      if (filters.type && activity.type !== filters.type) return false;
+      if (filters.status && activity.status !== filters.status) return false;
+      if (filters.dayNumber && activity.dayNumber !== filters.dayNumber) return false;
+      if (filters.minCost !== undefined && (activity.cost || 0) < filters.minCost) return false;
+      if (filters.maxCost !== undefined && (activity.cost || 0) > filters.maxCost) return false;
+      return true;
+    });
   },
 
-  // Delete activity
-  async deleteActivity(id: number): Promise<void> {
-    await apiClient.delete(`/activities/${id}`);
+  // Calculate total cost for activities
+  calculateTotalCost(activities: Activity[]): number {
+    return activities.reduce((total, activity) => total + (activity.cost || 0), 0);
   },
 
-  // Get activities by trip and status
-  async getActivitiesByTripAndStatus(tripId: number, status: ActivityStatus): Promise<Activity[]> {
-    const response = await apiClient.get(`/activities/trip/${tripId}/status/${status}`);
-    return response.data;
+  // Get activities by day
+  getActivitiesByDay(activities: Activity[], dayNumber: number): Activity[] {
+    return activities.filter(activity => activity.dayNumber === dayNumber);
   },
 
-  // Get activities by trip and type
-  async getActivitiesByTripAndType(tripId: number, type: ActivityType): Promise<Activity[]> {
-    const response = await apiClient.get(`/activities/trip/${tripId}/type/${type}`);
-    return response.data;
+  // Sort activities by time
+  sortActivitiesByTime(activities: Activity[]): Activity[] {
+    return [...activities].sort((a, b) => {
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return 1;
+      if (!b.startTime) return -1;
+      return a.startTime.localeCompare(b.startTime);
+    });
   }
 };

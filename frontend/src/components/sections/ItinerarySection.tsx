@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Calendar, Trash2, Edit } from 'lucide-react';
-import { Activity, Itinerary } from '../../services/itineraryService';
+import { Activity, DayItinerary } from '../../services/itineraryService';
 
 interface TripDay {
   date: Date;
@@ -10,7 +10,7 @@ interface TripDay {
 interface ItinerarySectionProps {
   tripDays: TripDay[];
   activities: Activity[];
-  itineraries: Itinerary[];
+  itineraries: DayItinerary[];
   selectedDay?: number; // Add selectedDay prop
   onAddActivity: (dayNumber: number) => void;
   onEditActivity: (activity: Activity) => void;
@@ -34,29 +34,20 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
 }) => {
   // Helper function to get activities for a specific day
   const getActivitiesForDay = (dayNumber: number) => {
-    // First try to find activities by itineraryId (for backend activities)
-    const dayItinerary = itineraries.find(itinerary => itinerary.dayNumber === dayNumber);
-    if (dayItinerary) {
-      const itineraryActivities = activities.filter(activity => activity.itineraryId === dayItinerary.id);
-      if (itineraryActivities.length > 0) {
-        return itineraryActivities;
-      }
+    console.log(`🔍 Getting activities for day ${dayNumber}:`, {
+      totalActivities: activities.length,
+      activities: activities.map(a => ({ id: a.id, name: a.name, dayNumber: a.dayNumber }))
+    });
+    
+    // Filter activities by dayNumber (new JSON-based architecture)
+    const dayActivities = activities.filter(activity => activity.dayNumber === dayNumber);
+    
+    if (dayActivities.length > 0) {
+      console.log(`✅ Found ${dayActivities.length} activities for day ${dayNumber}`);
+      return dayActivities;
     }
     
-    // For TripContext activities, check if they have dayNumber property
-    const localActivities = activities.filter(activity => 
-      !activity.itineraryId && activity.dayNumber === dayNumber
-    );
-    
-    if (localActivities.length > 0) {
-      return localActivities;
-    }
-    
-    // Fallback: for TripContext activities without itineraryId or dayNumber, show them on the selected day
-    if (dayNumber === selectedDay) {
-      return activities.filter(activity => !activity.itineraryId && !activity.dayNumber);
-    }
-    
+    console.log(`❌ No activities found for day ${dayNumber}`);
     return [];
   };
 
@@ -174,7 +165,7 @@ const ItinerarySection: React.FC<ItinerarySectionProps> = ({
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button 
-                                onClick={() => onDeleteActivity(activity.id?.toString() || '')}
+                                onClick={() => onDeleteActivity(activity.id || '')}
                                 className="text-red-500 hover:text-red-700"
                                 title="Remove activity"
                               >

@@ -22,24 +22,51 @@ public class LocationSearchService {
     private final RestTemplate restTemplate = new RestTemplate();
     
     public Map<String, Object> searchLocations(String query, String languageCode, int limit) {
-        String url = String.format(
-            "https://%s/accomodation/autocomplete?languagecode=%s&limit=%d&query=%s&currency_code=USD",
-            apiHost, languageCode, limit, query
-        );
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Rapidapi-Key", apiKey);
-        headers.set("X-Rapidapi-Host", apiHost);
-        
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        
-        ResponseEntity<Map> response = restTemplate.exchange(
-            url, 
-            HttpMethod.GET, 
-            entity, 
-            Map.class
-        );
-        
-        return response.getBody();
+        try {
+            // URL encode the query parameter
+            String encodedQuery = java.net.URLEncoder.encode(query, "UTF-8");
+            
+            String url = String.format(
+                "https://%s/accomodation/autocomplete?languagecode=%s&limit=%d&query=%s&currency_code=USD",
+                apiHost, languageCode, limit, encodedQuery
+            );
+            
+            System.out.println("Searching locations with URL: " + url);
+            System.out.println("API Key: " + (apiKey != null ? apiKey.substring(0, 10) + "..." : "null"));
+            System.out.println("API Host: " + apiHost);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Rapidapi-Key", apiKey);
+            headers.set("X-Rapidapi-Host", apiHost);
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.exchange(
+                url, 
+                HttpMethod.GET, 
+                entity, 
+                Map.class
+            );
+            
+            System.out.println("API Response Status: " + response.getStatusCode());
+            return response.getBody();
+            
+        } catch (Exception e) {
+            System.err.println("Error in location search: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Return a mock response for development
+            return Map.of(
+                "success", false,
+                "error", "External API unavailable: " + e.getMessage(),
+                "data", Map.of(
+                    "data", Map.of(
+                        "autoCompleteSuggestions", Map.of(
+                            "results", new Object[0]
+                        )
+                    )
+                )
+            );
+        }
     }
 }

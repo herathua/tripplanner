@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
-import { Trip, TripStatus, TripVisibility, tripService } from '../services/tripService';
-import { Activity, ActivityType, ActivityStatus } from '../services/itineraryService';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import { Trip, tripService } from '../services/tripService';
+import { Activity, ItineraryData, itineraryService } from '../services/itineraryService';
 import { useAppSelector } from '../store';
 
 export interface Place {
@@ -30,13 +30,14 @@ interface TripState {
   places: Place[];
   activities: Activity[];
   expenses: Expense[];
+  itineraryData: ItineraryData;
 }
 
 interface TripContextType {
   state: TripState;
   createTrip: (trip: Trip) => Promise<void>;
   loadTrip: (id: number) => Promise<void>;
-  saveTrip: () => Promise<void>;
+  saveTrip: () => Promise<Trip | null>;
   addPlace: (place: Omit<Place, 'id'>) => void;
   removePlace: (placeId: string) => void;
   addActivity: (activity: Omit<Activity, 'id'>) => void;
@@ -55,84 +56,116 @@ const initialState: TripState = {
   places: [],
   activities: [],
   expenses: [],
+  itineraryData: { days: [] },
 };
 
 // Action types
 type TripAction =
   | { type: 'SET_CURRENT_TRIP'; payload: Trip }
+  | { type: 'SET_ITINERARY_DATA'; payload: ItineraryData }
   | { type: 'ADD_PLACE'; payload: Place }
   | { type: 'REMOVE_PLACE'; payload: string }
+  | { type: 'CLEAR_PLACES' }
   | { type: 'ADD_ACTIVITY'; payload: Activity }
   | { type: 'REMOVE_ACTIVITY'; payload: string }
   | { type: 'ADD_EXPENSE'; payload: Expense }
   | { type: 'REMOVE_EXPENSE'; payload: string }
+  | { type: 'CLEAR_EXPENSES' }
   | { type: 'UPDATE_TRIP_NAME'; payload: string }
   | { type: 'UPDATE_TRIP_BUDGET'; payload: number }
   | { type: 'CLEAR_TRIP' };
 
 // Reducer
 const tripReducer = (state: TripState, action: TripAction): TripState => {
-  console.log('🔄 TripContext reducer called with action:', action.type, action.type === 'CLEAR_TRIP' ? 'no payload' : action.payload);
-  
   switch (action.type) {
     case 'SET_CURRENT_TRIP':
-      console.log('📝 Setting current trip:', action.payload);
       return {
         ...state,
         currentTrip: action.payload,
       };
+    case 'SET_ITINERARY_DATA':
+      console.log('🔄 SET_ITINERARY_DATA action:', action.payload);
+      const activities = action.payload.days.flatMap(day => day.activities);
+      console.log('🎯 Extracted activities:', activities);
+      return {
+        ...state,
+        itineraryData: action.payload,
+        // Update activities from itinerary data
+        activities: activities,
+      };
     case 'ADD_PLACE':
-      console.log('📍 Adding place to context:', action.payload);
-      const newState = {
+      return {
         ...state,
         places: [...state.places, action.payload],
       };
-      console.log('✅ New state after adding place:', newState);
-      return newState;
     case 'REMOVE_PLACE':
-      console.log('🗑️ Removing place:', action.payload);
       return {
         ...state,
         places: state.places.filter(place => place.id !== action.payload),
       };
-    case 'ADD_ACTIVITY':
-      console.log('🎯 Adding activity:', action.payload);
+    case 'CLEAR_PLACES':
       return {
         ...state,
-        activities: [...state.activities, action.payload],
+        places: [],
+      };
+    case 'ADD_ACTIVITY':
+      console.log('🔄 ADD_ACTIVITY action:', action.payload);
+      console.log('📊 Current activities before add:', state.activities.length);
+      console.log('🎯 Activity ID being added:', action.payload.id);
+      
+      // Check if activity with same ID already exists
+      const existingActivity = state.activities.find(a => a.id === action.payload.id);
+      if (existingActivity) {
+        console.log('⚠️ Activity with same ID already exists, skipping duplicate');
+        return state;
+      }
+      
+      const newActivities = [...state.activities, action.payload];
+      console.log('📊 New activities count:', newActivities.length);
+      
+      return {
+        ...state,
+        activities: newActivities,
+        // Update itinerary data
+        itineraryData: itineraryService.addActivityToDay(state.itineraryData, action.payload.dayNumber, action.payload),
       };
     case 'REMOVE_ACTIVITY':
-      console.log('🗑️ Removing activity:', action.payload);
+      // Find the activity to get its day number
+      const activityToRemove = state.activities.find(activity => activity.id === action.payload);
+      const dayNumber = activityToRemove?.dayNumber || 1;
+      
       return {
         ...state,
         activities: state.activities.filter(activity => activity.id !== action.payload),
+        // Update itinerary data
+        itineraryData: itineraryService.removeActivityFromDay(state.itineraryData, dayNumber, action.payload),
       };
     case 'ADD_EXPENSE':
-      console.log('💰 Adding expense:', action.payload);
       return {
         ...state,
         expenses: [...state.expenses, action.payload],
       };
     case 'REMOVE_EXPENSE':
-      console.log('🗑️ Removing expense:', action.payload);
       return {
         ...state,
         expenses: state.expenses.filter(expense => expense.id !== action.payload),
       };
+    case 'CLEAR_EXPENSES':
+      return {
+        ...state,
+        expenses: [],
+      };
     case 'UPDATE_TRIP_NAME':
-      console.log('✏️ Updating trip name:', action.payload);
       return {
         ...state,
         currentTrip: state.currentTrip ? { ...state.currentTrip, title: action.payload } : null,
       };
     case 'UPDATE_TRIP_BUDGET':
-      console.log('💰 Updating trip budget:', action.payload);
       return {
         ...state,
         currentTrip: state.currentTrip ? { ...state.currentTrip, budget: action.payload } : null,
       };
     case 'CLEAR_TRIP':
-      console.log('🧹 Clearing trip state');
       return initialState;
     default:
       return state;
@@ -163,6 +196,26 @@ const mapCategoryToBackend = (frontendCategory: string): string => {
   return categoryMap[frontendCategory.toLowerCase()] || 'OTHER';
 };
 
+// Helper function to map frontend expense categories to backend expense categories
+const mapExpenseCategoryToBackend = (frontendCategory: string): string => {
+  const expenseCategoryMap: { [key: string]: string } = {
+    'accommodation': 'ACCOMMODATION',
+    'food': 'FOOD',
+    'transport': 'TRANSPORT',
+    'activities': 'ACTIVITIES',
+    'shopping': 'SHOPPING',
+    'entertainment': 'ENTERTAINMENT',
+    'insurance': 'INSURANCE',
+    'health': 'HEALTH',
+    'visas': 'VISAS',
+    'fees': 'FEES',
+    'tips': 'TIPS',
+    'other': 'OTHER'
+  };
+  
+  return expenseCategoryMap[frontendCategory.toLowerCase()] || 'OTHER';
+};
+
 // Provider component
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(tripReducer, initialState);
@@ -185,11 +238,27 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadTrip = async (id: number) => {
     try {
       const trip = await tripService.getTripById(id);
+      console.log('🔄 Loading trip:', trip);
+      console.log('📊 Trip itineraryData:', trip.itineraryData);
       dispatch({ type: 'SET_CURRENT_TRIP', payload: trip });
       
-      // Load places if they exist in the trip data
+      // Clear existing data first
+      dispatch({ type: 'CLEAR_PLACES' });
+      dispatch({ type: 'CLEAR_EXPENSES' });
+      
+      // Load itinerary data from JSON
+      if (trip.itineraryData) {
+        console.log('📅 Parsing itinerary data...');
+        const itineraryData = itineraryService.parseItineraryData(trip.itineraryData);
+        console.log('✅ Parsed itinerary data:', itineraryData);
+        console.log('🎯 Activities found:', itineraryData.days.flatMap(day => day.activities));
+        dispatch({ type: 'SET_ITINERARY_DATA', payload: itineraryData });
+      } else {
+        console.log('⚠️ No itinerary data found in trip');
+      }
+      
+      // Load places if they exist
       if (trip.places && trip.places.length > 0) {
-        console.log('Loading places from trip data:', trip.places);
         trip.places.forEach((place: any) => {
           const contextPlace: Place = {
             id: place.id?.toString() || Math.random().toString(36).substr(2, 9),
@@ -210,29 +279,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      // Activities are loaded separately via itinerary service in Newtrip.tsx
-
-      // Load expenses if they exist in the trip data
+      // Load expenses if they exist
       if (trip.expenses && trip.expenses.length > 0) {
-        console.log('Loading expenses from trip data:', trip.expenses);
         trip.expenses.forEach((expense: any) => {
           const contextExpense: Expense = {
             id: expense.id?.toString() || Math.random().toString(36).substr(2, 9),
             dayNumber: expense.dayNumber || 1,
-            expenseDate: expense.expenseDate || new Date().toISOString().split('T')[0],
+            date: expense.expenseDate || new Date().toISOString().split('T')[0],
             category: expense.category || 'OTHER',
             description: expense.description || '',
-            amount: expense.amount || 0,
-            currency: expense.currency || 'USD',
-            receiptUrl: expense.receiptUrl,
-            paymentMethod: expense.paymentMethod,
-            vendor: expense.vendor,
-            location: expense.location,
-            notes: expense.notes,
-            reimbursable: expense.reimbursable || false,
-            reimbursed: expense.reimbursed || false,
-            reimbursementReference: expense.reimbursementReference,
-            status: expense.status || 'PAID'
+            amount: expense.amount || 0
           };
           dispatch({ type: 'ADD_EXPENSE', payload: contextExpense });
         });
@@ -244,7 +300,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const saveTrip = async () => {
-    if (!state.currentTrip) return;
+    if (!state.currentTrip) return null;
     
     try {
       // Create trip data with places, activities, and expenses included
@@ -264,42 +320,39 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           longitude: place.coordinates.lng,
           photos: place.photos
         })),
-        // Activities are handled separately via itinerary service
-        // They will be loaded when the trip is loaded
+        // Include itinerary data as JSON string
+        itineraryData: itineraryService.stringifyItineraryData(state.itineraryData),
         expenses: state.expenses.map(expense => ({
           dayNumber: expense.dayNumber,
-          expenseDate: expense.expenseDate,
-          category: expense.category,
+          expenseDate: expense.date,
+          category: mapExpenseCategoryToBackend(expense.category),
           description: expense.description,
-          amount: expense.amount,
-          currency: expense.currency,
-          receiptUrl: expense.receiptUrl,
-          paymentMethod: expense.paymentMethod,
-          vendor: expense.vendor,
-          location: expense.location,
-          notes: expense.notes,
-          reimbursable: expense.reimbursable,
-          reimbursed: expense.reimbursed,
-          reimbursementReference: expense.reimbursementReference,
-          status: expense.status
+          amount: expense.amount
         }))
       };
       
       if (state.currentTrip.id) {
-        await tripService.updateTrip(state.currentTrip.id, tripData);
+        const updatedTrip = await tripService.updateTrip(state.currentTrip.id, tripData);
+        return updatedTrip;
       } else {
         if (!user?.uid) {
           throw new Error('User not authenticated');
         }
-        await tripService.createTrip(tripData, user.uid);
+        const createdTrip = await tripService.createTrip(tripData, user.uid);
+        dispatch({ type: 'SET_CURRENT_TRIP', payload: createdTrip });
+        return createdTrip;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving trip:', error);
+      if (error.response?.data) {
+        console.error('Backend error response:', error.response.data);
+        throw new Error(`Backend error: ${error.response.data}`);
+      }
       throw error;
     }
   };
 
-  // Initialize trip from URL parameters (from HomePage)
+  // Initialize trip from URL parameters
   const initializeTripFromParams = useCallback((params: URLSearchParams) => {
     const startDate = params.get('startDate');
     const endDate = params.get('endDate');
@@ -322,15 +375,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Local state management functions
   const addPlace = (place: Omit<Place, 'id'>) => {
-    console.log('🏗️ addPlace called with:', place);
     const newPlace: Place = {
       ...place,
       id: Math.random().toString(36).substr(2, 9),
     };
-    console.log('🆔 Generated new place with ID:', newPlace.id);
-    console.log('📤 Dispatching ADD_PLACE action...');
     dispatch({ type: 'ADD_PLACE', payload: newPlace });
-    console.log('✅ ADD_PLACE action dispatched');
   };
 
   const removePlace = (placeId: string) => {
@@ -340,7 +389,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addActivity = (activity: Omit<Activity, 'id'>) => {
     const newActivity: Activity = {
       ...activity,
-      id: Math.random().toString(36).substr(2, 9),
+      id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), // Generate a string ID
     };
     dispatch({ type: 'ADD_ACTIVITY', payload: newActivity });
   };
@@ -371,7 +420,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearTrip = () => {
-    console.log('Clearing trip state - starting fresh');
     dispatch({ type: 'CLEAR_TRIP' });
   };
 

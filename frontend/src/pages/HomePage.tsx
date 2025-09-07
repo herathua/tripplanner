@@ -141,14 +141,18 @@ const HomePage: React.FC = () => {
   // Load user trips
   useEffect(() => {
     if (user && user.uid) {
-      console.log('Loading trips for user:', user.uid);
-      tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
-        console.log('Trips data received:', data);
+      console.log('🔍 Loading trips for user:', user.uid);
+      console.log('🔍 Current date:', new Date().toISOString().split('T')[0]);
+      tripService.getAllTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+        console.log('📊 Trips data received:', data);
+        console.log('📊 Total trips found:', data.totalElements);
+        console.log('📊 Trips in current page:', data.content?.length || 0);
+        console.log('📊 Trip details:', data.content);
         setUpcomingTrips(data.content || []);
         setTripTotalPages(data.totalPages || 1);
       }).catch(error => {
-        console.error('Error loading trips:', error);
-        console.error('Error details:', error.response?.data);
+        console.error('❌ Error loading trips:', error);
+        console.error('❌ Error details:', error.response?.data);
       });
     }
   }, [user, tripPage]);
@@ -317,6 +321,21 @@ const HomePage: React.FC = () => {
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Plan new trip
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm hover:bg-blue-600 flex items-center"
+                onClick={async () => {
+                  try {
+                    console.log('🧪 Testing backend connectivity...');
+                    const result = await tripService.healthCheck();
+                    alert(`Backend is accessible: ${JSON.stringify(result)}`);
+                  } catch (error) {
+                    console.error('❌ Backend test failed:', error);
+                    alert(`Backend test failed: ${error.message}`);
+                  }
+                }}
+              >
+                🧪 Test Backend
               </button>
             </div>
           </div>

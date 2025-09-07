@@ -1,17 +1,7 @@
 import apiClient from '../config/api';
 
-export interface Itinerary {
-  id?: number;
-  dayNumber: number;
-  date: string;
-  notes?: string;
-  tripId: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface Activity {
-  id?: string;
+  id?: string; // Use string ID for local activities
   name: string;
   description?: string;
   startTime?: string;
@@ -20,12 +10,21 @@ export interface Activity {
   durationHours?: number;
   type: ActivityType;
   status: ActivityStatus;
-  tripId?: number;
-  itineraryId?: number;
-  dayNumber?: number; // Add dayNumber for local state activities
+  dayNumber: number;
   placeId?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface DayItinerary {
+  dayNumber: number;
+  date: string;
+  notes?: string;
+  activities: Activity[];
+}
+
+export interface ItineraryData {
+  days: DayItinerary[];
 }
 
 export enum ActivityType {
@@ -46,32 +45,101 @@ export enum ActivityStatus {
 }
 
 export const itineraryService = {
-  // Get all itineraries for a trip
-  async getItinerariesByTripId(tripId: number): Promise<Itinerary[]> {
-    const response = await apiClient.get(`/itineraries/trip/${tripId}`);
-    return response.data;
+  // Parse itinerary data from JSON string
+  parseItineraryData(jsonString: string): ItineraryData {
+    try {
+      if (!jsonString || jsonString.trim() === '') {
+        return { days: [] };
+      }
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing itinerary data:', error);
+      return { days: [] };
+    }
   },
 
-  // Get itinerary by ID
-  async getItineraryById(id: number): Promise<Itinerary> {
-    const response = await apiClient.get(`/itineraries/${id}`);
-    return response.data;
+  // Convert itinerary data to JSON string
+  stringifyItineraryData(itineraryData: ItineraryData): string {
+    try {
+      return JSON.stringify(itineraryData);
+    } catch (error) {
+      console.error('Error stringifying itinerary data:', error);
+      return '{"days":[]}';
+    }
   },
 
-  // Create a new itinerary
-  async createItinerary(itinerary: Itinerary): Promise<Itinerary> {
-    const response = await apiClient.post('/itineraries', itinerary);
-    return response.data;
+  // Get itinerary data from trip
+  async getItineraryFromTrip(tripId: number): Promise<ItineraryData> {
+    try {
+      const response = await apiClient.get(`/trips/${tripId}`);
+      const trip = response.data;
+      return this.parseItineraryData(trip.itineraryData || '{}');
+    } catch (error) {
+      console.error('Error fetching itinerary from trip:', error);
+      return { days: [] };
+    }
   },
 
-  // Update itinerary
-  async updateItinerary(id: number, itinerary: Itinerary): Promise<Itinerary> {
-    const response = await apiClient.put(`/itineraries/${id}`, itinerary);
-    return response.data;
+  // Update itinerary data in trip
+  async updateItineraryInTrip(tripId: number, itineraryData: ItineraryData): Promise<void> {
+    try {
+      const jsonString = this.stringifyItineraryData(itineraryData);
+      await apiClient.put(`/trips/${tripId}`, {
+        itineraryData: jsonString
+      });
+    } catch (error) {
+      console.error('Error updating itinerary in trip:', error);
+      throw error;
+    }
   },
 
-  // Delete itinerary
-  async deleteItinerary(id: number): Promise<void> {
-    await apiClient.delete(`/itineraries/${id}`);
+  // Helper methods for managing activities
+  addActivityToDay(itineraryData: ItineraryData, dayNumber: number, activity: Activity): ItineraryData {
+    const day = itineraryData.days.find(d => d.dayNumber === dayNumber);
+    if (day) {
+      // Check if activity with same ID already exists
+      const existingActivity = day.activities.find(a => a.id === activity.id);
+      if (!existingActivity) {
+        day.activities.push(activity);
+      } else {
+        console.log('⚠️ Activity with same ID already exists in day, skipping duplicate');
+      }
+    } else {
+      // Create new day if it doesn't exist
+      itineraryData.days.push({
+        dayNumber,
+        date: new Date().toISOString().split('T')[0], // Default to today
+        activities: [activity]
+      });
+    }
+    return itineraryData;
+  },
+
+  removeActivityFromDay(itineraryData: ItineraryData, dayNumber: number, activityId: string): ItineraryData {
+    const day = itineraryData.days.find(d => d.dayNumber === dayNumber);
+    if (day) {
+      day.activities = day.activities.filter(a => a.id !== activityId);
+    }
+    return itineraryData;
+  },
+
+  updateActivityInDay(itineraryData: ItineraryData, dayNumber: number, activityId: string, updatedActivity: Activity): ItineraryData {
+    const day = itineraryData.days.find(d => d.dayNumber === dayNumber);
+    if (day) {
+      const index = day.activities.findIndex(a => a.id === activityId);
+      if (index !== -1) {
+        day.activities[index] = { ...updatedActivity, id: activityId };
+      }
+    }
+    return itineraryData;
+  },
+
+  getActivitiesForDay(itineraryData: ItineraryData, dayNumber: number): Activity[] {
+    const day = itineraryData.days.find(d => d.dayNumber === dayNumber);
+    return day ? day.activities : [];
+  },
+
+  getAllActivities(itineraryData: ItineraryData): Activity[] {
+    return itineraryData.days.flatMap(day => day.activities);
   }
 };

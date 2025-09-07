@@ -103,9 +103,7 @@ public class Place {
     @JsonIgnore
     private Trip trip;
     
-    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonIgnore
-    private List<Activity> activities = new ArrayList<>();
+    // Activity relationship removed - activities are now stored as JSON in trip
     
     // Enums
     public enum PlaceCategory {
@@ -122,15 +120,7 @@ public class Place {
         photos.remove(photoUrl);
     }
     
-    public void addActivity(Activity activity) {
-        activities.add(activity);
-        activity.setPlace(this);
-    }
-    
-    public void removeActivity(Activity activity) {
-        activities.remove(activity);
-        activity.setPlace(null);
-    }
+    // Activity management methods removed - activities are now stored as JSON in trip
     
     // Coordinate helper methods
     public boolean hasValidCoordinates() {

@@ -40,11 +40,49 @@ public class PlaceController {
 
     @PostMapping
     @Operation(summary = "Create a new place", description = "Create a new place with the provided details")
-    public ResponseEntity<Place> createPlace(
+    public ResponseEntity<?> createPlace(
             @Parameter(description = "Place object to create") 
             @RequestBody Place place) {
-        Place savedPlace = placeRepository.save(place);
-        return ResponseEntity.ok(savedPlace);
+        try {
+            System.out.println("Creating place with data: " + place);
+            System.out.println("Place name: " + place.getName());
+            System.out.println("Place location: " + place.getLocation());
+            System.out.println("Place category: " + place.getCategory());
+            System.out.println("Place rating: " + place.getRating());
+            System.out.println("Place cost: " + place.getCost());
+            System.out.println("Place duration: " + place.getDuration());
+            System.out.println("Place latitude: " + place.getLatitude());
+            System.out.println("Place longitude: " + place.getLongitude());
+            System.out.println("Place photos: " + place.getPhotos());
+            
+            // Validate required fields
+            if (place.getName() == null || place.getName().trim().isEmpty()) {
+                System.err.println("Validation failed: Place name is required");
+                return ResponseEntity.badRequest().body("Place name is required");
+            }
+            if (place.getLocation() == null || place.getLocation().trim().isEmpty()) {
+                System.err.println("Validation failed: Place location is required");
+                return ResponseEntity.badRequest().body("Place location is required");
+            }
+            if (place.getCategory() == null) {
+                System.err.println("Validation failed: Place category is required");
+                return ResponseEntity.badRequest().body("Place category is required");
+            }
+            if (place.getRating() == null || place.getRating() < 1 || place.getRating() > 5) {
+                System.err.println("Validation failed: Place rating must be between 1 and 5");
+                return ResponseEntity.badRequest().body("Place rating must be between 1 and 5");
+            }
+            
+            System.out.println("✅ All validations passed");
+            
+            Place savedPlace = placeRepository.save(place);
+            System.out.println("✅ Place saved successfully with ID: " + savedPlace.getId());
+            return ResponseEntity.ok(savedPlace);
+        } catch (Exception e) {
+            System.err.println("Error creating place: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error creating place: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
