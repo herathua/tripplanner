@@ -49,9 +49,9 @@ const TripMap: React.FC<TripMapProps> = ({ places, tripName, isFullscreen = fals
 
   // Get category-specific icon
   const getCategoryIcon = (category: string) => {
-    const iconSize = [25, 41];
-    const iconAnchor = [12, 41];
-    const popupAnchor = [1, -34];
+    const iconSize: [number, number] = [25, 41];
+    const iconAnchor: [number, number] = [12, 41];
+    const popupAnchor: [number, number] = [1, -34];
     
     let iconUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
     let className = '';
