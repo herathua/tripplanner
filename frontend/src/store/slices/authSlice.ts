@@ -4,28 +4,10 @@ import {
   loginWithEmailAndPassword,
   registerWithEmailAndPassword,
   logoutUser,
-  onAuthStateChange,
   loginWithGoogle as firebaseGoogleLogin,
-  loginAnonymously as firebaseAnonymousLogin,
+  resetPassword as firebaseResetPassword,
 } from '../../config/firebase';
 import apiClient from '../../config/api';
-import { auth } from '../../config/firebase';
-
-// TEMPORARY: Mock user type to replace Firebase User
-// TODO: Replace with Firebase User type when backend is integrated
-interface MockUser {
-  uid: string;
-  email: string;
-  displayName: string;
-  emailVerified: boolean;
-}
-
-// TEMPORARY: Hardcoded credentials for development
-// TODO: Remove this when Firebase is properly configured
-const TEMP_CREDENTIALS = {
-  email: 'test@example.com',
-  password: 'test123',
-};
 
 interface AuthState {
   user: User | null;
@@ -100,16 +82,14 @@ export const loginWithGoogle = createAsyncThunk<User, void, { rejectValue: strin
   }
 );
 
-// Login anonymously
-export const loginAnonymously = createAsyncThunk<User, void, { rejectValue: string }>(
-  'auth/loginAnonymously',
-  async (_, { rejectWithValue }) => {
+// Reset password
+export const resetPassword = createAsyncThunk<void, string, { rejectValue: string }>(
+  'auth/resetPassword',
+  async (email: string, { rejectWithValue }) => {
     try {
-      const user = await firebaseAnonymousLogin();
-      await syncUserWithBackend(user);
-      return user;
+      await firebaseResetPassword(email);
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to login anonymously');
+      return rejectWithValue(error.message || 'Failed to send password reset email');
     }
   }
 );
@@ -196,21 +176,18 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.isAuthenticated = false;
       })
-      // Anonymous Login
-      .addCase(loginAnonymously.pending, (state) => {
+      // Reset Password
+      .addCase(resetPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginAnonymously.fulfilled, (state, action) => {
+      .addCase(resetPassword.fulfilled, (state) => {
         state.loading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
         state.error = null;
       })
-      .addCase(loginAnonymously.rejected, (state, action) => {
+      .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.isAuthenticated = false;
       })
       // Logout
       .addCase(logout.pending, (state) => {
