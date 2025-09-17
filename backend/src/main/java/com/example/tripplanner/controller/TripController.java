@@ -175,7 +175,10 @@ public class TripController {
             @RequestParam(defaultValue = "3") int size) {
         Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
         if (userOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("User not found with Firebase UID: " + firebaseUid);
+            // Return empty page instead of error - user will be created when they sync
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Trip> emptyPage = Page.empty(pageable);
+            return ResponseEntity.ok(emptyPage);
         }
         User user = userOpt.get();
         LocalDate today = LocalDate.now();

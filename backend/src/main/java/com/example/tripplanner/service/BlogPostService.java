@@ -171,9 +171,13 @@ public class BlogPostService {
     }
     
     public Page<BlogPost> getUserBlogPostsByFirebaseUid(String firebaseUid, Pageable pageable) {
-        User author = userRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
+        Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+        if (userOpt.isEmpty()) {
+            // Return empty page instead of throwing exception - user will be created when they sync
+            return Page.empty(pageable);
+        }
         
+        User author = userOpt.get();
         return blogPostRepository.findByAuthor(author, pageable);
     }
     

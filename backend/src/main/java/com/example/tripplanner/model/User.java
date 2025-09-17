@@ -38,7 +38,7 @@ public class User {
     @Column(nullable = false)
     private String displayName;
     
-    @Column
+    @Column(name = "photo_url", columnDefinition = "TEXT", length = 65535)
     private String photoUrl;
     
     @Column
@@ -55,11 +55,11 @@ public class User {
     private boolean active = true;
     
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "date_created", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "last_updated")
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
