@@ -55,7 +55,6 @@ const NewTrip = () => {
       addExpense, 
       removeExpense, 
       updateTripName, 
-      saveTrip,
       clearTrip
     } = useTrip();
     
@@ -449,18 +448,7 @@ const NewTrip = () => {
       hotelSearch.clearSearch();
     };
 
-    const handleSaveTrip = async () => {
-      if (!state.currentTrip) return;
-      
-      try {
-        await saveTrip();
-        alert('Trip saved successfully!');
-        // Navigate back to homepage after saving
-        navigate('/home');
-      } catch (error) {
-        alert('Failed to save trip. Please try again.');
-      }
-    };
+    // Removed old save trip functionality - now handled in HomePage modal
 
     const handleDeleteTrip = async () => {
       if (!tripId) return;
@@ -660,13 +648,7 @@ const NewTrip = () => {
                   )}
                 </div>
                 <div className="flex items-center space-x-4">
-                  <button 
-                    onClick={handleSaveTrip}
-                    className="flex items-center px-6 py-2 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>Save Trip</span>
-                  </button>
+                  {/* Save functionality moved to HomePage modal */}
                   {tripId && (
                     <button 
                       onClick={handleDeleteTrip}
