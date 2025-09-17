@@ -3,6 +3,82 @@ import { Plus, Search, Camera as CameraIcon, Star, Trash2, MapPin, Globe, Clock,
 import { Place } from '../../contexts/TripContext';
 import { locationService } from '../../services/locationService';
 
+// ✅ Helper function to get real coordinates for common destinations
+const getRealCoordinates = (query: string): { lat: number; lng: number } => {
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  // Real coordinates for popular destinations
+  const coordinates: { [key: string]: { lat: number; lng: number } } = {
+    'paris': { lat: 48.8566, lng: 2.3522 },
+    'london': { lat: 51.5074, lng: -0.1278 },
+    'new york': { lat: 40.7128, lng: -74.0060 },
+    'tokyo': { lat: 35.6762, lng: 139.6503 },
+    'rome': { lat: 41.9028, lng: 12.4964 },
+    'barcelona': { lat: 41.3851, lng: 2.1734 },
+    'amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'berlin': { lat: 52.5200, lng: 13.4050 },
+    'madrid': { lat: 40.4168, lng: -3.7038 },
+    'vienna': { lat: 48.2082, lng: 16.3738 },
+    'prague': { lat: 50.0755, lng: 14.4378 },
+    'budapest': { lat: 47.4979, lng: 19.0402 },
+    'istanbul': { lat: 41.0082, lng: 28.9784 },
+    'moscow': { lat: 55.7558, lng: 37.6176 },
+    'dubai': { lat: 25.2048, lng: 55.2708 },
+    'singapore': { lat: 1.3521, lng: 103.8198 },
+    'hong kong': { lat: 22.3193, lng: 114.1694 },
+    'sydney': { lat: -33.8688, lng: 151.2093 },
+    'melbourne': { lat: -37.8136, lng: 144.9631 },
+    'toronto': { lat: 43.6532, lng: -79.3832 },
+    'vancouver': { lat: 49.2827, lng: -123.1207 },
+    'miami': { lat: 25.7617, lng: -80.1918 },
+    'los angeles': { lat: 34.0522, lng: -118.2437 },
+    'san francisco': { lat: 37.7749, lng: -122.4194 },
+    'chicago': { lat: 41.8781, lng: -87.6298 },
+    'boston': { lat: 42.3601, lng: -71.0589 },
+    'washington': { lat: 38.9072, lng: -77.0369 },
+    'seattle': { lat: 47.6062, lng: -122.3321 },
+    'denver': { lat: 39.7392, lng: -104.9903 },
+    'las vegas': { lat: 36.1699, lng: -115.1398 },
+    'phoenix': { lat: 33.4484, lng: -112.0740 },
+    'atlanta': { lat: 33.7490, lng: -84.3880 },
+    'houston': { lat: 29.7604, lng: -95.3698 },
+    'dallas': { lat: 32.7767, lng: -96.7970 },
+    'austin': { lat: 30.2672, lng: -97.7431 },
+    'nashville': { lat: 36.1627, lng: -86.7816 },
+    'new orleans': { lat: 29.9511, lng: -90.0715 },
+    'montreal': { lat: 45.5017, lng: -73.5673 },
+    'quebec': { lat: 46.8139, lng: -71.2080 },
+    'calgary': { lat: 51.0447, lng: -114.0719 },
+    'edmonton': { lat: 53.5461, lng: -113.4938 },
+    'ottawa': { lat: 45.4215, lng: -75.6972 },
+    'winnipeg': { lat: 49.8951, lng: -97.1384 },
+    'halifax': { lat: 44.6488, lng: -63.5752 },
+    'st johns': { lat: 47.5615, lng: -52.7126 },
+    'whitehorse': { lat: 60.7212, lng: -135.0568 },
+    'yellowknife': { lat: 62.4540, lng: -114.3718 },
+    'iqaluit': { lat: 63.7467, lng: -68.5170 }
+  };
+  
+  // Check for exact matches first
+  if (coordinates[normalizedQuery]) {
+    return coordinates[normalizedQuery];
+  }
+  
+  // Check for partial matches
+  for (const [city, coords] of Object.entries(coordinates)) {
+    if (normalizedQuery.includes(city) || city.includes(normalizedQuery)) {
+      return coords;
+    }
+  }
+  
+  // Default to a random location if no match found
+  console.warn(`⚠️ No coordinates found for "${query}", using random location`);
+  return { 
+    lat: 40.7128 + (Math.random() - 0.5) * 20, // Random around NYC
+    lng: -74.0060 + (Math.random() - 0.5) * 20 
+  };
+};
+
 interface PlaceSearchSuggestionsProps {
   searchQuery: string;
   onSelectPlace: (place: Omit<Place, 'id'>) => void;
@@ -39,11 +115,15 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
       setError(null);
 
       try {
+        console.log('🔍 Starting location search for:', searchQuery);
+        
         // Try backend search first
         const response = await locationService.searchLocations(searchQuery, 'en', 5);
+        console.log('📡 Backend API response:', response);
         
         if (response.success && response.data?.data?.autoCompleteSuggestions?.results) {
           const results = response.data.data.autoCompleteSuggestions.results;
+          console.log('✅ Found', results.length, 'results from Booking.com API');
           
           const transformedSuggestions: SearchResult[] = results.map((result: any) => ({
             id: result.destination.destId,
@@ -59,10 +139,12 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
             }
           }));
 
+          console.log('🔄 Transformed suggestions:', transformedSuggestions);
           setSuggestions(transformedSuggestions);
         } else {
-          // Fallback to simple search with mock data
-          console.log('Using fallback search for:', searchQuery);
+          // ✅ Enhanced fallback with real coordinates
+          console.log('⚠️ No results from Booking.com API, using enhanced fallback for:', searchQuery);
+          const realCoords = getRealCoordinates(searchQuery);
           const fallbackSuggestions: SearchResult[] = [
             {
               id: '1',
@@ -72,7 +154,7 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
               type: 'attraction',
               country: 'Popular Destination',
               region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+              coordinates: realCoords // ✅ Use real coordinates
             },
             {
               id: '2',
@@ -82,7 +164,10 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
               type: 'attraction',
               country: 'Cultural Heritage',
               region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+              coordinates: { 
+                lat: realCoords.lat + (Math.random() - 0.5) * 0.01, // Small variation
+                lng: realCoords.lng + (Math.random() - 0.5) * 0.01 
+              }
             },
             {
               id: '3',
@@ -92,15 +177,25 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
               type: 'restaurant',
               country: 'Food & Dining',
               region: searchQuery,
-              coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+              coordinates: { 
+                lat: realCoords.lat + (Math.random() - 0.5) * 0.01, // Small variation
+                lng: realCoords.lng + (Math.random() - 0.5) * 0.01 
+              }
             }
           ];
           
           setSuggestions(fallbackSuggestions);
         }
-      } catch (err) {
-        console.error('Error searching places:', err);
+        } catch (err) {
+        console.error('❌ Error searching places:', err);
+        console.error('Error details:', {
+          message: err instanceof Error ? err.message : 'Unknown error',
+          stack: err instanceof Error ? err.stack : undefined
+        });
+        
         // Use fallback search on error
+        // ✅ Enhanced fallback with real coordinates for error cases
+        const realCoords = getRealCoordinates(searchQuery);
         const fallbackSuggestions: SearchResult[] = [
           {
             id: '1',
@@ -110,10 +205,11 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
             type: 'attraction',
             country: 'Travel Destination',
             region: searchQuery,
-            coordinates: { lat: 7.8731 + Math.random() * 0.1, lng: 80.7718 + Math.random() * 0.1 }
+            coordinates: realCoords // ✅ Use real coordinates
           }
         ];
         
+        console.log('🔄 Using fallback suggestions:', fallbackSuggestions);
         setSuggestions(fallbackSuggestions);
       } finally {
         setIsLoading(false);
@@ -128,6 +224,16 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
   const handleSelectPlace = async (suggestion: SearchResult) => {
     setAddingPlaceId(suggestion.id);
     
+    // ✅ Validate and fix coordinates
+    const lat = parseFloat(suggestion.coordinates.lat.toString());
+    const lng = parseFloat(suggestion.coordinates.lng.toString());
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      console.error('Invalid coordinates from API:', suggestion.coordinates);
+      setAddingPlaceId(null);
+      return;
+    }
+    
     const newPlace: Omit<Place, 'id'> = {
       name: suggestion.name,
       location: suggestion.location,
@@ -135,7 +241,7 @@ const PlaceSearchSuggestions: React.FC<PlaceSearchSuggestionsProps> = ({
       category: suggestion.type.toLowerCase(),
       rating: 4, // Default rating
       photos: suggestion.image ? [suggestion.image] : [],
-      coordinates: suggestion.coordinates,
+      coordinates: { lat, lng }, // ✅ Ensure proper number format
       cost: 0, // Will be updated when user adds details
       duration: 2 // Default duration
     };

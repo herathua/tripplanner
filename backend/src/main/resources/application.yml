@@ -46,3 +46,9 @@ error:
 
 springdoc:
   pathsToMatch: /, /api/**
+
+# Booking.com API Configuration
+booking:
+  api:
+    key: a0997d222fmsh50214de9dec9326p145269jsn3f760d1a9ee5
+    host: booking-com-api5.p.rapidapi.com

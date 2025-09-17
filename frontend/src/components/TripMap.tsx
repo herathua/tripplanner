@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -32,6 +32,16 @@ interface TripMapProps {
 }
 
 const TripMap: React.FC<TripMapProps> = ({ places, tripName, isFullscreen = false }) => {
+  // ✅ Add debugging for coordinates
+  useEffect(() => {
+    console.log('🗺️ TripMap places:', places);
+    places.forEach(place => {
+      console.log(`📍 Place: ${place.name}`);
+      console.log(`   Coordinates: lat=${place.coordinates.lat}, lng=${place.coordinates.lng}`);
+      console.log(`   Type: lat=${typeof place.coordinates.lat}, lng=${typeof place.coordinates.lng}`);
+    });
+  }, [places]);
+
   // Calculate center of map based on places
   const getMapCenter = () => {
     if (places.length === 0) {
@@ -41,21 +51,31 @@ const TripMap: React.FC<TripMapProps> = ({ places, tripName, isFullscreen = fals
     const lats = places.map(p => p.coordinates.lat);
     const lngs = places.map(p => p.coordinates.lng);
     
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+    // ✅ Validate coordinates
+    const validLats = lats.filter(lat => !isNaN(lat) && lat !== null && lat !== undefined);
+    const validLngs = lngs.filter(lng => !isNaN(lng) && lng !== null && lng !== undefined);
     
+    if (validLats.length === 0 || validLngs.length === 0) {
+      console.warn('⚠️ No valid coordinates found, using default center');
+      return { lat: 7.8731, lng: 80.7718 };
+    }
+    
+    const centerLat = (Math.min(...validLats) + Math.max(...validLats)) / 2;
+    const centerLng = (Math.min(...validLngs) + Math.max(...validLngs)) / 2;
+    
+    console.log(`🎯 Map center: lat=${centerLat}, lng=${centerLng}`);
     return { lat: centerLat, lng: centerLng };
   };
 
   // Get category-specific icon
   const getCategoryIcon = (category: string) => {
-    const iconSize = [25, 41];
-    const iconAnchor = [12, 41];
-    const popupAnchor = [1, -34];
-    
+    const iconSize: [number, number] = [25, 41];
+    const iconAnchor: [number, number] = [12, 41];
+    const popupAnchor: [number, number] = [1, -34];
+
     let iconUrl = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png';
     let className = '';
-    
+
     switch (category) {
       case 'attraction':
         className = 'marker-attraction';
@@ -75,7 +95,7 @@ const TripMap: React.FC<TripMapProps> = ({ places, tripName, isFullscreen = fals
       default:
         className = 'marker-default';
     }
-    
+
     return new L.Icon({
       iconUrl,
       iconSize,
@@ -100,30 +120,58 @@ const TripMap: React.FC<TripMapProps> = ({ places, tripName, isFullscreen = fals
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {places.map((place) => (
-          <Marker
-            key={place.id}
-            position={[place.coordinates.lat, place.coordinates.lng]}
-            icon={getCategoryIcon(place.category)}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-semibold text-lg mb-1">{place.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">{place.location}</p>
-                <p className="text-sm text-gray-700 mb-2">{place.description}</p>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-600 font-medium">${place.cost}</span>
-                  <span className="text-blue-600">{place.duration}h</span>
+        {places.map((place) => {
+          // ✅ Validate coordinates before rendering
+          const lat = parseFloat(place.coordinates.lat.toString());
+          const lng = parseFloat(place.coordinates.lng.toString());
+          
+          console.log(`📍 Rendering marker for ${place.name}:`, {
+            originalLat: place.coordinates.lat,
+            originalLng: place.coordinates.lng,
+            parsedLat: lat,
+            parsedLng: lng,
+            validLat: !isNaN(lat) && lat >= -90 && lat <= 90,
+            validLng: !isNaN(lng) && lng >= -180 && lng <= 180
+          });
+          
+          if (isNaN(lat) || isNaN(lng) || lat === null || lng === null) {
+            console.warn(`⚠️ Invalid coordinates for place ${place.name}: lat=${lat}, lng=${lng}`);
+            return null;
+          }
+          
+          if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            console.warn(`⚠️ Coordinates out of range for place ${place.name}: lat=${lat}, lng=${lng}`);
+            return null;
+          }
+          
+          return (
+            <Marker
+              key={place.id}
+              position={[lat, lng]} // ✅ Leaflet expects [lat, lng] order
+              icon={getCategoryIcon(place.category)}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-semibold text-lg mb-1">{place.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{place.location}</p>
+                  <p className="text-sm text-gray-700 mb-2">{place.description}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-green-600 font-medium">${place.cost}</span>
+                    <span className="text-blue-600">{place.duration}h</span>
+                  </div>
+                  <div className="mt-2">
+                    <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-full capitalize">
+                      {place.category}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    📍 {lat.toFixed(6)}, {lng.toFixed(6)}
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-full capitalize">
-                    {place.category}
-                  </span>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

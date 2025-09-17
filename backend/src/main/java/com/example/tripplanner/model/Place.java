@@ -37,6 +37,7 @@ public class Place {
     @Column(columnDefinition = "TEXT")
     private String description;
     
+    @NotNull(message = "Category is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PlaceCategory category;
@@ -56,12 +57,14 @@ public class Place {
     @Column(nullable = false, precision = 4, scale = 1)
     private BigDecimal duration = BigDecimal.valueOf(2.0);
     
+    @NotNull(message = "Latitude is required")
     @DecimalMin(value = "-90.0", message = "Latitude must be between -90 and 90")
     @DecimalMax(value = "90.0", message = "Latitude must be between -90 and 90")
     @Digits(integer = 3, fraction = 6, message = "Latitude must have at most 3 digits and 6 decimal places")
     @Column(nullable = false, precision = 9, scale = 6)
     private BigDecimal latitude;
     
+    @NotNull(message = "Longitude is required")
     @DecimalMin(value = "-180.0", message = "Longitude must be between -180 and 180")
     @DecimalMax(value = "180.0", message = "Longitude must be between -180 and 180")
     @Digits(integer = 3, fraction = 6, message = "Longitude must have at most 3 digits and 6 decimal places")

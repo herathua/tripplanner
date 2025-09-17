@@ -5,6 +5,7 @@ import { useAppSelector } from '../store';
 
 export interface Place {
   id?: string;
+  tripId?: number; // ✅ Add tripId to Place interface
   name: string;
   location: string;
   description?: string;
@@ -27,7 +28,7 @@ export interface Expense {
 
 interface TripState {
   currentTrip: Trip | null;
-  places: Place[];
+  placesByTrip: { [tripId: number]: Place[] }; // ✅ Store places by tripId
   activities: Activity[];
   expenses: Expense[];
 }
@@ -37,8 +38,9 @@ interface TripContextType {
   createTrip: (trip: Trip) => Promise<void>;
   loadTrip: (id: number) => Promise<void>;
   saveTrip: () => Promise<void>;
-  addPlace: (place: Omit<Place, 'id'>) => void;
-  removePlace: (placeId: string) => void;
+  addPlace: (place: Omit<Place, 'id'>, tripId?: number) => void; // ✅ Updated signature
+  removePlace: (placeId: string, tripId: number) => void; // ✅ Updated signature
+  getPlacesForTrip: (tripId: number) => Place[]; // ✅ New helper function
   addActivity: (activity: Omit<Activity, 'id'>) => void;
   removeActivity: (activityId: string) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => void;
@@ -52,7 +54,7 @@ interface TripContextType {
 // Initial state
 const initialState: TripState = {
   currentTrip: null,
-  places: [],
+  placesByTrip: {}, // ✅ Initialize empty object for trip-specific places
   activities: [],
   expenses: [],
 };
@@ -61,7 +63,7 @@ const initialState: TripState = {
 type TripAction =
   | { type: 'SET_CURRENT_TRIP'; payload: Trip }
   | { type: 'ADD_PLACE'; payload: Place }
-  | { type: 'REMOVE_PLACE'; payload: string }
+  | { type: 'REMOVE_PLACE'; payload: { placeId: string; tripId: number } } // ✅ Updated payload structure
   | { type: 'ADD_ACTIVITY'; payload: Activity }
   | { type: 'REMOVE_ACTIVITY'; payload: string }
   | { type: 'ADD_EXPENSE'; payload: Expense }
@@ -83,17 +85,40 @@ const tripReducer = (state: TripState, action: TripAction): TripState => {
       };
     case 'ADD_PLACE':
       console.log('📍 Adding place to context:', action.payload);
+      const place = action.payload;
+      const tripId = place.tripId;
+      
+      if (!tripId) {
+        console.warn('⚠️ Place missing tripId, cannot add to context');
+        return state;
+      }
+      
+      const currentPlaces = state.placesByTrip[tripId] || [];
       const newState = {
         ...state,
-        places: [...state.places, action.payload],
+        placesByTrip: {
+          ...state.placesByTrip,
+          [tripId]: [...currentPlaces, place]
+        },
       };
       console.log('✅ New state after adding place:', newState);
       return newState;
     case 'REMOVE_PLACE':
       console.log('🗑️ Removing place:', action.payload);
+      const { placeId, tripId: removeTripId } = action.payload as { placeId: string; tripId: number };
+      
+      if (!removeTripId) {
+        console.warn('⚠️ Remove place missing tripId');
+        return state;
+      }
+      
+      const tripPlaces = state.placesByTrip[removeTripId] || [];
       return {
         ...state,
-        places: state.places.filter(place => place.id !== action.payload),
+        placesByTrip: {
+          ...state.placesByTrip,
+          [removeTripId]: tripPlaces.filter(place => place.id !== placeId)
+        },
       };
     case 'ADD_ACTIVITY':
       console.log('🎯 Adding activity:', action.payload);
@@ -211,11 +236,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [dispatch]);
 
   // Local state management functions
-  const addPlace = (place: Omit<Place, 'id'>) => {
-    console.log('🏗️ addPlace called with:', place);
+  const addPlace = (place: Omit<Place, 'id'>, tripId?: number) => {
+    console.log('🏗️ addPlace called with:', place, 'tripId:', tripId);
     const newPlace: Place = {
       ...place,
       id: Math.random().toString(36).substr(2, 9),
+      tripId: tripId, // ✅ Include tripId
     };
     console.log('🆔 Generated new place with ID:', newPlace.id);
     console.log('📤 Dispatching ADD_PLACE action...');
@@ -223,8 +249,13 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('✅ ADD_PLACE action dispatched');
   };
 
-  const removePlace = (placeId: string) => {
-    dispatch({ type: 'REMOVE_PLACE', payload: placeId });
+  const removePlace = (placeId: string, tripId: number) => {
+    dispatch({ type: 'REMOVE_PLACE', payload: { placeId, tripId } });
+  };
+
+  // ✅ Helper function to get places for a specific trip
+  const getPlacesForTrip = (tripId: number): Place[] => {
+    return state.placesByTrip[tripId] || [];
   };
 
   const addActivity = (activity: Omit<Activity, 'id'>) => {
@@ -272,6 +303,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveTrip,
     addPlace,
     removePlace,
+    getPlacesForTrip, // ✅ Add new helper function
     addActivity,
     removeActivity,
     addExpense,

@@ -10,6 +10,7 @@ import {
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import TripSidebar from '../components/TripSidebar';
 import { useTrip, Place, Expense } from '../contexts/TripContext';
+import { useTripPlaces } from '../hooks/useTripPlaces'; // ✅ Import trip-specific places hook
 import { Activity } from '../services/itineraryService';
 
 // Import services
@@ -45,6 +46,9 @@ const NewTrip = () => {
   
   try {
     const dispatch = useAppDispatch();
+    const [searchParams] = useSearchParams();
+    const tripIdParam = searchParams.get('tripId'); // ✅ Renamed to avoid conflict
+    
     const { 
       state, 
       initializeTripFromParams, 
@@ -55,15 +59,24 @@ const NewTrip = () => {
       addExpense, 
       removeExpense, 
       updateTripName, 
-      clearTrip
+      clearTrip,
+      getPlacesForTrip // ✅ Get trip-specific places helper
     } = useTrip();
+    
+    // ✅ Use trip-specific places hook
+    const {
+      places: tripPlaces,
+      isLoading: placesLoading,
+      isCreating: isCreatingPlace,
+      createPlace,
+      deletePlace
+    } = useTripPlaces(tripIdParam ? parseInt(tripIdParam) : null);
     
     console.log('✅ useTrip hook executed successfully');
     console.log('✅ useAppDispatch executed successfully');
     
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
-    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [tripDays, setTripDays] = useState<Array<{ date: Date; dayNumber: number }>>([]);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -109,7 +122,8 @@ const NewTrip = () => {
       
       // Only clear trip data once when component first mounts
       // Don't clear on every render as it causes infinite loops
-      if (state.places.length === 0) {
+      const currentTripPlaces = tripIdParam ? getPlacesForTrip(parseInt(tripIdParam)) : [];
+      if (currentTripPlaces.length === 0) {
         console.log('Clearing existing trip data...');
         clearTrip();
         dispatch(clearTripDetails());
@@ -122,21 +136,21 @@ const NewTrip = () => {
       
       const startDateStr = searchParams.get('startDate');
       const endDateStr = searchParams.get('endDate');
-      const tripIdParam = searchParams.get('tripId');
+      const tripIdFromUrl = searchParams.get('tripId');
 
-      console.log('URL Parameters:', { startDateStr, endDateStr, tripIdParam });
+      console.log('URL Parameters:', { startDateStr, endDateStr, tripIdFromUrl });
 
-      if (tripIdParam) {
-        console.log('Loading existing trip with ID:', tripIdParam);
+      if (tripIdFromUrl) {
+        console.log('Loading existing trip with ID:', tripIdFromUrl);
         // Load existing trip from backend
-        loadExistingTrip(parseInt(tripIdParam));
+        loadExistingTrip(parseInt(tripIdFromUrl));
       } else if (!startDateStr || !endDateStr) {
         console.log('No tripId and missing start/end dates, navigating to home');
         navigate('/');
         return;
       }
 
-      if (startDateStr && endDateStr && !tripIdParam) {
+      if (startDateStr && endDateStr && !tripIdFromUrl) {
         console.log('New trip - generating trip days');
         const startDate = new Date(startDateStr);
         const endDate = new Date(endDateStr);
@@ -230,21 +244,53 @@ const NewTrip = () => {
       }));
     };
 
-    // Place management
-    const handleAddPlace = (place: Omit<Place, 'id'>) => {
-      addPlace(place);
-      setShowAddPlaceModal(false);
-    };
+  // ✅ Place management with trip-specific logic
+  const handleAddPlace = async (place: Omit<Place, 'id'>) => {
+    console.log('🎯 handleAddPlace called with place:', place);
+    console.log('🎯 Current tripIdParam:', tripIdParam);
+    
+    if (tripIdParam) {
+      // Use backend API for trip-specific places
+      console.log('📝 Creating place via backend API for trip:', tripIdParam);
+      try {
+        await createPlace(place);
+        console.log('✅ Place created via backend API');
+      } catch (error) {
+        console.error('❌ Failed to create place via backend API:', error);
+        throw error; // Re-throw to show error notification
+      }
+    } else {
+      // Fallback to local state
+      console.log('📝 Adding place to local context...');
+      addPlace(place, tripIdParam ? parseInt(tripIdParam) : undefined);
+      console.log('✅ Place added to local context');
+    }
+    
+    setShowAddPlaceModal(false);
+  };
 
-    const handleDeletePlace = (placeId: string) => {
-      removePlace(placeId);
-      // Also remove activities associated with this place
-      state.activities.forEach(activity => {
-        if (activity.placeId === placeId && activity.id) {
-          removeActivity(activity.id);
-        }
-      });
-    };
+  const handleDeletePlace = async (placeId: string) => {
+    console.log('🗑️ handleDeletePlace called with placeId:', placeId);
+    
+    if (tripIdParam) {
+      // Use backend API for trip-specific places
+      console.log('📝 Deleting place via backend API for trip:', tripIdParam);
+      await deletePlace(placeId);
+      console.log('✅ Place deleted via backend API');
+    } else {
+      // Fallback to local state
+      console.log('📝 Removing place from local context...');
+      removePlace(placeId, tripIdParam ? parseInt(tripIdParam) : 0);
+      console.log('✅ Place removed from local context');
+    }
+    
+    // Also remove activities associated with this place
+    state.activities.forEach(activity => {
+      if (activity.placeId === placeId && activity.id) {
+        removeActivity(activity.id);
+      }
+    });
+  };
 
     // Activity management with backend integration
     const handleAddActivity = async (activity: Omit<Activity, 'id'>) => {
@@ -538,7 +584,7 @@ const NewTrip = () => {
                   setEditingActivity(null);
                 }}
                 selectedDay={selectedDay || 1}
-                places={state.places || []}
+                places={tripPlaces || []}
                 selectedPlace={selectedPlace}
                 editingActivity={editingActivity}
               />
@@ -667,41 +713,21 @@ const NewTrip = () => {
                   tripDays={tripDays}
                   budget={state.currentTrip?.budget || 0}
                   totalSpent={calculateTotalSpent()}
-                  places={state.places || []}
+                  places={tripPlaces || []} // ✅ Use trip-specific places
                   tripName={state.currentTrip?.title || "Trip"}
                   isMapFullscreen={isMapFullscreen}
                   onToggleMapFullscreen={() => setIsMapFullscreen(!isMapFullscreen)}
                   getCategoryIcon={getCategoryIcon}
                 />
 
-                               <PlacesSection
-                 places={state.places || []}
-                 searchQuery={searchQuery}
-                 onSearchChange={setSearchQuery}
-                 onAddToItinerary={(place) => {
-                   console.log('🎯 onAddToItinerary called with place:', place);
-                   
-                   // Add the place directly to the trip context
-                   // This will automatically pin it on the map and display it as a card
-                   console.log('📝 Calling addPlace...');
-                   addPlace(place);
-                   console.log('✅ addPlace completed');
-                   
-                   // Show success notification
-                   console.log('🔔 Adding success notification...');
-                   dispatch(addNotification({
-                     type: 'success',
-                     message: `${place.name} has been added to your trip!`,
-                     duration: 3000,
-                   }));
-                   console.log('✅ Notification added');
-                   
-                   // Log current state to verify place was added
-                   console.log('📊 Current places in context:', state.places);
-                 }}
-                 onDeletePlace={handleDeletePlace}
-                 getCategoryIcon={getCategoryIcon}
-               />
+                <PlacesSection
+                  places={tripPlaces || []} // ✅ Use trip-specific places
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  onAddToItinerary={handleAddPlace} // ✅ Use trip-specific handler
+                  onDeletePlace={handleDeletePlace} // ✅ Use trip-specific handler
+                  getCategoryIcon={getCategoryIcon}
+                />
 
                 <ItinerarySection
                   tripDays={tripDays}
