@@ -1,41 +1,25 @@
-server:
-  port: 8080
-
 spring:
   datasource:
-    url: ${JDBC_DATABASE_URL:jdbc:mysql://localhost:3307/tripplanner?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    url: ${JDBC_DATABASE_URL:jdbc:mysql://localhost:3306/tripplanner?serverTimezone=UTC}
     username: ${JDBC_DATABASE_USERNAME:root}
-    password: ${JDBC_DATABASE_PASSWORD:P4ssword!}
+    password: ${JDBC_DATABASE_PASSWORD:<<YOUR_PASSWORD>>}
     hikari:
       connection-timeout: 30000
       maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 300000
-      max-lifetime: 1200000
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
-    show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
-        use_sql_comments: true
-  jackson:
-    date-format: yyyy-MM-dd
-    time-zone: UTC
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        id:
+          new_generator_mappings: true
   docker:
     compose:
       lifecycle-management: start-only
-
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.example.tripplanner: DEBUG
-    org.springframework.web: DEBUG
-
 error:
   handling:
     http-status-in-json-response: true
@@ -43,6 +27,5 @@ error:
     full-stacktrace-http-statuses: 5xx
     log-levels:
       5xx: ERROR
-
 springdoc:
   pathsToMatch: /, /api/**

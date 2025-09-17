@@ -7,8 +7,9 @@ import {
   onAuthStateChange,
   loginWithGoogle as firebaseGoogleLogin,
   loginAnonymously as firebaseAnonymousLogin,
+  sendPasswordReset,
 } from '../../config/firebase';
-import apiClient from '../../config/api';
+import apiClient, { authService } from '../../config/api';
 import { auth } from '../../config/firebase';
 
 // TEMPORARY: Mock user type to replace Firebase User
@@ -44,18 +45,23 @@ const initialState: AuthState = {
 // Helper to sync user with backend
 async function syncUserWithBackend(user: User) {
   if (!user) return;
-  const token = await user.getIdToken();
-  await apiClient.post('/users/sync', {
-    firebaseUid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoUrl: user.photoURL,
-    emailVerified: user.emailVerified,
-  }, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }
-  });
+  try {
+    const token = await user.getIdToken();
+    // Verify token with backend
+    await authService.verifyToken(token);
+    
+    // Sync user data with backend
+    await apiClient.post('/users/sync', {
+      firebaseUid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
+      emailVerified: user.emailVerified,
+    });
+  } catch (error) {
+    console.error('Failed to sync user with backend:', error);
+    throw error;
+  }
 }
 
 // Login with email/password
@@ -110,6 +116,19 @@ export const loginAnonymously = createAsyncThunk<User, void, { rejectValue: stri
       return user;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to login anonymously');
+    }
+  }
+);
+
+// Password Reset
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      await sendPasswordReset(email);
+      return email;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to send password reset email');
     }
   }
 );
@@ -223,6 +242,19 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(logout.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Password Reset
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

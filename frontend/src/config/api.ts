@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from './firebase';
 
 // API Configuration
 export const API_CONFIG = {
@@ -112,17 +113,64 @@ if (import.meta.env.DEV) {
   );
 }
 
-// Temporarily disable Firebase authentication for testing
-// apiClient.interceptors.request.use(async (config) => {
-//   const user = auth.currentUser;
-//   if (user) {
-//     const token = await user.getIdToken();
-//     config.headers = {
-//       ...config.headers,
-//       Authorization: `Bearer ${token}`,
-//     };
-//   }
-//   return config;
-// }, (error) => Promise.reject(error));
+// Firebase authentication interceptor
+apiClient.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      const token = await user.getIdToken();
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
+    } catch (error) {
+      console.error('Error getting Firebase token:', error);
+    }
+  }
+  return config;
+}, (error) => Promise.reject(error));
+
+// Authentication service functions
+export const authService = {
+  /**
+   * Verify Firebase token with backend
+   * @param idToken Firebase ID token
+   * @returns Promise with verification result
+   */
+  async verifyToken(idToken: string) {
+    try {
+      const response = await apiClient.post('/auth/login', { idToken });
+      return response.data;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get current user's Firebase token
+   * @returns Promise with Firebase ID token
+   */
+  async getCurrentToken(): Promise<string | null> {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        return await user.getIdToken();
+      } catch (error) {
+        console.error('Error getting current token:', error);
+        return null;
+      }
+    }
+    return null;
+  },
+
+  /**
+   * Check if user is authenticated
+   * @returns boolean indicating authentication status
+   */
+  isAuthenticated(): boolean {
+    return !!auth.currentUser;
+  }
+};
 
 export default apiClient;

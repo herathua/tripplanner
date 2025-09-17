@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { tripService, userService, placeService } from '../services';
-import { Trip, TripStatus, TripVisibility } from '../services/tripService';
+import { userService, placeService } from '../services';
+import TripService, { Trip, TripStatus, TripVisibility } from '../services/tripService';
 import { User, UserRole } from '../services/userService';
 import { Place, PlaceCategory } from '../services/placeService';
 import { useAppSelector } from '../store';
@@ -35,7 +35,7 @@ const ApiTestPage: React.FC = () => {
       if (!user?.uid) {
         throw new Error('User not authenticated');
       }
-      const result = await tripService.createTrip(newTrip, user.uid);
+      const result = await TripService.createTrip(newTrip, user.uid);
       setResult('createTrip', result);
     } catch (error: any) {
       setResult('createTrip', { error: error.message });
@@ -47,7 +47,7 @@ const ApiTestPage: React.FC = () => {
   const testGetAllTrips = async () => {
     setLoadingState('getAllTrips', true);
     try {
-      const result = await tripService.getAllTrips();
+      const result = await TripService.getTripsByUser(user.uid);
       setResult('getAllTrips', result);
     } catch (error: any) {
       setResult('getAllTrips', { error: error.message });
@@ -59,7 +59,7 @@ const ApiTestPage: React.FC = () => {
   const testSearchTrips = async () => {
     setLoadingState('searchTrips', true);
     try {
-      const result = await tripService.searchTrips('test');
+      const result = await TripService.searchTrips(user.uid, 'test');
       setResult('searchTrips', result);
     } catch (error: any) {
       setResult('searchTrips', { error: error.message });

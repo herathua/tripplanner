@@ -8,7 +8,8 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
-  signInAnonymously
+  signInAnonymously,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 // Your web app's Firebase configuration
@@ -68,6 +69,14 @@ export const loginAnonymously = async () => {
 export const logoutUser = async () => {
   try {
     await signOut(auth);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendPasswordReset = async (email: string) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
   } catch (error) {
     throw error;
   }
