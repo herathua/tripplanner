@@ -52,6 +52,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { name: 'AI Travel Assistant', path: '/location-search', action: toggleAIAssistant },
   ];
 
+  // Add admin link if user is admin
+  if (profile?.role === 'ADMIN' || user?.email?.includes('admin')) {
+    navigation.push({ name: 'Admin Console', path: '/admin' });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

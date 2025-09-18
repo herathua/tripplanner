@@ -257,11 +257,11 @@ const HomePage: React.FC = () => {
   };
 
   const handleViewAllGuides = () => {
-    navigate('/guides');
+    navigate('/user-management?tab=guides');
   };
 
   const handleViewAllTrips = () => {
-    navigate('/trips');
+    navigate('/user-management?tab=trips');
   };
 
   return (
@@ -440,13 +440,6 @@ const HomePage: React.FC = () => {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold">Popular Guides</h2>
-            <button
-              className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
-              onClick={handleViewAllGuides}
-            >
-              View All
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

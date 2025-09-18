@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppSelector } from '../store';
+import { useSearchParams } from 'react-router-dom';
 import ProfileSettings from '../components/user/ProfileSettings';
 import UserTrips from '../components/user/UserTrips';
 import UserGuides from '../components/user/UserGuides';
@@ -9,8 +10,17 @@ type UserManagementTab = 'profile' | 'trips' | 'guides';
 
 const UserManagement: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<UserManagementTab>('profile');
   const { profile } = useUserProfile(user);
+
+  // Set initial tab based on URL search params
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['profile', 'trips', 'guides'].includes(tabParam)) {
+      setActiveTab(tabParam as UserManagementTab);
+    }
+  }, [searchParams]);
 
   if (!isAuthenticated || !user) {
     return (

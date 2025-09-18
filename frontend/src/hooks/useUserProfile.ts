@@ -5,6 +5,7 @@ import { ImageUploadService } from '../services/imageUploadService';
 interface UserProfile {
   displayName?: string;
   photoUrl?: string;
+  role?: string;
 }
 
 export const useUserProfile = (user: User | null) => {

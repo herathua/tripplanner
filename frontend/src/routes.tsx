@@ -24,6 +24,8 @@ const EnhancedBlogViewer = React.lazy(() => import('./pages/EnhancedBlogViewer')
 const BlogManagementDashboard = React.lazy(() => import('./pages/BlogManagementDashboard'));
 const SupabaseDebugger = React.lazy(() => import('./components/SupabaseDebugger'));
 const UserManagement = React.lazy(() => import('./pages/UserManagement'));
+const AdminConsole = React.lazy(() => import('./pages/AdminConsole'));
+const AdminRoute = React.lazy(() => import('./components/admin/AdminRoute'));
 
 
 // Protected Route component
@@ -253,6 +255,16 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <UserManagement />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminConsole />
+            </AdminRoute>
           }
         />
 

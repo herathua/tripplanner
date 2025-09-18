@@ -101,7 +101,7 @@ export class ImageUploadService {
   /**
    * Get user profile from backend database
    */
-  static async getUserProfile(user: User): Promise<{ displayName?: string; photoUrl?: string } | null> {
+  static async getUserProfile(user: User): Promise<{ displayName?: string; photoUrl?: string; role?: string } | null> {
     try {
       // Import userService dynamically to avoid circular imports
       const { userService } = await import('./userService');
@@ -110,7 +110,8 @@ export class ImageUploadService {
       
       return {
         displayName: backendUser.displayName,
-        photoUrl: backendUser.photoUrl
+        photoUrl: backendUser.photoUrl,
+        role: backendUser.role
       };
     } catch (error: any) {
       console.error('Backend profile fetch error:', error);
