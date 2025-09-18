@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Eye, Star } from 'lucide-react';
+import { Edit, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
+import StarRating from './StarRating';
 
 interface GuideCardProps {
   guide: BlogPost;
@@ -130,8 +131,14 @@ const GuideCard: React.FC<GuideCardProps> = ({
           </div>
           
           <div className="flex items-center text-sm text-gray-600">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="ml-1">4.8</span>
+            <StarRating
+              blogPostId={guide.id!}
+              averageRating={guide.averageRating}
+              ratingCount={guide.ratingCount}
+              showStats={false}
+              interactive={false}
+              size="sm"
+            />
             <span className="mx-1">•</span>
             <span>{guide.viewCount || 0} views</span>
           </div>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, ArrowRight, Eye } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
+import StarRating from '../components/StarRating';
 
 const TravelGuidePage: React.FC = () => {
   const navigate = useNavigate();
@@ -73,8 +74,14 @@ const TravelGuidePage: React.FC = () => {
               {post.title || 'Untitled Guide'}
             </h3>
             <div className="flex items-center">
-              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-              <span className="ml-1 text-sm">4.8</span>
+              <StarRating
+                blogPostId={post.id!}
+                averageRating={post.averageRating}
+                ratingCount={post.ratingCount}
+                showStats={false}
+                interactive={false}
+                size="sm"
+              />
             </div>
           </div>
           <div className="text-sm text-gray-600 mb-2">

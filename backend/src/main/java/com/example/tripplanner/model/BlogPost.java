@@ -1,7 +1,6 @@
 package com.example.tripplanner.model;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,6 +45,12 @@ public class BlogPost {
     
     @Column(name = "view_count")
     private Long viewCount = 0L;
+    
+    @Column(name = "average_rating")
+    private Double averageRating = 0.0;
+    
+    @Column(name = "rating_count")
+    private Long ratingCount = 0L;
     
     @PrePersist
     protected void onCreate() {
@@ -176,5 +181,21 @@ public class BlogPost {
     
     public void incrementViewCount() {
         this.viewCount++;
+    }
+    
+    public Double getAverageRating() {
+        return averageRating;
+    }
+    
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+    
+    public Long getRatingCount() {
+        return ratingCount;
+    }
+    
+    public void setRatingCount(Long ratingCount) {
+        this.ratingCount = ratingCount;
     }
 }

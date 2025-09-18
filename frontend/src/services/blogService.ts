@@ -12,6 +12,8 @@ export interface BlogPost {
   updatedAt?: string;
   publishedAt?: string;
   viewCount?: number;
+  averageRating?: number;
+  ratingCount?: number;
   coverImage?: {
     url: string;
     alt: string;

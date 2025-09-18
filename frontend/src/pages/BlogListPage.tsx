@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { blogService, BlogPost, BlogPostResponse } from '../services/blogService';
+import StarRating from '../components/StarRating';
 
 const BlogListPage: React.FC = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -128,7 +129,7 @@ const BlogListPage: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <Link
                       to={`/blog/${post.publicSlug}`}
                       className="text-blue-600 hover:text-blue-700 font-medium"
@@ -138,6 +139,18 @@ const BlogListPage: React.FC = () => {
                     {post.viewCount !== undefined && (
                       <span className="text-sm text-gray-500">{post.viewCount} views</span>
                     )}
+                  </div>
+                  
+                  {/* Rating display */}
+                  <div className="flex items-center justify-between">
+                    <StarRating
+                      blogPostId={post.id!}
+                      averageRating={post.averageRating}
+                      ratingCount={post.ratingCount}
+                      showStats={true}
+                      interactive={false}
+                      size="sm"
+                    />
                   </div>
                 </div>
               </article>

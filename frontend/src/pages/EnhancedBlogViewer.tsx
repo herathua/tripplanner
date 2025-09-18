@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useAppSelector } from '../store';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
@@ -11,6 +12,8 @@ import Marker from '@editorjs/marker';
 import ImageTool from '@editorjs/image';
 import { blogService, BlogPost } from '../services/blogService';
 import { BlogCoverImageService, BlogCoverImage } from '../utils/blogCoverImageService';
+import StarRating from '../components/StarRating';
+import InteractiveRating from '../components/InteractiveRating';
 
 const EnhancedBlogViewer: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +24,23 @@ const EnhancedBlogViewer: React.FC = () => {
   const [editorFailed, setEditorFailed] = useState(true); // Start with fallback mode
   const [coverImage, setCoverImage] = useState<BlogCoverImage | null>(null);
   const [isCoverImageLoading, setIsCoverImageLoading] = useState(true);
+  
+  // Get user authentication state
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Handle rating submission
+  const handleRatingSubmitted = async (rating: number) => {
+    console.log('User rated the blog post:', rating);
+    // Refresh blog post data to get updated ratings
+    if (slug) {
+      try {
+        const updatedPost = await blogService.getPublicBlogPost(slug);
+        setBlogPost(updatedPost);
+      } catch (error) {
+        console.error('Error refreshing blog post after rating:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -214,6 +234,18 @@ const EnhancedBlogViewer: React.FC = () => {
                 <span>• {blogPost.viewCount} views</span>
               )}
               <span>• {formatReadingTime(blogPost.content)}</span>
+              
+              {/* Rating display */}
+              <div className="flex items-center gap-2">
+                <StarRating
+                  blogPostId={blogPost.id!}
+                  averageRating={blogPost.averageRating}
+                  ratingCount={blogPost.ratingCount}
+                  showStats={true}
+                  interactive={false}
+                  size="sm"
+                />
+              </div>
             </div>
 
             {/* Tags */}
@@ -401,6 +433,30 @@ const EnhancedBlogViewer: React.FC = () => {
               </svg>
               Copy Link
             </button>
+          </div>
+        </div>
+
+        {/* Rating Section */}
+        <div className="mt-8 bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Rate this Guide</h3>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <InteractiveRating
+                blogPostId={blogPost.id!}
+                firebaseUid={user?.uid}
+                onRatingSubmitted={handleRatingSubmitted}
+              />
+            </div>
+            <div className="ml-6">
+              <StarRating
+                blogPostId={blogPost.id!}
+                averageRating={blogPost.averageRating}
+                ratingCount={blogPost.ratingCount}
+                showStats={true}
+                interactive={false}
+                size="md"
+              />
+            </div>
           </div>
         </div>
 
