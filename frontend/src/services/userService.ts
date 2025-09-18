@@ -60,5 +60,11 @@ export const userService = {
   async getUserByEmail(email: string): Promise<User> {
     const response = await apiClient.get(`/users/email/${email}`);
     return response.data;
+  },
+
+  // Sync user (create or update)
+  async syncUser(userData: Partial<User>): Promise<User> {
+    const response = await apiClient.post('/users/sync', userData);
+    return response.data;
   }
 };

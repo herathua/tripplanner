@@ -219,6 +219,29 @@ public class TripController {
         }
     }
 
+    @GetMapping("/user/{firebaseUid}")
+    @Operation(summary = "Get all trips for user", description = "Retrieve all trips for a specific user")
+    public ResponseEntity<PagedResponseDTO<TripDTO>> getAllTripsByUser(
+            @Parameter(description = "Firebase UID of the user")
+            @PathVariable String firebaseUid,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("=== GETTING ALL TRIPS FOR USER ===");
+            System.out.println("Firebase UID: " + firebaseUid);
+            System.out.println("Page: " + page + ", Size: " + size);
+            
+            PagedResponseDTO<TripDTO> trips = tripService.getAllTripsByUser(firebaseUid, page, size);
+            System.out.println("✅ Returning " + trips.getContent().size() + " total trips");
+            return ResponseEntity.ok(trips);
+        } catch (Exception e) {
+            System.err.println("=== ERROR GETTING ALL TRIPS ===");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(new PagedResponseDTO<>(new ArrayList<>(), 0, size, 0));
+        }
+    }
+
     // Unified Trip Plan Operations
     @PostMapping("/{id}/plan")
     @Operation(summary = "Save complete trip plan", description = "Save the entire trip plan including places, activities, and expenses in one operation")

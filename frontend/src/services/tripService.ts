@@ -77,5 +77,13 @@ export const tripService = {
       params: { page, size }
     });
     return response.data;
+  },
+
+  // Get all trips by user Firebase UID with paging
+  async getAllTripsByUser(firebaseUid: string, page = 0, size = 10) {
+    const response = await apiClient.get(`/trips/user/${firebaseUid}`, {
+      params: { page, size }
+    });
+    return response.data;
   }
 };

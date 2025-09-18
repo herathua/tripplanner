@@ -23,6 +23,7 @@ const EnhancedBlogEditor = React.lazy(() => import('./pages/EnhancedBlogEditor')
 const EnhancedBlogViewer = React.lazy(() => import('./pages/EnhancedBlogViewer'));
 const BlogManagementDashboard = React.lazy(() => import('./pages/BlogManagementDashboard'));
 const SupabaseDebugger = React.lazy(() => import('./components/SupabaseDebugger'));
+const UserManagement = React.lazy(() => import('./pages/UserManagement'));
 
 
 // Protected Route component
@@ -243,6 +244,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <ChatBotPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user-management"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
             </ProtectedRoute>
           }
         />

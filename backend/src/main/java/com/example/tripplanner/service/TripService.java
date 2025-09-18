@@ -307,6 +307,33 @@ public class TripService {
         return new PagedResponseDTO<>(pagedTrips, page, size, tripDTOs.size());
     }
 
+    // Get all trips by user Firebase UID with pagination
+    public PagedResponseDTO<TripDTO> getAllTripsByUser(String firebaseUid, int page, int size) {
+        System.out.println("=== GETTING ALL TRIPS FOR USER ===");
+        System.out.println("Firebase UID: " + firebaseUid);
+        System.out.println("Page: " + page + ", Size: " + size);
+        
+        User user = userRepository.findByFirebaseUid(firebaseUid)
+            .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
+        
+        List<Trip> allTrips = tripRepository.findByUser(user);
+        
+        System.out.println("✅ Found " + allTrips.size() + " total trips");
+        
+        // Convert to DTOs
+        List<TripDTO> tripDTOs = allTrips.stream()
+            .map(this::convertToTripDTO)
+            .collect(Collectors.toList());
+        
+        // Apply pagination manually (since we don't have Spring Data pagination here)
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, tripDTOs.size());
+        
+        List<TripDTO> pagedTrips = tripDTOs.subList(startIndex, endIndex);
+        
+        return new PagedResponseDTO<>(pagedTrips, page, size, tripDTOs.size());
+    }
+
     // Unified Trip Plan Operations
     public TripPlanDTO saveTripPlan(Long tripId, TripPlanDTO tripPlanDTO) {
         System.out.println("=== SAVING UNIFIED TRIP PLAN ===");

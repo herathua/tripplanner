@@ -39,6 +39,29 @@ public class UserController {
         return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/firebase/{firebaseUid}")
+    @Operation(summary = "Get user by Firebase UID", description = "Retrieve a specific user by their Firebase UID")
+    public ResponseEntity<UserDTO> getUserByFirebaseUid(
+            @Parameter(description = "Firebase UID of the user to retrieve") 
+            @PathVariable String firebaseUid) {
+        Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            UserDTO dto = new UserDTO(
+                user.getId(),
+                user.getFirebaseUid(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getPhotoUrl(),
+                user.isEmailVerified(),
+                user.isActive(),
+                user.getRole().name()
+            );
+            return ResponseEntity.ok(dto);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping
     @Operation(summary = "Create a new user", description = "Create a new user with the provided details")
     public ResponseEntity<User> createUser(
