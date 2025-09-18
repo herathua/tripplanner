@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Edit, Trash2, Eye, Star } from 'lucide-react';
+import { Edit, Trash2, Eye, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
@@ -110,13 +110,12 @@ const GuideCard: React.FC<GuideCardProps> = ({
             className="object-cover w-full h-48"
           />
         )}
-        <div className="absolute top-3 right-3 flex space-x-2">
+        <div className="absolute top-3 right-3">
           {guide.status && (
             <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(guide.status)}`}>
               {guide.status}
             </span>
           )}
-          <Heart className="w-6 h-6 text-white" />
         </div>
       </div>
       

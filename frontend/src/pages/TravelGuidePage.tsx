@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, ArrowRight, Eye, Heart } from 'lucide-react';
+import { Search, MapPin, Star, ArrowRight, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
@@ -59,13 +59,12 @@ const TravelGuidePage: React.FC = () => {
               className="w-full h-full object-cover"
             />
           )}
-          <div className="absolute top-3 right-3 flex space-x-2">
+          <div className="absolute top-3 right-3">
             {post.status === 'PUBLISHED' && (
               <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                 PUBLISHED
               </span>
             )}
-            <Heart className="w-5 h-5 text-white" />
           </div>
         </div>
         <div className="p-4">
