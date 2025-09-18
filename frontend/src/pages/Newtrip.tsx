@@ -63,7 +63,8 @@ const NewTrip = () => {
       removeExpense, 
       updateTripName, 
       clearTrip,
-      getPlacesForTrip // ✅ Get trip-specific places helper
+      getPlacesForTrip, // ✅ Get trip-specific places helper
+      loadTrip // ✅ Add loadTrip function
     } = useTrip();
     
     // ✅ Use trip-specific places hook
@@ -199,8 +200,9 @@ const NewTrip = () => {
         console.log('Loaded expenses:', tripExpenses);
         setBackendExpenses(tripExpenses);
         
-        // Update context with trip data
-        // Note: You might need to update the context to handle this
+        // Update context with trip data using the context's loadTrip function
+        console.log('Updating trip context with loaded data:', trip);
+        await loadTrip(id);
         
         // Generate trip days from trip dates
         if (trip.startDate && trip.endDate) {
@@ -365,6 +367,9 @@ const NewTrip = () => {
 
     try {
       console.log('💾 Saving unified trip plan with ID:', tripIdParam);
+      console.log('📊 Current trip state:', state.currentTrip);
+      console.log('📊 Trip state title:', state.currentTrip?.title);
+      console.log('📊 Trip state destination:', state.currentTrip?.destination);
       
       // Convert frontend data to unified trip plan format
       const tripPlan: TripPlanDTO = {

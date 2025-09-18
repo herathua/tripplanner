@@ -75,12 +75,12 @@ const HomePage: React.FC = () => {
             className="cursor-pointer mb-3"
             onClick={() => handleViewTrip(trip)}
           >
-            <h3 className="mb-2 font-semibold text-lg hover:text-blue-600 transition-colors">{trip.title}</h3>
+            <h3 className="mb-2 font-semibold text-lg hover:text-blue-600 transition-colors">{trip.title || 'Untitled Trip'}</h3>
             <div className="flex items-center text-sm text-gray-600 mb-2">
-              <span className="font-medium">{trip.destination}</span>
+              <span className="font-medium">{trip.destination || 'Unknown Destination'}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>{trip.startDate} - {trip.endDate}</span>
+              <span>{trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'TBD'} - {trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'TBD'}</span>
               {trip.budget && (
                 <span className="font-medium text-green-600">
                   ${trip.budget.toLocaleString()}
@@ -120,6 +120,7 @@ const HomePage: React.FC = () => {
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
   const [tripPage, setTripPage] = useState(0);
   const [tripTotalPages, setTripTotalPages] = useState(1);
+  const [tripsLoading, setTripsLoading] = useState(false);
   const tripsPerPage = 3;
   
   // User guides state
@@ -137,6 +138,7 @@ const HomePage: React.FC = () => {
     
     if (user && user.uid) {
       console.log('Loading trips for user:', user.uid);
+      setTripsLoading(true);
       tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
         console.log('Trips data received:', data);
         console.log('Data structure:', {
@@ -153,9 +155,14 @@ const HomePage: React.FC = () => {
         console.error('Error details:', error.response?.data);
         console.error('Error status:', error.response?.status);
         console.error('Error message:', error.message);
+        setUpcomingTrips([]);
+      }).finally(() => {
+        setTripsLoading(false);
       });
     } else {
       console.log('No user or user.uid, skipping trip loading');
+      setUpcomingTrips([]);
+      setTripsLoading(false);
     }
   }, [user, tripPage]);
 
@@ -211,25 +218,33 @@ const HomePage: React.FC = () => {
 
   // Trip management functions
   const handleEditTrip = (trip: any) => {
+    console.log('Editing trip:', trip);
     navigate(`/new-trip?tripId=${trip.id}`);
   };
 
   const handleViewTrip = (trip: any) => {
+    console.log('Viewing trip:', trip);
     navigate(`/new-trip?tripId=${trip.id}`);
   };
 
   const handleDeleteTrip = async (tripId: number) => {
     if (window.confirm('Are you sure you want to delete this trip?')) {
       try {
+        console.log('Deleting trip with ID:', tripId);
         await tripService.deleteTrip(tripId);
+        console.log('Trip deleted successfully');
+        
         // Refresh trips
         if (user && user.uid) {
+          console.log('Refreshing trips after deletion...');
           const data = await tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage);
           setUpcomingTrips(data.content || []);
+          console.log('Trips refreshed, new count:', data.content?.length || 0);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error deleting trip:', error);
-        alert('Failed to delete trip');
+        console.error('Error details:', error.response?.data);
+        alert(`Failed to delete trip: ${error.response?.data?.message || error.message}`);
       }
     }
   };
@@ -278,19 +293,47 @@ const HomePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingTrips.length === 0 && (
-              <div className="col-span-3 text-center text-gray-500">
-                No upcoming trips found. 
-                <br />
+            {tripsLoading ? (
+              <div className="col-span-3 text-center text-gray-500 py-8">
+                <div className="mb-4">Loading trips...</div>
+              </div>
+            ) : upcomingTrips.length === 0 ? (
+              <div className="col-span-3 text-center text-gray-500 py-8">
+                <div className="mb-4">
+                  {user?.uid ? 'No upcoming trips found.' : 'Please log in to view your trips.'}
+                </div>
                 <small className="text-xs text-gray-400">
                   Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
                   Trips count: {upcomingTrips.length}
+                  {user?.uid && (
+                    <div className="mt-2">
+                      <button 
+                        onClick={() => {
+                          console.log('Refreshing trips...');
+                          setTripsLoading(true);
+                          tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+                            console.log('Refreshed trips data:', data);
+                            setUpcomingTrips(data.content || []);
+                            setTripTotalPages(data.totalPages || 1);
+                          }).catch(error => {
+                            console.error('Error refreshing trips:', error);
+                          }).finally(() => {
+                            setTripsLoading(false);
+                          });
+                        }}
+                        className="text-blue-600 hover:text-blue-700 underline"
+                      >
+                        Refresh trips
+                      </button>
+                    </div>
+                  )}
                 </small>
               </div>
+            ) : (
+              upcomingTrips.map((trip, idx) => (
+                <DynamicTripCard key={trip.id || idx} trip={trip} />
+              ))
             )}
-            {upcomingTrips.map((trip, idx) => (
-              <DynamicTripCard key={trip.id || idx} trip={trip} />
-            ))}
           </div>
           {/* Paging Controls */}
           {tripTotalPages > 1 && (
