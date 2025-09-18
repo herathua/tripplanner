@@ -4,8 +4,9 @@ import { adminService, AdminStats, SystemLog } from '../services/adminService';
 import { userService, User, UserRole } from '../services/userService';
 import { addNotification } from '../store/slices/uiSlice';
 import { useAppDispatch } from '../store';
+import BlogManagement from '../components/admin/BlogManagement';
 
-type AdminTab = 'dashboard' | 'users' | 'logs' | 'settings';
+type AdminTab = 'dashboard' | 'users' | 'logs' | 'settings' | 'blogs';
 
 const AdminConsole: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -105,6 +106,7 @@ const AdminConsole: React.FC = () => {
   const tabs = [
     { id: 'dashboard' as AdminTab, name: 'Dashboard', icon: '📊' },
     { id: 'users' as AdminTab, name: 'User Management', icon: '👥' },
+    { id: 'blogs' as AdminTab, name: 'Blog Management', icon: '📝' },
     { id: 'logs' as AdminTab, name: 'System Logs', icon: '📋' },
     { id: 'settings' as AdminTab, name: 'Settings', icon: '⚙️' },
   ];
@@ -358,6 +360,8 @@ const AdminConsole: React.FC = () => {
         return renderDashboard();
       case 'users':
         return renderUsers();
+      case 'blogs':
+        return <BlogManagement />;
       case 'logs':
         return renderLogs();
       case 'settings':

@@ -1,6 +1,8 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.User;
+import com.example.tripplanner.model.BlogPost;
+import com.example.tripplanner.model.BlogPostStatus;
 import com.example.tripplanner.repository.UserRepository;
 import com.example.tripplanner.repository.TripRepository;
 import com.example.tripplanner.repository.BlogPostRepository;
@@ -13,13 +15,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/admin")
@@ -186,6 +190,92 @@ public class AdminController {
         } catch (Exception e) {
             System.err.println("Error exporting user data: " + e.getMessage());
             return ResponseEntity.status(500).body(new byte[0]);
+        }
+    }
+
+    // Blog Management Endpoints
+    
+    @GetMapping("/blog-posts")
+    @Operation(summary = "Get all blog posts (admin only)")
+    public ResponseEntity<Page<BlogPost>> getAllBlogPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BlogPost> blogPosts = blogPostRepository.findAll(pageable);
+            return ResponseEntity.ok(blogPosts);
+        } catch (Exception e) {
+            System.err.println("Error getting all blog posts: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/blog-posts/{id}")
+    @Operation(summary = "Get blog post by ID (admin only)")
+    public ResponseEntity<BlogPost> getBlogPostById(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            Optional<BlogPost> blogPost = blogPostRepository.findById(id);
+            if (blogPost.isPresent()) {
+                return ResponseEntity.ok(blogPost.get());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting blog post by ID: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @PutMapping("/blog-posts/{id}/status")
+    @Operation(summary = "Update blog post status (admin only)")
+    public ResponseEntity<BlogPost> updateBlogPostStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request,
+            Authentication authentication) {
+        try {
+            Optional<BlogPost> blogPostOpt = blogPostRepository.findById(id);
+            if (blogPostOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            BlogPost blogPost = blogPostOpt.get();
+            String statusStr = request.get("status");
+            try {
+                BlogPostStatus status = BlogPostStatus.valueOf(statusStr);
+                blogPost.setStatus(status);
+                BlogPost updatedPost = blogPostRepository.save(blogPost);
+                return ResponseEntity.ok(updatedPost);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating blog post status: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @DeleteMapping("/blog-posts/{id}")
+    @Operation(summary = "Delete blog post (admin only)")
+    public ResponseEntity<Map<String, String>> deleteBlogPost(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            if (blogPostRepository.existsById(id)) {
+                blogPostRepository.deleteById(id);
+                return ResponseEntity.ok(Map.of("message", "Blog post deleted successfully"));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting blog post: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 }

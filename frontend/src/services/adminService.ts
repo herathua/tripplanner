@@ -1,5 +1,6 @@
 import apiClient from '../config/api';
 import { User, UserRole } from './userService';
+import { BlogPost, BlogPostResponse } from './blogService';
 
 export interface AdminStats {
   totalUsers: number;
@@ -62,6 +63,31 @@ export const adminService = {
   // Get user activity logs
   async getUserActivityLogs(userId: number): Promise<SystemLog[]> {
     const response = await apiClient.get(`/admin/users/${userId}/activity`);
+    return response.data;
+  },
+
+  // Blog management endpoints
+  // Get all blog posts (admin only)
+  async getAllBlogPosts(page: number = 0, size: number = 10): Promise<BlogPostResponse> {
+    const response = await apiClient.get(`/admin/blog-posts?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // Update blog post status (admin only)
+  async updateBlogPostStatus(id: number, status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'): Promise<BlogPost> {
+    const response = await apiClient.put(`/admin/blog-posts/${id}/status`, { status });
+    return response.data;
+  },
+
+  // Delete blog post (admin only)
+  async deleteBlogPost(id: number): Promise<{ message: string }> {
+    const response = await apiClient.delete(`/admin/blog-posts/${id}`);
+    return response.data;
+  },
+
+  // Get blog post by ID (admin only)
+  async getBlogPostById(id: number): Promise<BlogPost> {
+    const response = await apiClient.get(`/admin/blog-posts/${id}`);
     return response.data;
   },
 
