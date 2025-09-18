@@ -65,19 +65,4 @@ export const adminService = {
     return response.data;
   },
 
-  // Send system notification to users
-  async sendSystemNotification(message: string, targetUsers?: 'all' | 'admins' | number[]): Promise<void> {
-    await apiClient.post('/admin/notifications', {
-      message,
-      targetUsers: targetUsers || 'all'
-    });
-  },
-
-  // Export user data
-  async exportUserData(): Promise<Blob> {
-    const response = await apiClient.get('/admin/export/users', {
-      responseType: 'blob'
-    });
-    return response.data;
-  }
 };

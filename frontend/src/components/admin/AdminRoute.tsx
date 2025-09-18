@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../../store';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import MainLayout from '../layout/MainLayout';
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -43,7 +44,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  return <>{children}</>;
+  return <MainLayout>{children}</MainLayout>;
 };
 
 export default AdminRoute;

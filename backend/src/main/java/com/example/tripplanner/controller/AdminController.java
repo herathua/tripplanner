@@ -12,10 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/admin")
@@ -30,6 +34,7 @@ public class AdminController {
 
     @Autowired
     private BlogPostRepository blogPostRepository;
+
 
     @GetMapping("/stats")
     @Operation(summary = "Get admin dashboard statistics")
@@ -139,28 +144,48 @@ public class AdminController {
         return ResponseEntity.ok(logs);
     }
 
-    @PostMapping("/notifications")
-    @Operation(summary = "Send system notification")
-    public ResponseEntity<Map<String, String>> sendNotification(
-            @RequestBody Map<String, Object> request,
-            Authentication authentication) {
-        
-        String message = (String) request.get("message");
-        String targetUsers = (String) request.getOrDefault("targetUsers", "all");
-        
-        // Implementation would depend on your notification system
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "success");
-        response.put("message", "Notification sent successfully");
-        
-        return ResponseEntity.ok(response);
-    }
 
     @GetMapping("/export/users")
     @Operation(summary = "Export user data")
-    public ResponseEntity<String> exportUserData(Authentication authentication) {
-        // This would typically return a CSV file
-        // For now, returning a simple response
-        return ResponseEntity.ok("User data export functionality would be implemented here");
+    public ResponseEntity<byte[]> exportUserData(Authentication authentication) {
+        try {
+            List<User> users = userRepository.findAll();
+            
+            // Create CSV content
+            StringBuilder csvContent = new StringBuilder();
+            csvContent.append("ID,Email,Display Name,Role,Active,Created At,Updated At\n");
+            
+            for (User user : users) {
+                csvContent.append(String.format("%d,%s,%s,%s,%s,%s,%s\n",
+                    user.getId(),
+                    user.getEmail() != null ? user.getEmail() : "",
+                    user.getDisplayName() != null ? user.getDisplayName() : "",
+                    user.getRole() != null ? user.getRole().toString() : "USER",
+                    user.isActive() ? "true" : "false",
+                    user.getCreatedAt() != null ? user.getCreatedAt().toString() : "",
+                    user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : ""
+                ));
+            }
+            
+            byte[] csvBytes = csvContent.toString().getBytes("UTF-8");
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", 
+                "users-export-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")) + ".csv");
+            headers.setContentLength(csvBytes.length);
+            
+            // Log the export for audit purposes
+            System.out.println(String.format("Admin %s exported user data (%d users)", 
+                authentication.getName(), users.size()));
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(csvBytes);
+                
+        } catch (Exception e) {
+            System.err.println("Error exporting user data: " + e.getMessage());
+            return ResponseEntity.status(500).body(new byte[0]);
+        }
     }
 }

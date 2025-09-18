@@ -101,6 +101,7 @@ const AdminConsole: React.FC = () => {
     }
   };
 
+
   const tabs = [
     { id: 'dashboard' as AdminTab, name: 'Dashboard', icon: '📊' },
     { id: 'users' as AdminTab, name: 'User Management', icon: '👥' },
@@ -316,63 +317,40 @@ const AdminConsole: React.FC = () => {
     </div>
   );
 
-  const renderSettings = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Admin Settings</h2>
-      
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">System Notifications</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Message</label>
-            <textarea
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              rows={3}
-              placeholder="Enter notification message..."
-            />
+  const renderSettings = () => {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">Admin Settings</h2>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Data Export</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Export user data for backup or analysis purposes. The exported file will contain user information in CSV format.
+          </p>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => {
+                dispatch(addNotification({
+                  type: 'info',
+                  message: 'Data export feature is temporarily disabled',
+                  duration: 3000,
+                }));
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export User Data
+            </button>
+            <span className="text-sm text-gray-500">
+              {users.length} users will be exported
+            </span>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Target Users</label>
-            <select className="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-              <option value="all">All Users</option>
-              <option value="admins">Admins Only</option>
-              <option value="premium">Premium Users</option>
-            </select>
-          </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-            Send Notification
-          </button>
         </div>
       </div>
-
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Data Export</h3>
-        <p className="text-sm text-gray-600 mb-4">Export user data for backup or analysis purposes.</p>
-        <button
-          onClick={async () => {
-            try {
-              const blob = await adminService.exportUserData();
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
-              a.click();
-              window.URL.revokeObjectURL(url);
-            } catch (error) {
-              dispatch(addNotification({
-                type: 'error',
-                message: 'Failed to export data',
-                duration: 3000,
-              }));
-            }
-          }}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-        >
-          Export User Data
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -398,15 +376,14 @@ const AdminConsole: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Console</h1>
-          <p className="mt-2 text-gray-600">
-            Manage users, monitor system activity, and configure settings
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Admin Console</h1>
+        <p className="mt-2 text-gray-600">
+          Manage users, monitor system activity, and configure settings
+        </p>
+      </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
@@ -448,7 +425,6 @@ const AdminConsole: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
