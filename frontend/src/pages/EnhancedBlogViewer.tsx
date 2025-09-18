@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import EditorJS, { OutputData } from '@editorjs/editorjs';
+import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
 import List from '@editorjs/list';
@@ -17,7 +17,7 @@ const EnhancedBlogViewer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editorReady, setEditorReady] = useState(false);
-  const [editorFailed, setEditorFailed] = useState(false);
+  const [editorFailed, setEditorFailed] = useState(true); // Start with fallback mode
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -43,7 +43,7 @@ const EnhancedBlogViewer: React.FC = () => {
 
   // Initialize EditorJS for read-only rendering
   useEffect(() => {
-    if (blogPost && blogPost.content && !editorReady) {
+    if (blogPost && blogPost.content && !editorReady && !editorFailed) {
       const initEditor = async () => {
         try {
           const contentData = JSON.parse(blogPost.content);
@@ -70,6 +70,7 @@ const EnhancedBlogViewer: React.FC = () => {
 
           // EditorJS will automatically render the data when initialized
           // No need to call render() separately
+          console.log('EditorJS initialized:', editor);
         } catch (error) {
           console.error('Error initializing editor viewer:', error);
           setEditorFailed(true);
@@ -80,7 +81,17 @@ const EnhancedBlogViewer: React.FC = () => {
       // Add a small delay to ensure DOM element is available
       setTimeout(initEditor, 100);
     }
-  }, [blogPost, editorReady]);
+  }, [blogPost, editorReady, editorFailed]);
+
+  // Clear EditorJS container when switching to fallback mode
+  useEffect(() => {
+    if (editorFailed) {
+      const container = document.getElementById('editorjs-viewer');
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+  }, [editorFailed]);
 
   if (loading) {
     return (
@@ -176,14 +187,89 @@ const EnhancedBlogViewer: React.FC = () => {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="p-8">
-            <div id="editorjs-viewer" className="prose prose-lg max-w-none">
-              {!editorReady && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <div className="text-gray-600">Loading content...</div>
-                </div>
-              )}
-            </div>
+            {editorFailed ? (
+              // Fallback rendering when EditorJS fails
+              <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
+                {(() => {
+                  try {
+                    // Try to parse as JSON (EditorJS format)
+                    const contentData = JSON.parse(blogPost.content);
+                    if (contentData.blocks && Array.isArray(contentData.blocks)) {
+                      return contentData.blocks.map((block: any, index: number) => {
+                        switch (block.type) {
+                          case 'paragraph':
+                            return (
+                              <p key={index} className="mb-4">
+                                {block.data.text}
+                              </p>
+                            );
+                          case 'header':
+                            const HeaderTag = `h${block.data.level}` as keyof JSX.IntrinsicElements;
+                            return (
+                              <HeaderTag key={index} className="font-bold mb-4">
+                                {block.data.text}
+                              </HeaderTag>
+                            );
+                          case 'image':
+                            return (
+                              <div key={index} className="my-6">
+                                <img 
+                                  src={block.data.file.url} 
+                                  alt={block.data.caption || ''}
+                                  className="w-full rounded-lg shadow-md"
+                                />
+                                {block.data.caption && (
+                                  <p className="text-sm text-gray-600 mt-2 text-center">
+                                    {block.data.caption}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          case 'list':
+                            const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+                            return (
+                              <ListTag key={index} className="mb-4">
+                                {block.data.items.map((item: string, itemIndex: number) => (
+                                  <li key={itemIndex}>{item}</li>
+                                ))}
+                              </ListTag>
+                            );
+                          case 'quote':
+                            return (
+                              <blockquote key={index} className="border-l-4 border-blue-500 pl-4 italic text-gray-700 mb-4">
+                                {block.data.text}
+                              </blockquote>
+                            );
+                          default:
+                            return (
+                              <div key={index} className="mb-4">
+                                {block.data.text || JSON.stringify(block.data)}
+                              </div>
+                            );
+                        }
+                      });
+                    }
+                  } catch (e) {
+                    // If not JSON, display as plain text
+                    return (
+                      <div className="whitespace-pre-wrap">
+                        {blogPost.content}
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            ) : (
+              // EditorJS container
+              <div id="editorjs-viewer" className="prose prose-lg max-w-none">
+                {!editorReady && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <div className="text-gray-600">Loading content...</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
