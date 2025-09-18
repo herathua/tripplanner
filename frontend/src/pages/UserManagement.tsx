@@ -3,12 +3,14 @@ import { useAppSelector } from '../store';
 import ProfileSettings from '../components/user/ProfileSettings';
 import UserTrips from '../components/user/UserTrips';
 import UserGuides from '../components/user/UserGuides';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 type UserManagementTab = 'profile' | 'trips' | 'guides';
 
 const UserManagement: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState<UserManagementTab>('profile');
+  const { profile } = useUserProfile(user);
 
   if (!isAuthenticated || !user) {
     return (
@@ -57,23 +59,23 @@ const UserManagement: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               {/* User Info */}
               <div className="text-center mb-6">
-                {user.photoURL ? (
+                {profile?.photoUrl ? (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'User'}
+                    src={profile.photoUrl}
+                    alt={profile.displayName || 'User'}
                     className="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-300 mx-auto mb-3 flex items-center justify-center">
-                    <span className="text-xl font-medium text-gray-600">
-                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                  <div className="w-16 h-16 rounded-full bg-blue-500 mx-auto mb-3 flex items-center justify-center">
+                    <span className="text-xl font-medium text-white">
+                      {profile?.displayName?.charAt(0) || user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </span>
                   </div>
                 )}
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {user.displayName || 'User'}
+                  {profile?.displayName || user?.displayName || 'User'}
                 </h3>
-                <p className="text-sm text-gray-500">{user.email}</p>
+                <p className="text-sm text-gray-500">{user?.email}</p>
               </div>
 
               {/* Navigation */}

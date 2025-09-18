@@ -245,8 +245,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   className="w-20 h-20 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-2xl font-medium text-gray-600">
+                <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center">
+                  <span className="text-2xl font-medium text-white">
                     {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
                   </span>
                 </div>
@@ -311,7 +311,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500 sm:text-sm"
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  Email cannot be changed. Contact support if needed.
+                  Email cannot be changed.
                 </p>
               </div>
             </div>
