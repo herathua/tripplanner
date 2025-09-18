@@ -3,6 +3,7 @@ import { User } from 'firebase/auth';
 import { useAppDispatch } from '../../store';
 import { addNotification } from '../../store/slices/uiSlice';
 import { ImageUploadService } from '../../services/imageUploadService';
+import { PasswordService, PasswordUpdateRequest } from '../../services/passwordService';
 
 interface ProfileSettingsProps {
   user: User;
@@ -12,6 +13,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [passwordStrength, setPasswordStrength] = useState<{ strength: 'weak' | 'medium' | 'strong'; score: number }>({ strength: 'weak', score: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -61,6 +64,25 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Validate password strength for new password
+    if (name === 'newPassword') {
+      const strength = PasswordService.getPasswordStrength(value);
+      setPasswordStrength(strength);
+    }
+
+    // Clear errors when user starts typing
+    if (passwordErrors.length > 0) {
+      setPasswordErrors([]);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,20 +205,24 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.newPassword !== formData.confirmPassword) {
-      dispatch(addNotification({
-        type: 'error',
-        message: 'New passwords do not match',
-        duration: 3000,
-      }));
-      return;
-    }
+    // Clear previous errors
+    setPasswordErrors([]);
+    
+    // Create password update request
+    const passwordRequest: PasswordUpdateRequest = {
+      currentPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+      confirmPassword: formData.confirmPassword
+    };
 
-    if (formData.newPassword.length < 6) {
+    // Validate the request
+    const validation = PasswordService.validatePasswordUpdate(passwordRequest);
+    if (!validation.isValid) {
+      setPasswordErrors(validation.errors);
       dispatch(addNotification({
         type: 'error',
-        message: 'Password must be at least 6 characters',
-        duration: 3000,
+        message: 'Please fix the following errors: ' + validation.errors.join(', '),
+        duration: 5000,
       }));
       return;
     }
@@ -204,19 +230,54 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
     setIsUpdatingPassword(true);
 
     try {
-      // Note: Firebase doesn't allow updating password without re-authentication
-      // This would require implementing re-authentication flow
-      dispatch(addNotification({
-        type: 'info',
-        message: 'Password update requires re-authentication. Please use the forgot password feature.',
-        duration: 5000,
-      }));
+      // First validate with backend
+      const backendResult = await PasswordService.updatePassword(passwordRequest, user);
+      
+      if (!backendResult.success) {
+        setPasswordErrors([backendResult.error || 'Backend validation failed']);
+        dispatch(addNotification({
+          type: 'error',
+          message: backendResult.error || 'Failed to validate password update',
+          duration: 5000,
+        }));
+        return;
+      }
+
+      // If backend validation passes, try Firebase update
+      const firebaseResult = await PasswordService.updatePasswordWithFirebase(formData.newPassword, user);
+      
+      if (firebaseResult.success) {
+        // Clear form on success
+        setFormData(prev => ({
+          ...prev,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        }));
+        setPasswordStrength({ strength: 'weak', score: 0 });
+        
+        dispatch(addNotification({
+          type: 'success',
+          message: 'Password updated successfully',
+          duration: 3000,
+        }));
+      } else {
+        setPasswordErrors([firebaseResult.error || 'Failed to update password']);
+        dispatch(addNotification({
+          type: 'error',
+          message: firebaseResult.error || 'Failed to update password',
+          duration: 5000,
+        }));
+      }
+
     } catch (error: any) {
       console.error('Error updating password:', error);
+      const errorMessage = error.message || 'An unexpected error occurred';
+      setPasswordErrors([errorMessage]);
       dispatch(addNotification({
         type: 'error',
-        message: error.message || 'Failed to update password',
-        duration: 3000,
+        message: errorMessage,
+        duration: 5000,
       }));
     } finally {
       setIsUpdatingPassword(false);
@@ -333,6 +394,29 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           <div className="bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
             
+            {/* Display validation errors */}
+            {passwordErrors.length > 0 && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">Please fix the following errors:</h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      <ul className="list-disc list-inside space-y-1">
+                        {passwordErrors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-4">
               <div>
                 <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
@@ -343,8 +427,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   name="currentPassword"
                   id="currentPassword"
                   value={formData.currentPassword}
-                  onChange={handleInputChange}
+                  onChange={handlePasswordInputChange}
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  placeholder="Enter your current password"
                 />
               </div>
 
@@ -357,9 +442,38 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   name="newPassword"
                   id="newPassword"
                   value={formData.newPassword}
-                  onChange={handleInputChange}
+                  onChange={handlePasswordInputChange}
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  placeholder="Enter your new password"
                 />
+                
+                {/* Password Strength Indicator */}
+                {formData.newPassword && (
+                  <div className="mt-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            passwordStrength.strength === 'weak' ? 'bg-red-500' :
+                            passwordStrength.strength === 'medium' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${(passwordStrength.score / 7) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className={`text-xs font-medium ${
+                        passwordStrength.strength === 'weak' ? 'text-red-600' :
+                        passwordStrength.strength === 'medium' ? 'text-yellow-600' :
+                        'text-green-600'
+                      }`}>
+                        {passwordStrength.strength.charAt(0).toUpperCase() + passwordStrength.strength.slice(1)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Password must contain uppercase, lowercase, number, and special character
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -371,17 +485,39 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   name="confirmPassword"
                   id="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={handleInputChange}
+                  onChange={handlePasswordInputChange}
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  placeholder="Confirm your new password"
                 />
+                
+                {/* Password Match Indicator */}
+                {formData.confirmPassword && (
+                  <div className="mt-1">
+                    {formData.newPassword === formData.confirmPassword ? (
+                      <p className="text-xs text-green-600 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Passwords match
+                      </p>
+                    ) : (
+                      <p className="text-xs text-red-600 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        Passwords do not match
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="mt-6">
               <button
                 type="submit"
-                disabled={isUpdatingPassword}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                disabled={isUpdatingPassword || passwordErrors.length > 0}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUpdatingPassword ? 'Updating...' : 'Update Password'}
               </button>
