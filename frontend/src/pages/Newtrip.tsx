@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
-  Menu, 
-  X, 
   Edit2, 
-  FileText, 
-  ChevronRight,
-  Trash2,
+  Trash2, 
   Save
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -20,7 +16,7 @@ import { itineraryService, Itinerary } from '../services/itineraryService';
 import { activityService } from '../services/activityService';
 import { locationService } from '../services/locationService';
 import { expenseService, Expense as BackendExpense, ExpenseCategory, Currency, ExpenseStatus } from '../services/expenseService';
-import { tripPlanService, TripPlanDTO, DayPlanDTO, PlaceDTO as TripPlanPlaceDTO, ActivityDTO as TripPlanActivityDTO, ExpenseDTO as TripPlanExpenseDTO } from '../services/tripPlanService';
+import { tripPlanService, TripPlanDTO } from '../services/tripPlanService';
 
 // Import extracted components
 import Modal from '../components/modals/Modal';
@@ -37,9 +33,8 @@ import BudgetSection from '../components/sections/BudgetSection';
 import { useHotelSearch, HotelDestination } from '../hooks/useHotelSearch';
 import { getCategoryIcon, getExpenseCategoryIcon } from '../utils/iconUtils';
 import { formatDate, generateTripDays } from '../utils/dateUtils';
-import { samplePlaces } from '../data/sampleData';
-import { useAppDispatch, useAppSelector } from '../store';
-import { setTripDetails, clearTripDetails } from '../store/slices/tripSlice';
+import { useAppDispatch } from '../store';
+import { clearTripDetails } from '../store/slices/tripSlice';
 import { addNotification } from '../store/slices/uiSlice';
 
 const NewTrip = () => {

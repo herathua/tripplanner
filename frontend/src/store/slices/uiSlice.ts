@@ -19,9 +19,6 @@ interface UIState {
     type: string | null;
     data: any;
   };
-  sidebar: {
-    isOpen: boolean;
-  };
 }
 
 const initialState: UIState = {
@@ -31,9 +28,6 @@ const initialState: UIState = {
     isOpen: false,
     type: null,
     data: null,
-  },
-  sidebar: {
-    isOpen: false,
   },
 };
 
@@ -58,9 +52,6 @@ const uiSlice = createSlice({
         data: action.payload.data || null,
       };
     },
-    toggleSidebar: (state) => {
-      state.sidebar.isOpen = !state.sidebar.isOpen;
-    },
   },
 });
 
@@ -69,7 +60,6 @@ export const {
   addNotification,
   removeNotification,
   setModal,
-  toggleSidebar,
 } = uiSlice.actions;
 
 export default uiSlice.reducer; 

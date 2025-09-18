@@ -10,7 +10,6 @@ import Modal from '../components/modals/Modal';
 import AddPlaceForm from '../components/forms/AddPlaceForm';
 import AddActivityForm from '../components/forms/AddActivityForm';
 import AddExpenseForm from '../components/forms/AddExpenseForm';
-import TripSidebar from '../components/TripSidebar';
 import TripOverview from '../components/sections/TripOverview';
 import PlacesSection from '../components/sections/PlacesSection';
 import ItinerarySection from '../components/sections/ItinerarySection';
@@ -44,9 +43,6 @@ const NewTrip: React.FC = () => {
   // Use existing trip context for places and local state
   const { state, addPlace, removePlace, addExpense, removeExpense } = useTrip();
 
-  // UI state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   
   // Modal states
@@ -219,26 +215,9 @@ const NewTrip: React.FC = () => {
         </>
       ) : (
         <>
-          <TripSidebar
-            isSidebarOpen={isSidebarOpen}
-            isMinimized={isMinimized}
-            tripName={trip?.title || "Trip"}
-            tripDays={tripDays}
-            formatTripDuration={() => {
-              if (tripDays.length > 0) {
-                const start = tripDays[0].date;
-                const end = tripDays[tripDays.length - 1].date;
-                return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-              }
-              return '';
-            }}
-            setShowHotelSearchModal={() => {}}
-            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            setIsMinimized={setIsMinimized}
-          />
 
           {/* Main Content */}
-          <div className={`flex-1 transition-all duration-300 ${isMinimized ? 'md:ml-16' : 'md:ml-80'} min-h-screen`}>
+          <div className="flex-1 min-h-screen">
             {/* Header */}
             <header className="sticky top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md">
               <div className="flex items-center space-x-2">
