@@ -70,7 +70,7 @@ const GuideCard: React.FC<GuideCardProps> = ({
     if (onView) {
       onView(guide);
     } else if (guide.publicSlug) {
-      navigate(`/guide/${guide.publicSlug}`);
+      navigate(`/blog/${guide.publicSlug}`);
     }
   };
 

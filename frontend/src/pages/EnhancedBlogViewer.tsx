@@ -227,11 +227,33 @@ const EnhancedBlogViewer: React.FC = () => {
                             );
                           case 'list':
                             const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+                            const isChecklist = block.data.style === 'checklist';
                             return (
-                              <ListTag key={index} className="mb-4">
-                                {block.data.items.map((item: string, itemIndex: number) => (
-                                  <li key={itemIndex}>{item}</li>
-                                ))}
+                              <ListTag key={index} className={`mb-4 ${isChecklist ? 'list-none' : ''}`}>
+                                {block.data.items.map((item: any, itemIndex: number) => {
+                                  const content = typeof item === 'string' ? item : item.content || '';
+                                  const isChecked = typeof item === 'object' && item.meta?.checked;
+                                  
+                                  if (isChecklist) {
+                                    return (
+                                      <li key={itemIndex} className="flex items-center mb-2">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={isChecked} 
+                                          readOnly 
+                                          className="mr-2"
+                                        />
+                                        <span dangerouslySetInnerHTML={{ __html: content }} />
+                                      </li>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <li key={itemIndex}>
+                                      <span dangerouslySetInnerHTML={{ __html: content }} />
+                                    </li>
+                                  );
+                                })}
                               </ListTag>
                             );
                           case 'quote':
