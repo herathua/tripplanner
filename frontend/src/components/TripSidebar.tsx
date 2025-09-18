@@ -28,33 +28,6 @@ const TripSidebar: React.FC<TripSidebarProps> = ({
       ${isMinimized ? 'w-16' : 'w-80'}
       md:fixed md:translate-x-0 flex flex-col`}
   >
-    {/* Trip Header - Fixed at top */}
-    <div className="sticky top-0 z-10 p-6 bg-white border-b">
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <img
-            src="/src/assets/logo.png"
-            alt="TripTail Logo"
-            title="TripTail"
-            className={`w-8 h-8 flex-shrink-0 object-contain transition-all duration-300 ${isMinimized ? 'mx-auto' : ''}`}
-          />
-          <h2 className={`text-lg font-bold transition-all duration-300 ${
-            isMinimized ? 'w-0 overflow-hidden opacity-0' : 'w-auto opacity-100'
-          }`}>{tripName}</h2>
-        </div>
-      </div>
-      <div className={`space-y-2 ${isMinimized ? 'hidden' : 'block'}`}>
-        <h3 className="font-semibold text-gray-900">{tripName}</h3>
-        <div className="flex items-center text-sm text-gray-600">
-          <Calendar className="w-4 h-4 mr-2" />
-          <span>{formatTripDuration()}</span>
-        </div>
-        <div className="flex items-center text-sm text-gray-600">
-          <Clock className="w-4 h-4 mr-2" />
-          <span>{tripDays.length} days</span>
-        </div>
-      </div>
-    </div>
     {/* Navigation - Scrollable */}
     <nav className={`flex-1 ${isMinimized ? 'p-2' : 'p-4'} overflow-y-auto`}>
       <div className="space-y-1">

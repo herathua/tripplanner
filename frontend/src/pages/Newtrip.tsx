@@ -9,7 +9,6 @@ import {
   Save
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import TripSidebar from '../components/TripSidebar';
 import { useTrip, Place, Expense } from '../contexts/TripContext';
 import { useTripPlaces } from '../hooks/useTripPlaces'; // ✅ Import trip-specific places hook
 import { Activity } from '../services/itineraryService';
@@ -79,8 +78,6 @@ const NewTrip = () => {
     console.log('✅ useTrip hook executed successfully');
     console.log('✅ useAppDispatch executed successfully');
     
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(false);
     const navigate = useNavigate();
     const [tripDays, setTripDays] = useState<Array<{ date: Date; dayNumber: number }>>([]);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -835,9 +832,6 @@ const NewTrip = () => {
       }
     };
 
-    const toggleSidebar = () => {
-      setIsSidebarOpen(!isSidebarOpen);
-    };
 
     const isAnyModalOpen = showAddPlaceModal || showAddActivityModal || showAddExpenseModal || showHotelSearchModal;
 
@@ -913,36 +907,10 @@ const NewTrip = () => {
           </>
         ) : (
           <>
-            <TripSidebar
-              isSidebarOpen={isSidebarOpen}
-              isMinimized={isMinimized}
-              tripName={state.currentTrip?.title || "Trip"}
-              tripDays={tripDays}
-              formatTripDuration={() => {
-                if (tripDays.length > 0) {
-                  const start = tripDays[0].date;
-                  const end = tripDays[tripDays.length - 1].date;
-                  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-                }
-                return '';
-              }}
-              setShowHotelSearchModal={setShowHotelSearchModal}
-              toggleSidebar={toggleSidebar}
-              setIsMinimized={setIsMinimized}
-            />
 
-            {/* External toggle button (desktop) */}
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="fixed z-50 items-center justify-center hidden w-8 h-8 bg-white rounded-full shadow-md md:flex hover:bg-gray-50"
-              title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
-              style={{ top: '1.5rem', left: isMinimized ? '4rem' : '20rem', transform: 'translateX(50%)' }}
-            >
-              <ChevronRight className={`w-4 h-4 text-gray-500 transform transition-transform duration-300 ${isMinimized ? 'rotate-180' : ''}`} />
-            </button>
 
             {/* Main Content */}
-            <div className={`flex-1 transition-all duration-300 ${isMinimized ? 'md:ml-16' : 'md:ml-80'} min-h-screen`}>
+            <div className="flex-1 min-h-screen">
               {/* Mobile Header */}
               <header className="top-0 z-40 flex items-center justify-between p-4 bg-white shadow-md md:hidden">
                 <div className="flex items-center space-x-2">
@@ -955,12 +923,6 @@ const NewTrip = () => {
                     <Edit2 className="w-4 h-4 text-gray-500" />
                   </button>
                 </div>
-                <button
-                  className="p-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                  onClick={toggleSidebar}
-                >
-                  {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
               </header>
 
               {/* Desktop Header */}
