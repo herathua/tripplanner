@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { locationService } from '../services/locationService';
+import { locationService } from '../../services/locationService';
 
 interface APITestResult {
   success: boolean;

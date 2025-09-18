@@ -21,12 +21,6 @@ public class BlogPostController {
     @Autowired
     private BlogPostService blogPostService;
     
-    // Test endpoint - no authentication required
-    @GetMapping("/test")
-    public ResponseEntity<?> testEndpoint() {
-        return ResponseEntity.ok(Map.of("message", "Blog API is working!"));
-    }
-    
     // Create new blog post
     @PostMapping
     public ResponseEntity<?> createBlogPost(@RequestBody BlogPost blogPost, 
@@ -35,7 +29,6 @@ public class BlogPostController {
             BlogPost createdPost = blogPostService.createBlogPost(blogPost, firebaseUid);
             return ResponseEntity.ok(createdPost);
         } catch (Exception e) {
-            System.err.println("=== CONTROLLER ERROR ===");
             System.err.println("Error creating blog post: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
@@ -44,7 +37,7 @@ public class BlogPostController {
     
     // Update blog post
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateBlogPost(@PathVariable Long id, 
+    public ResponseEntity<?> updateBlogPost(@PathVariable Long id,
                                           @RequestBody BlogPost blogPost,
                                           @RequestParam String firebaseUid) {
         try {
@@ -56,7 +49,7 @@ public class BlogPostController {
     }
     
     // Publish blog post
-    @PostMapping("/{id}/publish")
+    @PutMapping("/{id}/publish")
     public ResponseEntity<?> publishBlogPost(@PathVariable Long id, 
                                            @RequestParam String firebaseUid) {
         try {
@@ -72,30 +65,18 @@ public class BlogPostController {
     }
     
     // Save as draft
-    @PostMapping("/{id}/draft")
+    @PutMapping("/{id}/draft")
     public ResponseEntity<?> saveAsDraft(@PathVariable Long id, 
-                                       @RequestParam Long authorId) {
+                                       @RequestParam String firebaseUid) {
         try {
-            BlogPost draftPost = blogPostService.saveAsDraft(id, authorId);
+            BlogPost draftPost = blogPostService.saveAsDraftByFirebaseUid(id, firebaseUid);
             return ResponseEntity.ok(draftPost);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
     
-    // Delete blog post
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBlogPost(@PathVariable Long id, 
-                                          @RequestParam String firebaseUid) {
-        try {
-            blogPostService.deleteBlogPostByFirebaseUid(id, firebaseUid);
-            return ResponseEntity.ok(Map.of("message", "Blog post deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Get blog post by ID (private access)
+    // Get blog post by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getBlogPostById(@PathVariable Long id) {
         try {
@@ -103,18 +84,6 @@ public class BlogPostController {
             return ResponseEntity.ok(blogPost);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
-        }
-    }
-    
-    // Get blog post by slug (private access for author)
-    @GetMapping("/slug/{slug}")
-    public ResponseEntity<?> getBlogPostBySlug(@PathVariable String slug, 
-                                             @RequestParam Long authorId) {
-        try {
-            BlogPost blogPost = blogPostService.getBlogPostBySlug(slug, authorId);
-            return ResponseEntity.ok(blogPost);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
     
@@ -130,27 +99,6 @@ public class BlogPostController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-    }
-    
-    // Get user's draft blog posts
-    @GetMapping("/user/{authorId}/drafts")
-    public ResponseEntity<?> getUserDraftBlogPosts(@PathVariable Long authorId,
-                                                 @RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(defaultValue = "10") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.getUserDraftBlogPosts(authorId, pageable);
-            return ResponseEntity.ok(blogPosts);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Check if slug is available
-    @GetMapping("/check-slug/{slug}")
-    public ResponseEntity<?> checkSlugAvailability(@PathVariable String slug) {
-        boolean isAvailable = blogPostService.isSlugAvailable(slug);
-        return ResponseEntity.ok(Map.of("available", isAvailable));
     }
 }
 
@@ -182,60 +130,6 @@ class PublicBlogPostController {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<BlogPost> blogPosts = blogPostService.getPublishedBlogPosts(pageable);
-            return ResponseEntity.ok(blogPosts);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Search published blog posts
-    @GetMapping("/search")
-    public ResponseEntity<?> searchPublishedBlogPosts(@RequestParam String q,
-                                                    @RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.searchPublishedBlogPosts(q, pageable);
-            return ResponseEntity.ok(blogPosts);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Get published blog posts by tag
-    @GetMapping("/tag/{tag}")
-    public ResponseEntity<?> getPublishedBlogPostsByTag(@PathVariable String tag,
-                                                      @RequestParam(defaultValue = "0") int page,
-                                                      @RequestParam(defaultValue = "10") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.getPublishedBlogPostsByTag(tag, pageable);
-            return ResponseEntity.ok(blogPosts);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Get most viewed published blog posts
-    @GetMapping("/popular")
-    public ResponseEntity<?> getMostViewedPublishedBlogPosts(@RequestParam(defaultValue = "0") int page,
-                                                           @RequestParam(defaultValue = "10") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.getMostViewedPublishedBlogPosts(pageable);
-            return ResponseEntity.ok(blogPosts);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
-    // Get recent published blog posts
-    @GetMapping("/recent")
-    public ResponseEntity<?> getRecentPublishedBlogPosts(@RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "10") int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.getRecentPublishedBlogPosts(pageable);
             return ResponseEntity.ok(blogPosts);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

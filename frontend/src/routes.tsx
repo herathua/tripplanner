@@ -21,6 +21,9 @@ const ImageTestPage = React.lazy(() => import('./pages/ImageTestPage'));
 const BlogBlockEditor = React.lazy(() => import('./pages/BlogBlockEditor'));
 const BlogPostViewer = React.lazy(() => import('./pages/BlogPostViewer'));
 const BlogListPage = React.lazy(() => import('./pages/BlogListPage'));
+const SimpleBlogEditor = React.lazy(() => import('./pages/SimpleBlogEditor'));
+const SimpleBlogList = React.lazy(() => import('./pages/SimpleBlogList'));
+const SimpleBlogViewer = React.lazy(() => import('./pages/SimpleBlogViewer'));
 
 
 // Protected Route component
@@ -150,7 +153,7 @@ const AppRoutes: React.FC = () => {
           path="/blog"
           element={
             <MainLayout>
-              <BlogListPage />
+              <SimpleBlogList />
             </MainLayout>
           }
         />
@@ -158,12 +161,28 @@ const AppRoutes: React.FC = () => {
           path="/blog/new"
           element={
             <MainLayout>
-              <BlogBlockEditor />
+              <SimpleBlogEditor />
             </MainLayout>
           }
         />
         <Route
-          path="/blog/:id/edit"
+          path="/blog/:slug"
+          element={
+            <MainLayout>
+              <SimpleBlogViewer />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog-old"
+          element={
+            <MainLayout>
+              <BlogListPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog-old/new"
           element={
             <MainLayout>
               <BlogBlockEditor />
@@ -171,7 +190,7 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
-          path="/blog/:slug"
+          path="/blog-old/:slug"
           element={
             <MainLayout>
               <BlogPostViewer />

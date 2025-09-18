@@ -66,7 +66,6 @@ public class BlogPost {
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")
                 .trim();
-        // Add more uniqueness with nano time and random suffix
         return baseSlug + "-" + System.nanoTime() + "-" + (int)(Math.random() * 1000);
     }
     
