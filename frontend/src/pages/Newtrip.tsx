@@ -175,6 +175,9 @@ const NewTrip = () => {
       }
     }, []); // Only run once on mount
 
+    // Note: Removed auto-update useEffect to prevent infinite loops
+    // Budget is now calculated dynamically in the UI without modifying the stored budget
+
     // Load existing trip from backend
     const loadExistingTrip = async (id: number) => {
       console.log('loadExistingTrip called with ID:', id);
@@ -228,13 +231,27 @@ const NewTrip = () => {
 
     // Utility functions
     const calculateTotalSpent = () => {
+      let expenseTotal = 0;
+      let activityTotal = 0;
+      
       if (tripId) {
         // Use backend expenses
-        return backendExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        expenseTotal = backendExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        // Use backend activities
+        activityTotal = backendActivities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
       } else {
         // Use local expenses
-        return state.expenses.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+        expenseTotal = state.expenses.reduce((sum, expense) => sum + expense.amount, 0) || 0;
+        // Use local activities
+        activityTotal = state.activities.reduce((sum, activity) => sum + (activity.cost || 0), 0);
       }
+      
+      return expenseTotal + activityTotal;
+    };
+
+    // Calculate total budget (just the manual budget set by user)
+    const calculateTotalBudget = () => {
+      return state.currentTrip?.budget || 0;
     };
 
     // Convert backend expenses to frontend format
@@ -1033,9 +1050,10 @@ const NewTrip = () => {
                 />
 
                 <BudgetSection
-                  budget={state.currentTrip?.budget || 0}
+                  budget={calculateTotalBudget()}
                   totalSpent={calculateTotalSpent()}
                   expenses={tripId ? convertBackendExpensesToFrontend(backendExpenses) : state.expenses || []}
+                  activities={tripId ? backendActivities : state.activities || []}
                   onAddExpense={() => setShowAddExpenseModal(true)}
                   onDeleteExpense={handleDeleteExpense}
                   getExpenseCategoryIcon={getExpenseCategoryIcon}
