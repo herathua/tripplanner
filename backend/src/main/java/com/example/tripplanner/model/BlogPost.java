@@ -51,7 +51,7 @@ public class BlogPost {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (publicSlug == null) {
+        if (publicSlug == null && title != null) {
             publicSlug = generateSlug();
         }
     }
@@ -62,6 +62,9 @@ public class BlogPost {
     }
     
     private String generateSlug() {
+        if (title == null || title.trim().isEmpty()) {
+            return "post-" + System.nanoTime() + "-" + (int)(Math.random() * 1000);
+        }
         String baseSlug = title.toLowerCase()
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .replaceAll("\\s+", "-")

@@ -1,8 +1,7 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from './store';
 import MainLayout from './components/layout/MainLayout';
-import { Loader2 } from 'lucide-react';
 
 // Lazy load pages for better performance
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
@@ -10,7 +9,6 @@ const HomePage = React.lazy(() => import('./pages/HomePage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const PlanningPage = React.lazy(() => import('./pages/PlanningPage'));
 const TravelGuidePage = React.lazy(() => import('./pages/TravelGuidePage'));
-const LocationSearchPage = React.lazy(() => import('./pages/LocationSearchPage'));
 
 const NewTripPage = React.lazy(() => import('./pages/Newtrip'));
 const ChatBotPage = React.lazy(() => import('./pages/ChatBotPage'));
@@ -20,10 +18,11 @@ const ApiTestPage = React.lazy(() => import('./pages/ApiTestPage'));
 const ImageTestPage = React.lazy(() => import('./pages/ImageTestPage'));
 const BlogBlockEditor = React.lazy(() => import('./pages/BlogBlockEditor'));
 const BlogPostViewer = React.lazy(() => import('./pages/BlogPostViewer'));
-const BlogListPage = React.lazy(() => import('./pages/BlogListPage'));
-const SimpleBlogEditor = React.lazy(() => import('./pages/SimpleBlogEditor'));
 const SimpleBlogList = React.lazy(() => import('./pages/SimpleBlogList'));
-const SimpleBlogViewer = React.lazy(() => import('./pages/SimpleBlogViewer'));
+const EnhancedBlogEditor = React.lazy(() => import('./pages/EnhancedBlogEditor'));
+const EnhancedBlogViewer = React.lazy(() => import('./pages/EnhancedBlogViewer'));
+const BlogManagementDashboard = React.lazy(() => import('./pages/BlogManagementDashboard'));
+const SupabaseDebugger = React.lazy(() => import('./components/SupabaseDebugger'));
 
 
 // Protected Route component
@@ -161,7 +160,23 @@ const AppRoutes: React.FC = () => {
           path="/blog/new"
           element={
             <MainLayout>
-              <SimpleBlogEditor />
+              <EnhancedBlogEditor />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog/:id/edit"
+          element={
+            <MainLayout>
+              <EnhancedBlogEditor />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/blog/manage"
+          element={
+            <MainLayout>
+              <BlogManagementDashboard />
             </MainLayout>
           }
         />
@@ -169,15 +184,15 @@ const AppRoutes: React.FC = () => {
           path="/blog/:slug"
           element={
             <MainLayout>
-              <SimpleBlogViewer />
+              <EnhancedBlogViewer />
             </MainLayout>
           }
         />
         <Route
-          path="/blog-old"
+          path="/supabase-debug"
           element={
             <MainLayout>
-              <BlogListPage />
+              <SupabaseDebugger />
             </MainLayout>
           }
         />

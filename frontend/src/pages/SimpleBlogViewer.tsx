@@ -14,11 +14,14 @@ const SimpleBlogViewer: React.FC = () => {
       
       try {
         setLoading(true);
+        setError(null);
+        console.log('Fetching blog post with slug:', slug);
         const post = await blogService.getPublicBlogPost(slug);
+        console.log('Blog post fetched:', post);
         setBlogPost(post);
       } catch (err) {
-        setError('Blog post not found or not published');
         console.error('Error fetching blog post:', err);
+        setError('Blog post not found or not published');
       } finally {
         setLoading(false);
       }
@@ -89,8 +92,75 @@ const SimpleBlogViewer: React.FC = () => {
 
         {/* Content */}
         <main className="prose prose-lg max-w-none">
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-            {blogPost.content}
+          <div className="text-gray-800 leading-relaxed">
+            {(() => {
+              try {
+                // Try to parse as JSON (EditorJS format)
+                const contentData = JSON.parse(blogPost.content);
+                if (contentData.blocks && Array.isArray(contentData.blocks)) {
+                  return contentData.blocks.map((block: any, index: number) => {
+                    switch (block.type) {
+                      case 'paragraph':
+                        return (
+                          <p key={index} className="mb-4">
+                            {block.data.text}
+                          </p>
+                        );
+                      case 'header':
+                        const HeaderTag = `h${block.data.level}` as keyof JSX.IntrinsicElements;
+                        return (
+                          <HeaderTag key={index} className="font-bold mb-4">
+                            {block.data.text}
+                          </HeaderTag>
+                        );
+                      case 'image':
+                        return (
+                          <div key={index} className="my-6">
+                            <img 
+                              src={block.data.file.url} 
+                              alt={block.data.caption || ''}
+                              className="w-full rounded-lg shadow-md"
+                            />
+                            {block.data.caption && (
+                              <p className="text-sm text-gray-600 mt-2 text-center">
+                                {block.data.caption}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      case 'list':
+                        const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+                        return (
+                          <ListTag key={index} className="mb-4">
+                            {block.data.items.map((item: string, itemIndex: number) => (
+                              <li key={itemIndex}>{item}</li>
+                            ))}
+                          </ListTag>
+                        );
+                      case 'quote':
+                        return (
+                          <blockquote key={index} className="border-l-4 border-blue-500 pl-4 italic text-gray-700 mb-4">
+                            {block.data.text}
+                          </blockquote>
+                        );
+                      default:
+                        return (
+                          <div key={index} className="mb-4">
+                            {block.data.text || JSON.stringify(block.data)}
+                          </div>
+                        );
+                    }
+                  });
+                }
+              } catch (e) {
+                // If not JSON, display as plain text
+                return (
+                  <div className="whitespace-pre-wrap">
+                    {blogPost.content}
+                  </div>
+                );
+              }
+            })()}
           </div>
         </main>
 

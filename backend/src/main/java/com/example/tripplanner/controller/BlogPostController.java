@@ -1,7 +1,6 @@
 package com.example.tripplanner.controller;
 
 import com.example.tripplanner.model.BlogPost;
-import com.example.tripplanner.model.BlogPostStatus;
 import com.example.tripplanner.service.BlogPostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -87,7 +86,19 @@ public class BlogPostController {
         }
     }
     
-    // Get user's blog posts
+    // Delete blog post
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBlogPost(@PathVariable Long id, 
+                                           @RequestParam String firebaseUid) {
+        try {
+            blogPostService.deleteBlogPost(id, firebaseUid);
+            return ResponseEntity.ok(Map.of("message", "Blog post deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    // Get user blog posts by Firebase UID
     @GetMapping("/user/{firebaseUid}")
     public ResponseEntity<?> getUserBlogPosts(@PathVariable String firebaseUid,
                                             @RequestParam(defaultValue = "0") int page,
@@ -97,7 +108,9 @@ public class BlogPostController {
             Page<BlogPost> blogPosts = blogPostService.getUserBlogPostsByFirebaseUid(firebaseUid, pageable);
             return ResponseEntity.ok(blogPosts);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            System.err.println("Error getting user blog posts: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 }
@@ -109,6 +122,21 @@ class PublicBlogPostController {
     
     @Autowired
     private BlogPostService blogPostService;
+    
+    // Get published blog posts
+    @GetMapping
+    public ResponseEntity<?> getPublishedBlogPosts(@RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = "10") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BlogPost> blogPosts = blogPostService.getPublishedBlogPosts(pageable);
+            return ResponseEntity.ok(blogPosts);
+        } catch (Exception e) {
+            System.err.println("Error getting published blog posts: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
     
     // Get public blog post by slug
     @GetMapping("/{slug}")
@@ -123,13 +151,14 @@ class PublicBlogPostController {
         }
     }
     
-    // Get all published blog posts
-    @GetMapping
-    public ResponseEntity<?> getPublishedBlogPosts(@RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(defaultValue = "10") int size) {
+    // Get published blog posts by tag
+    @GetMapping("/tag/{tag}")
+    public ResponseEntity<?> getPublishedBlogPostsByTag(@PathVariable String tag,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<BlogPost> blogPosts = blogPostService.getPublishedBlogPosts(pageable);
+            Page<BlogPost> blogPosts = blogPostService.getPublishedBlogPostsByTag(tag, pageable);
             return ResponseEntity.ok(blogPosts);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

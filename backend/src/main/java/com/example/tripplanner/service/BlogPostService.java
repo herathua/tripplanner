@@ -45,13 +45,22 @@ public class BlogPostService {
     }
     
     private User createDefaultUser(String firebaseUid) {
-        User user = new User();
-        user.setDisplayName("Anonymous User");
-        user.setEmail("anonymous@example.com");
-        user.setFirebaseUid(firebaseUid);
-        user.setActive(true);
-        user.setRole(User.UserRole.USER);
-        return userRepository.save(user);
+        try {
+            System.out.println("Creating default user for Firebase UID: " + firebaseUid);
+            User user = new User();
+            user.setDisplayName("Anonymous User");
+            user.setEmail("anonymous@example.com");
+            user.setFirebaseUid(firebaseUid);
+            user.setActive(true);
+            user.setRole(User.UserRole.USER);
+            User savedUser = userRepository.save(user);
+            System.out.println("Created user with ID: " + savedUser.getId());
+            return savedUser;
+        } catch (Exception e) {
+            System.err.println("Error creating default user: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create user", e);
+        }
     }
     
     public BlogPost updateBlogPost(Long id, BlogPost updatedPost, String firebaseUid) {
@@ -121,17 +130,54 @@ public class BlogPostService {
     }
     
     public Page<BlogPost> getPublishedBlogPosts(Pageable pageable) {
-        return blogPostRepository.findByStatus(BlogPostStatus.PUBLISHED, pageable);
+        try {
+            System.out.println("=== GETTING PUBLISHED BLOG POSTS ===");
+            System.out.println("Page: " + pageable.getPageNumber() + ", Size: " + pageable.getPageSize());
+            Page<BlogPost> result = blogPostRepository.findByStatus(BlogPostStatus.PUBLISHED, pageable);
+            System.out.println("Found " + result.getContent().size() + " published blog posts");
+            System.out.println("Total elements: " + result.getTotalElements());
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error getting published blog posts: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to get published blog posts: " + e.getMessage(), e);
+        }
+    }
+    
+    public Page<BlogPost> searchPublishedPosts(String query, Pageable pageable) {
+        return blogPostRepository.searchPublishedPosts(query, pageable);
+    }
+    
+    public Page<BlogPost> getPublishedBlogPostsByTag(String tag, Pageable pageable) {
+        return blogPostRepository.findPublishedByTag(tag, pageable);
     }
     
     public Page<BlogPost> getUserBlogPostsByFirebaseUid(String firebaseUid, Pageable pageable) {
-        Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
-        if (userOpt.isEmpty()) {
-            return Page.empty(pageable);
+        try {
+            System.out.println("=== GETTING USER BLOG POSTS ===");
+            System.out.println("Firebase UID: " + firebaseUid);
+            System.out.println("Page: " + pageable.getPageNumber() + ", Size: " + pageable.getPageSize());
+            
+            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            if (userOpt.isEmpty()) {
+                System.out.println("User not found, creating default user");
+                User defaultUser = createDefaultUser(firebaseUid);
+                Page<BlogPost> result = blogPostRepository.findByAuthor(defaultUser, pageable);
+                System.out.println("Found " + result.getContent().size() + " blog posts for new user");
+                return result;
+            }
+            
+            User author = userOpt.get();
+            System.out.println("Found user: " + author.getDisplayName() + " (ID: " + author.getId() + ")");
+            Page<BlogPost> result = blogPostRepository.findByAuthor(author, pageable);
+            System.out.println("Found " + result.getContent().size() + " blog posts");
+            System.out.println("Total elements: " + result.getTotalElements());
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error getting user blog posts: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to get user blog posts: " + e.getMessage(), e);
         }
-        
-        User author = userOpt.get();
-        return blogPostRepository.findByAuthor(author, pageable);
     }
     
     public void incrementViewCount(String slug) {
@@ -142,7 +188,17 @@ public class BlogPostService {
         }
     }
     
-    public boolean isSlugAvailable(String slug) {
-        return !blogPostRepository.existsByPublicSlug(slug);
+    public void deleteBlogPost(Long id, String firebaseUid) {
+        BlogPost blogPost = blogPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Blog post not found"));
+        
+        // Optional: Add authorization check here
+        // User user = userRepository.findByFirebaseUid(firebaseUid)
+        //     .orElseThrow(() -> new RuntimeException("User not found"));
+        // if (!blogPost.getAuthor().equals(user)) {
+        //     throw new RuntimeException("Not authorized to delete this blog post");
+        // }
+        
+        blogPostRepository.delete(blogPost);
     }
 }

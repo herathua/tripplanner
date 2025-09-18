@@ -105,7 +105,7 @@ const BlogListPage: React.FC = () => {
                   
                   <div className="flex items-center text-sm text-gray-600 mb-4">
                     {post.author && (
-                      <span className="mr-4">By {post.author.name || 'Anonymous'}</span>
+                      <span className="mr-4">By {post.author.displayName || 'Anonymous'}</span>
                     )}
                     {post.publishedAt && (
                       <span>{formatDate(post.publishedAt)}</span>

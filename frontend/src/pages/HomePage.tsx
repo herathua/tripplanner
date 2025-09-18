@@ -175,14 +175,17 @@ const HomePage: React.FC = () => {
         setGuideTotalPages(data.totalPages || 1);
       }).catch(error => {
         console.error('Error loading user guides:', error);
+        setUserGuides([]);
+        setGuideTotalPages(1);
       });
 
-             // Load published guides from all users
-       blogService.getPublishedBlogPosts(0, 3).then((data) => {
-         setPublishedGuides(data.content || []);
-       }).catch(error => {
-         console.error('Error loading published guides:', error);
-       });
+      // Load published guides from all users
+      blogService.getPublishedBlogPosts(0, 3).then((data) => {
+        setPublishedGuides(data.content || []);
+      }).catch(error => {
+        console.error('Error loading published guides:', error);
+        setPublishedGuides([]);
+      });
     }
   }, [user, guidePage]);
 

@@ -68,6 +68,12 @@ class BlogService {
     return response.data;
   }
 
+  // Delete blog post
+  async deleteBlogPost(id: number, firebaseUid: string): Promise<{ message: string }> {
+    const response = await apiClient.delete(`${this.baseUrl}/${id}?firebaseUid=${firebaseUid}`);
+    return response.data;
+  }
+
   // Public endpoints
 
   // Get public blog post by slug
@@ -79,6 +85,18 @@ class BlogService {
   // Get all published blog posts
   async getPublishedBlogPosts(page: number = 0, size: number = 10): Promise<BlogPostResponse> {
     const response = await apiClient.get(`${this.publicUrl}?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  // Search published blog posts
+  async searchPublishedBlogPosts(query: string, page: number = 0, size: number = 10): Promise<BlogPostResponse> {
+    const response = await apiClient.get(`${this.publicUrl}/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  // Get published blog posts by tag
+  async getPublishedBlogPostsByTag(tag: string, page: number = 0, size: number = 10): Promise<BlogPostResponse> {
+    const response = await apiClient.get(`${this.publicUrl}/tag/${encodeURIComponent(tag)}?page=${page}&size=${size}`);
     return response.data;
   }
 }

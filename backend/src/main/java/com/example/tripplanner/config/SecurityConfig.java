@@ -32,7 +32,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/auth/**", "/api/public/**", "/actuator/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/public/**", "/public/**", "/actuator/**").permitAll()
                 // Trip management endpoints (temporarily public for frontend testing)
                 .requestMatchers("/api/trips/**").permitAll()
                 .requestMatchers("/api/places/**").permitAll()
