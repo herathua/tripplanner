@@ -37,6 +37,10 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     @Query("SELECT a FROM Activity a WHERE a.trip = :trip AND (a.name LIKE %:searchTerm% OR a.description LIKE %:searchTerm%)")
     List<Activity> findByTripAndSearchTerm(@Param("trip") Trip trip, @Param("searchTerm") String searchTerm);
     
+    // Find by trip ID (for service layer)
+    @Query("SELECT a FROM Activity a WHERE a.trip.id = :tripId")
+    List<Activity> findByTripId(@Param("tripId") Long tripId);
+    
     // Completed activities
     @Query("SELECT a FROM Activity a WHERE a.trip = :trip AND a.status = 'COMPLETED'")
     List<Activity> findByTripAndCompleted(@Param("trip") Trip trip);
@@ -85,4 +89,8 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     // Activities by itinerary
     @Query("SELECT a FROM Activity a WHERE a.itinerary = :itinerary ORDER BY a.startTime ASC")
     List<Activity> findByItineraryOrderByStartTime(@Param("itinerary") Itinerary itinerary);
+    
+    // Find by itinerary ID
+    @Query("SELECT a FROM Activity a WHERE a.itinerary.id = :itineraryId")
+    List<Activity> findByItineraryId(@Param("itineraryId") Long itineraryId);
 }

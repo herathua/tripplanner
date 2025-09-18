@@ -38,6 +38,10 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p WHERE p.trip = :trip AND (p.name LIKE %:searchTerm% OR p.location LIKE %:searchTerm% OR p.description LIKE %:searchTerm%)")
     List<Place> findByTripAndSearchTerm(@Param("trip") Trip trip, @Param("searchTerm") String searchTerm);
     
+    // Find by trip ID (for service layer)
+    @Query("SELECT p FROM Place p WHERE p.trip.id = :tripId")
+    List<Place> findByTripId(@Param("tripId") Long tripId);
+    
     // Search by name
     @Query("SELECT p FROM Place p WHERE p.trip = :trip AND p.name LIKE %:name%")
     List<Place> findByTripAndNameContaining(@Param("trip") Trip trip, @Param("name") String name);

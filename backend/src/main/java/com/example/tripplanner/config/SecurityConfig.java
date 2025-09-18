@@ -33,6 +33,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/api/auth/**", "/api/public/**", "/actuator/**").permitAll()
+                // Trip management endpoints (temporarily public for frontend testing)
+                .requestMatchers("/api/trips/**").permitAll()
+                .requestMatchers("/api/places/**").permitAll()
+                .requestMatchers("/api/activities/**").permitAll()
+                .requestMatchers("/api/expenses/**").permitAll()
+                .requestMatchers("/api/itineraries/**").permitAll()
+                .requestMatchers("/api/users/**").permitAll()
+                .requestMatchers("/api/locations/**").permitAll()
+                .requestMatchers("/api/blog-posts/**").permitAll()
                 // Protected endpoints
                 .anyRequest().authenticated()
             )

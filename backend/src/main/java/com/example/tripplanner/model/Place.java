@@ -71,7 +71,7 @@ public class Place {
     @Column(nullable = false, precision = 9, scale = 6)
     private BigDecimal longitude;
     
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "place_photos", joinColumns = @JoinColumn(name = "place_id"))
     @Column(name = "photo_url", columnDefinition = "TEXT")
     private List<String> photos = new ArrayList<>();

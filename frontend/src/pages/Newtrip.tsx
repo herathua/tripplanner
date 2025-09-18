@@ -5,13 +5,15 @@ import {
   Edit2, 
   FileText, 
   ChevronRight,
-  Trash2
+  Trash2,
+  Save
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import TripSidebar from '../components/TripSidebar';
 import { useTrip, Place, Expense } from '../contexts/TripContext';
 import { useTripPlaces } from '../hooks/useTripPlaces'; // ✅ Import trip-specific places hook
 import { Activity } from '../services/itineraryService';
+import apiClient from '../config/api';
 
 // Import services
 import { tripService } from '../services/tripService';
@@ -19,6 +21,7 @@ import { itineraryService, Itinerary } from '../services/itineraryService';
 import { activityService } from '../services/activityService';
 import { locationService } from '../services/locationService';
 import { expenseService, Expense as BackendExpense, ExpenseCategory, Currency, ExpenseStatus } from '../services/expenseService';
+import { tripPlanService, TripPlanDTO, DayPlanDTO, PlaceDTO as TripPlanPlaceDTO, ActivityDTO as TripPlanActivityDTO, ExpenseDTO as TripPlanExpenseDTO } from '../services/tripPlanService';
 
 // Import extracted components
 import Modal from '../components/modals/Modal';
@@ -267,6 +270,276 @@ const NewTrip = () => {
     }
     
     setShowAddPlaceModal(false);
+  };
+
+  // ✅ Save trip functionality
+  const handleSaveTrip = async () => {
+    if (!tripIdParam) {
+      console.warn('⚠️ No tripId available for saving');
+      return;
+    }
+
+    try {
+      console.log('💾 Saving trip with ID:', tripIdParam);
+      
+      // Prepare trip data for update with proper data types
+      const tripData = {
+        title: state.currentTrip?.title || "Trip",
+        destination: state.currentTrip?.destination || "",
+        startDate: state.currentTrip?.startDate || new Date().toISOString().split('T')[0], // ✅ Keep as string for LocalDate conversion
+        endDate: state.currentTrip?.endDate || new Date().toISOString().split('T')[0], // ✅ Keep as string for LocalDate conversion
+        budget: state.currentTrip?.budget || 0, // ✅ Backend will convert to BigDecimal
+        description: state.currentTrip?.description || "",
+        status: state.currentTrip?.status || "PLANNING", // ✅ Enum value
+        visibility: state.currentTrip?.visibility || "PRIVATE" // ✅ Enum value
+      };
+
+      // ✅ Validate required fields
+      if (!tripData.title || tripData.title.trim() === '') {
+        throw new Error('Trip title is required');
+      }
+      if (!tripData.destination || tripData.destination.trim() === '') {
+        throw new Error('Trip destination is required');
+      }
+      if (!tripData.startDate) {
+        throw new Error('Start date is required');
+      }
+      if (!tripData.endDate) {
+        throw new Error('End date is required');
+      }
+      if (tripData.budget < 0) {
+        throw new Error('Budget must be non-negative');
+      }
+
+      console.log('📤 Sending trip update:', tripData);
+      console.log('📊 Trip data validation:', {
+        title: !!tripData.title,
+        destination: !!tripData.destination,
+        startDate: !!tripData.startDate,
+        endDate: !!tripData.endDate,
+        budget: tripData.budget,
+        status: tripData.status,
+        visibility: tripData.visibility
+      });
+      
+      // Update trip via API
+      const response = await apiClient.put(`/trips/${tripIdParam}`, tripData);
+      console.log('✅ Trip saved successfully:', response.data);
+      
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        message: 'Trip saved successfully!',
+        duration: 3000
+      }));
+      
+      // Redirect to homepage
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to save trip:', error);
+      
+      // ✅ Log detailed error information
+      if (error.response) {
+        console.error('Error response status:', error.response.status);
+        console.error('Error response data:', error.response.data);
+        console.error('Error response headers:', error.response.headers);
+      }
+      
+      dispatch(addNotification({
+        type: 'error',
+        message: `Failed to save trip: ${error.response?.data || error.message || 'Unknown error'}`,
+        duration: 5000
+      }));
+    }
+  };
+
+  // ✅ Unified save trip plan functionality
+  const handleSaveTripPlan = async () => {
+    if (!tripIdParam) {
+      console.warn('⚠️ No tripId available for saving');
+      return;
+    }
+
+    try {
+      console.log('💾 Saving unified trip plan with ID:', tripIdParam);
+      
+      // Convert frontend data to unified trip plan format
+      const tripPlan: TripPlanDTO = {
+        tripId: parseInt(tripIdParam),
+        title: state.currentTrip?.title || "Trip",
+        destination: state.currentTrip?.destination || "Unknown Destination", // ✅ Provide default destination
+        startDate: state.currentTrip?.startDate || new Date().toISOString().split('T')[0],
+        endDate: state.currentTrip?.endDate || new Date().toISOString().split('T')[0],
+        budget: state.currentTrip?.budget || 0,
+        description: state.currentTrip?.description || "",
+        
+        // Convert places
+        places: (tripPlaces || []).map(place => {
+          // Map frontend category to backend enum
+          const categoryMap: { [key: string]: string } = {
+            'attraction': 'ATTRACTION',
+            'restaurant': 'RESTAURANT',
+            'hotel': 'HOTEL',
+            'transport': 'TRANSPORT',
+            'shopping': 'SHOPPING',
+            'entertainment': 'ENTERTAINMENT',
+            'cultural': 'CULTURAL',
+            'nature': 'NATURE',
+            'sports': 'SPORTS',
+            'religious': 'RELIGIOUS',
+            'historical': 'HISTORICAL',
+            'other': 'OTHER'
+          };
+          
+          return {
+            name: place.name,
+            location: place.location,
+            description: place.description,
+            category: categoryMap[place.category.toLowerCase()] || 'OTHER',
+            rating: place.rating,
+            cost: place.cost,
+            duration: place.duration,
+            latitude: place.coordinates?.lat,
+            longitude: place.coordinates?.lng,
+            photos: place.photos || []
+          };
+        }),
+        
+        // Convert days with activities
+        days: tripDays.map(day => {
+          const dayActivities = backendActivities.filter(activity => {
+            const activityItinerary = itineraries.find(i => i.id === activity.itineraryId);
+            return activityItinerary?.dayNumber === day.dayNumber;
+          });
+          
+          return {
+            dayNumber: day.dayNumber,
+            date: day.date.toISOString().split('T')[0],
+            notes: '',
+            activities: dayActivities.map(activity => {
+              // Map frontend activity type to backend enum
+              const typeMap: { [key: string]: string } = {
+                'sightseeing': 'SIGHTSEEING',
+                'restaurant': 'RESTAURANT',
+                'hotel': 'HOTEL',
+                'transport': 'TRANSPORT',
+                'shopping': 'SHOPPING',
+                'entertainment': 'ENTERTAINMENT',
+                'other': 'OTHER'
+              };
+              
+              // Map frontend activity status to backend enum
+              const statusMap: { [key: string]: string } = {
+                'planned': 'PLANNED',
+                'confirmed': 'CONFIRMED',
+                'cancelled': 'CANCELLED',
+                'completed': 'COMPLETED'
+              };
+              
+              return {
+                name: activity.name,
+                description: activity.description,
+                startTime: activity.startTime,
+                endTime: activity.endTime,
+                cost: activity.cost,
+                durationHours: activity.durationHours,
+                type: (typeMap[activity.type?.toLowerCase()] || 'OTHER') as any,
+                status: (statusMap[activity.status?.toLowerCase()] || 'PLANNED') as any,
+                tripId: parseInt(tripIdParam),
+                itineraryId: activity.itineraryId,
+                dayNumber: day.dayNumber,
+                placeId: activity.placeId
+              };
+            })
+          };
+        }),
+        
+        // Convert expenses
+        expenses: backendExpenses.map(expense => {
+          // Map frontend expense category to backend enum
+          const categoryMap: { [key: string]: string } = {
+            'accommodation': 'ACCOMMODATION',
+            'food': 'FOOD',
+            'transport': 'TRANSPORT',
+            'activities': 'ACTIVITIES',
+            'shopping': 'SHOPPING',
+            'other': 'OTHER'
+          };
+          
+          // Map frontend expense status to backend enum
+          const statusMap: { [key: string]: string } = {
+            'pending': 'PENDING',
+            'paid': 'PAID',
+            'refunded': 'REFUNDED'
+          };
+          
+          // Map frontend currency to backend enum
+          const currencyMap: { [key: string]: string } = {
+            'usd': 'USD',
+            'eur': 'EUR',
+            'gbp': 'GBP',
+            'jpy': 'JPY',
+            'krw': 'KRW'
+          };
+          
+          return {
+            dayNumber: expense.dayNumber,
+            expenseDate: expense.expenseDate,
+            category: (categoryMap[expense.category?.toLowerCase()] || 'OTHER') as any,
+            description: expense.description,
+            amount: expense.amount,
+            currency: (currencyMap[expense.currency?.toLowerCase()] || 'USD') as any,
+            receiptUrl: expense.receiptUrl,
+            paymentMethod: expense.paymentMethod,
+            vendor: expense.vendor,
+            location: expense.location,
+            notes: expense.notes,
+            reimbursable: expense.reimbursable,
+            reimbursed: expense.reimbursed,
+            reimbursementReference: expense.reimbursementReference,
+            status: (statusMap[expense.status?.toLowerCase()] || 'PENDING') as any,
+            tripId: parseInt(tripIdParam)
+          };
+        })
+      };
+
+      console.log('📤 Sending unified trip plan:', tripPlan);
+      
+      // Save unified trip plan
+      const savedPlan = await tripPlanService.saveTripPlan(parseInt(tripIdParam), tripPlan);
+      console.log('✅ Unified trip plan saved successfully:', savedPlan);
+      
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        message: 'Trip plan saved successfully!',
+        duration: 3000
+      }));
+      
+      // Redirect to home page
+      setTimeout(() => {
+        navigate('/home');
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('❌ Failed to save trip plan:', error);
+      
+      // ✅ Log detailed error information
+      if (error.response) {
+        console.error('Error response status:', error.response.status);
+        console.error('Error response data:', error.response.data);
+        console.error('Error response headers:', error.response.headers);
+      }
+      
+      dispatch(addNotification({
+        type: 'error',
+        message: `Failed to save trip plan: ${error.response?.data || error.message || 'Unknown error'}`,
+        duration: 5000
+      }));
+    }
   };
 
   const handleDeletePlace = async (placeId: string) => {
@@ -694,7 +967,16 @@ const NewTrip = () => {
                   )}
                 </div>
                 <div className="flex items-center space-x-4">
-                  {/* Save functionality moved to HomePage modal */}
+                  {/* Save Trip Button */}
+                  <button 
+                    onClick={handleSaveTripPlan}
+                    className="flex items-center px-6 py-2 space-x-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save Trip Plan</span>
+                  </button>
+                  
+                  {/* Delete Trip Button */}
                   {tripId && (
                     <button 
                       onClick={handleDeleteTrip}

@@ -27,18 +27,26 @@ export const useTripCreation = (): TripCreationResult => {
   const [error, setError] = useState<string | null>(null);
 
   const createTrip = async (formData: TripFormData) => {
+    console.log('=== CREATE TRIP CALLED ===');
+    console.log('Form data:', formData);
+    console.log('User:', user);
+    console.log('User UID:', user?.uid);
+    
     const { title, destination, startDate, endDate, budget } = formData;
     
     if (!startDate || !endDate || !title.trim() || !destination.trim()) {
+      console.log('Validation failed: missing required fields');
       setError('Please fill in all required fields');
       return;
     }
 
     if (!user?.uid) {
+      console.log('Validation failed: user not authenticated');
       setError('User not authenticated');
       return;
     }
 
+    console.log('Validation passed, starting trip creation...');
     setIsLoading(true);
     setError(null);
     
@@ -81,7 +89,11 @@ export const useTripCreation = (): TripCreationResult => {
 
       // Send POST request to backend using configured API client with Firebase UID
       const url = `/trips?firebaseUid=${user.uid}`;
+      console.log('Making API call to:', url);
+      console.log('API client base URL:', apiClient.defaults.baseURL);
+      
       const response = await apiClient.post(url, tripData);
+      console.log('API response received:', response);
       const createdTrip = response.data;
       console.log('Trip created successfully:', createdTrip);
 
@@ -96,7 +108,13 @@ export const useTripCreation = (): TripCreationResult => {
       navigate(`/new-trip?tripId=${createdTrip.id}`);
 
     } catch (error) {
-      console.error('Error creating trip:', error);
+      console.error('=== ERROR CREATING TRIP ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error response:', (error as any)?.response);
+      console.error('Error status:', (error as any)?.response?.status);
+      console.error('Error data:', (error as any)?.response?.data);
+      
       setError(error instanceof Error ? error.message : 'Failed to create trip. Please try again.');
       dispatch(addNotification({
         type: 'error',

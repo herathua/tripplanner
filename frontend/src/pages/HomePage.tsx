@@ -131,16 +131,31 @@ const HomePage: React.FC = () => {
 
   // Load user trips
   useEffect(() => {
+    console.log('HomePage useEffect triggered');
+    console.log('User:', user);
+    console.log('User UID:', user?.uid);
+    
     if (user && user.uid) {
       console.log('Loading trips for user:', user.uid);
       tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
         console.log('Trips data received:', data);
+        console.log('Data structure:', {
+          content: data.content,
+          totalPages: data.totalPages,
+          page: data.page,
+          size: data.size,
+          totalElements: data.totalElements
+        });
         setUpcomingTrips(data.content || []);
         setTripTotalPages(data.totalPages || 1);
       }).catch(error => {
         console.error('Error loading trips:', error);
         console.error('Error details:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        console.error('Error message:', error.message);
       });
+    } else {
+      console.log('No user or user.uid, skipping trip loading');
     }
   }, [user, tripPage]);
 
@@ -264,7 +279,14 @@ const HomePage: React.FC = () => {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {upcomingTrips.length === 0 && (
-              <div className="col-span-3 text-center text-gray-500">No upcoming trips found.</div>
+              <div className="col-span-3 text-center text-gray-500">
+                No upcoming trips found. 
+                <br />
+                <small className="text-xs text-gray-400">
+                  Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
+                  Trips count: {upcomingTrips.length}
+                </small>
+              </div>
             )}
             {upcomingTrips.map((trip, idx) => (
               <DynamicTripCard key={trip.id || idx} trip={trip} />

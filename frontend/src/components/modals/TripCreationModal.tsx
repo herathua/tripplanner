@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, DollarSign } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -20,8 +20,33 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
     budget: ''
   });
 
+  // Debug form data changes
+  React.useEffect(() => {
+    console.log('Form data updated:', formData);
+    console.log('Button disabled state:', {
+      hasTitle: !!formData.title.trim(),
+      hasDestination: !!formData.destination.trim(),
+      hasStartDate: !!formData.startDate,
+      hasEndDate: !!formData.endDate,
+      hasBudget: !!formData.budget,
+      isLoading: isLoading,
+      buttonDisabled: !formData.startDate || !formData.endDate || !formData.budget || !formData.title.trim() || !formData.destination.trim() || isLoading
+    });
+  }, [formData, isLoading]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('=== FORM SUBMISSION ===');
+    console.log('Form data at submission:', formData);
+    console.log('Form validation:', {
+      hasTitle: !!formData.title.trim(),
+      hasDestination: !!formData.destination.trim(),
+      hasStartDate: !!formData.startDate,
+      hasEndDate: !!formData.endDate,
+      hasBudget: !!formData.budget,
+      isLoading: isLoading
+    });
+    
     clearError();
     await createTrip(formData);
   };
@@ -45,6 +70,7 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
+    console.log('Budget changed:', value);
     setFormData(prev => ({ ...prev, budget: value }));
   };
 
@@ -107,7 +133,10 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
             </label>
             <DatePicker
               selected={formData.startDate}
-              onChange={(date: Date | null) => setFormData(prev => ({ ...prev, startDate: date }))}
+              onChange={(date: Date | null) => {
+                console.log('Start date changed:', date);
+                setFormData(prev => ({ ...prev, startDate: date }));
+              }}
               selectsStart
               startDate={formData.startDate}
               endDate={formData.endDate}
@@ -124,7 +153,10 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
             </label>
             <DatePicker
               selected={formData.endDate}
-              onChange={(date: Date | null) => setFormData(prev => ({ ...prev, endDate: date }))}
+              onChange={(date: Date | null) => {
+                console.log('End date changed:', date);
+                setFormData(prev => ({ ...prev, endDate: date }));
+              }}
               selectsEnd
               startDate={formData.startDate}
               endDate={formData.endDate}

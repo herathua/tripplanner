@@ -65,7 +65,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </Link>
             </div>
 
-            {/* Centered Navigation */}
+            {/* Centered Navigation - Removed Trip and Login links */}
             <nav className="justify-center flex-1 hidden md:flex">
               <div className="flex space-x-8">
                 {navigation.map((item) => (

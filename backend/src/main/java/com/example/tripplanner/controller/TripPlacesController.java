@@ -25,85 +25,17 @@ public class TripPlacesController {
     @Autowired
     private TripRepository tripRepository;
 
-    @GetMapping("/{tripId}/places")
-    @Operation(summary = "Get places for a specific trip", description = "Retrieve all places associated with a specific trip")
-    public ResponseEntity<List<Place>> getPlacesForTrip(
-            @Parameter(description = "ID of the trip") 
-            @PathVariable Long tripId) {
-        
-        System.out.println("🔍 Getting places for trip: " + tripId);
-        
-        Optional<Trip> trip = tripRepository.findById(tripId);
-        if (!trip.isPresent()) {
-            System.out.println("❌ Trip not found: " + tripId);
-            return ResponseEntity.notFound().build();
-        }
-        
-        List<Place> places = placeRepository.findByTrip(trip.get());
-        System.out.println("✅ Found " + places.size() + " places for trip " + tripId);
-        
-        return ResponseEntity.ok(places);
-    }
+    // REMOVED: This endpoint conflicts with TripController.getPlacesByTripId
+    // The new TripController handles place retrieval with PlaceDTO and proper service layer
+    // Use GET /trips/{tripId}/places with PlaceDTO instead
 
-    @PostMapping("/{tripId}/places")
-    @Operation(summary = "Add a place to a specific trip", description = "Create a new place and associate it with a specific trip")
-    public ResponseEntity<Place> addPlaceToTrip(
-            @Parameter(description = "ID of the trip") 
-            @PathVariable Long tripId,
-            @Parameter(description = "Place object to create") 
-            @RequestBody Place place) {
-        
-        System.out.println("🏗️ Adding place to trip: " + tripId);
-        System.out.println("📍 Place details: " + place.getName() + " at " + place.getLocation());
-        
-        Optional<Trip> trip = tripRepository.findById(tripId);
-        if (!trip.isPresent()) {
-            System.out.println("❌ Trip not found: " + tripId);
-            return ResponseEntity.notFound().build();
-        }
-        
-        // Associate the place with the trip
-        place.setTrip(trip.get());
-        
-        Place savedPlace = placeRepository.save(place);
-        System.out.println("✅ Place saved with ID: " + savedPlace.getId());
-        
-        return ResponseEntity.ok(savedPlace);
-    }
+    // REMOVED: This endpoint conflicts with TripController.addPlaceToTrip
+    // The new TripController handles place creation with PlaceDTO and proper service layer
+    // Use POST /trips/{tripId}/places with PlaceDTO instead
 
-    @DeleteMapping("/{tripId}/places/{placeId}")
-    @Operation(summary = "Remove a place from a specific trip", description = "Delete a place that belongs to a specific trip")
-    public ResponseEntity<Void> removePlaceFromTrip(
-            @Parameter(description = "ID of the trip") 
-            @PathVariable Long tripId,
-            @Parameter(description = "ID of the place to delete") 
-            @PathVariable Long placeId) {
-        
-        System.out.println("🗑️ Removing place " + placeId + " from trip: " + tripId);
-        
-        Optional<Trip> trip = tripRepository.findById(tripId);
-        if (!trip.isPresent()) {
-            System.out.println("❌ Trip not found: " + tripId);
-            return ResponseEntity.notFound().build();
-        }
-        
-        Optional<Place> place = placeRepository.findById(placeId);
-        if (!place.isPresent()) {
-            System.out.println("❌ Place not found: " + placeId);
-            return ResponseEntity.notFound().build();
-        }
-        
-        // Verify the place belongs to this trip
-        if (!place.get().getTrip().getId().equals(tripId)) {
-            System.out.println("❌ Place " + placeId + " does not belong to trip " + tripId);
-            return ResponseEntity.badRequest().build();
-        }
-        
-        placeRepository.deleteById(placeId);
-        System.out.println("✅ Place " + placeId + " removed from trip " + tripId);
-        
-        return ResponseEntity.ok().build();
-    }
+    // REMOVED: This endpoint conflicts with TripController.removePlaceFromTrip
+    // The new TripController handles place deletion with proper service layer
+    // Use DELETE /trips/{tripId}/places/{placeId} instead
 
     @PutMapping("/{tripId}/places/{placeId}")
     @Operation(summary = "Update a place in a specific trip", description = "Update details of a place that belongs to a specific trip")

@@ -39,7 +39,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByTripAndAmountLessThanEqual(@Param("trip") Trip trip, @Param("amount") BigDecimal amount);
     
     @Query("SELECT e FROM Expense e WHERE e.trip = :trip AND e.expenseDate BETWEEN :startDate AND :endDate")
-    List<Expense> findByTripAndDateRange(@Param("trip") Trip trip, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    List<Expense> findByTripAndExpenseDateBetween(@Param("trip") Trip trip, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    // Find by trip ID (for service layer)
+    @Query("SELECT e FROM Expense e WHERE e.trip.id = :tripId")
+    List<Expense> findByTripId(@Param("tripId") Long tripId);
     
     // Search expenses
     @Query("SELECT e FROM Expense e WHERE e.trip = :trip AND (e.description LIKE %:searchTerm% OR e.vendor LIKE %:searchTerm% OR e.location LIKE %:searchTerm% OR e.notes LIKE %:searchTerm%)")
