@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import Paragraph from '@editorjs/paragraph';
@@ -111,12 +111,6 @@ const EnhancedBlogViewer: React.FC = () => {
           <div className="text-6xl mb-4">📝</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Blog Post Not Found</h1>
           <p className="text-gray-600 mb-6">{error || 'The blog post you are looking for does not exist.'}</p>
-          <Link 
-            to="/blog" 
-            className="inline-block bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Back to Blog
-          </Link>
         </div>
       </div>
     );
@@ -348,17 +342,7 @@ const EnhancedBlogViewer: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <div className="mt-8 flex justify-between items-center">
-          <Link 
-            to="/blog"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Blog
-          </Link>
-          
+        <div className="mt-8 flex justify-end items-center">
           <div className="text-sm text-gray-500">
             Last updated: {formatDate(blogPost.updatedAt || blogPost.createdAt || '')}
           </div>
