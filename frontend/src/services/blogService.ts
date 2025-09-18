@@ -12,6 +12,11 @@ export interface BlogPost {
   updatedAt?: string;
   publishedAt?: string;
   viewCount?: number;
+  coverImage?: {
+    url: string;
+    alt: string;
+    credit: string;
+  };
 }
 
 export interface BlogPostResponse {

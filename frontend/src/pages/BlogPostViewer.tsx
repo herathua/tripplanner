@@ -9,13 +9,15 @@ import Quote from '@editorjs/quote';
 import CodeTool from '@editorjs/code';
 import Embed from '@editorjs/embed';
 import Marker from '@editorjs/marker';
+import { BlogCoverImageService, BlogCoverImage } from '../utils/blogCoverImageService';
 
 const BlogPostViewer: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editorInstance, setEditorInstance] = useState<EditorJS | null>(null);
+  const [coverImage, setCoverImage] = useState<BlogCoverImage | null>(null);
+  const [isCoverImageLoading, setIsCoverImageLoading] = useState(true);
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -36,6 +38,40 @@ const BlogPostViewer: React.FC = () => {
     fetchBlogPost();
   }, [slug]);
 
+  // Load cover image when blog post is available
+  useEffect(() => {
+    const loadCoverImage = async () => {
+      if (!blogPost) return;
+      
+      try {
+        setIsCoverImageLoading(true);
+        
+        // Use existing cover image if available, otherwise generate one
+        if (blogPost.coverImage) {
+          setCoverImage(blogPost.coverImage);
+        } else {
+          const generatedCoverImage = await BlogCoverImageService.generateCoverImage(
+            blogPost.title,
+            blogPost.tags || []
+          );
+          setCoverImage(generatedCoverImage);
+        }
+      } catch (error) {
+        console.error('Error loading cover image:', error);
+        // Set fallback image
+        setCoverImage({
+          url: '/src/assets/logo.png',
+          alt: 'Travel blog cover',
+          credit: 'Default image'
+        });
+      } finally {
+        setIsCoverImageLoading(false);
+      }
+    };
+
+    loadCoverImage();
+  }, [blogPost]);
+
   useEffect(() => {
     if (blogPost && blogPost.content) {
       try {
@@ -55,8 +91,6 @@ const BlogPostViewer: React.FC = () => {
             marker: Marker as any,
           },
         });
-
-        setEditorInstance(editor);
 
         return () => {
           if (editor && typeof editor.destroy === 'function') {
@@ -97,16 +131,35 @@ const BlogPostViewer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
-            {blogPost.title}
-          </h1>
-          
-          {/* Meta information */}
-          <div className="flex items-center justify-between text-gray-600 mb-6">
-            <div className="flex items-center space-x-4">
+      {/* Cover Image Header */}
+      <header className="relative h-[60vh] min-h-[450px] overflow-hidden mb-8">
+        {isCoverImageLoading ? (
+          <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-3"></div>
+              <div className="text-gray-600">Loading cover image...</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <img
+              src={coverImage?.url || '/src/assets/logo.png'}
+              alt={coverImage?.alt || blogPost.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
+          </>
+        )}
+        
+        {/* Header Content Overlay */}
+        <div className="absolute inset-0 flex items-end justify-start">
+          <div className="px-6 pb-8 text-white">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
+              {blogPost.title}
+            </h1>
+            
+            {/* Meta information */}
+            <div className="flex flex-wrap items-center gap-4 text-gray-200 text-sm mb-4">
               {blogPost.author && (
                 <span>By {blogPost.author.name || 'Anonymous'}</span>
               )}
@@ -123,22 +176,32 @@ const BlogPostViewer: React.FC = () => {
                 <span>{blogPost.viewCount} views</span>
               )}
             </div>
-          </div>
 
-          {/* Tags */}
-          {blogPost.tags && blogPost.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {blogPost.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </header>
+            {/* Tags */}
+            {blogPost.tags && blogPost.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {blogPost.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Image Credit */}
+        {coverImage?.credit && (
+          <div className="absolute bottom-4 right-4 text-xs text-white/70 bg-black/30 px-2 py-1 rounded">
+            {coverImage.credit}
+          </div>
+        )}
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* Content */}
         <main className="prose prose-lg max-w-none">

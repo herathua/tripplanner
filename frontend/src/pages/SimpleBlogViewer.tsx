@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogService, BlogPost } from '../services/blogService';
+import { BlogCoverImageService, BlogCoverImage } from '../utils/blogCoverImageService';
 
 const SimpleBlogViewer: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [blogPost, setBlogPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [coverImage, setCoverImage] = useState<BlogCoverImage | null>(null);
+  const [isCoverImageLoading, setIsCoverImageLoading] = useState(true);
 
   useEffect(() => {
     const fetchBlogPost = async () => {
@@ -29,6 +32,40 @@ const SimpleBlogViewer: React.FC = () => {
 
     fetchBlogPost();
   }, [slug]);
+
+  // Load cover image when blog post is available
+  useEffect(() => {
+    const loadCoverImage = async () => {
+      if (!blogPost) return;
+      
+      try {
+        setIsCoverImageLoading(true);
+        
+        // Use existing cover image if available, otherwise generate one
+        if (blogPost.coverImage) {
+          setCoverImage(blogPost.coverImage);
+        } else {
+          const generatedCoverImage = await BlogCoverImageService.generateCoverImage(
+            blogPost.title,
+            blogPost.tags || []
+          );
+          setCoverImage(generatedCoverImage);
+        }
+      } catch (error) {
+        console.error('Error loading cover image:', error);
+        // Set fallback image
+        setCoverImage({
+          url: '/src/assets/logo.png',
+          alt: 'Travel blog cover',
+          credit: 'Default image'
+        });
+      } finally {
+        setIsCoverImageLoading(false);
+      }
+    };
+
+    loadCoverImage();
+  }, [blogPost]);
 
   if (loading) {
     return (
@@ -65,30 +102,57 @@ const SimpleBlogViewer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {blogPost.title}
-          </h1>
-          
-          {/* Meta information */}
-          <div className="flex items-center justify-between text-gray-600 mb-6">
-            <div className="flex items-center space-x-4">
+      {/* Cover Image Header */}
+      <header className="relative h-[50vh] min-h-[400px] overflow-hidden mb-8">
+        {isCoverImageLoading ? (
+          <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+              <div className="text-gray-600">Loading cover image...</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <img
+              src={coverImage?.url || '/src/assets/logo.png'}
+              alt={coverImage?.alt || blogPost.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
+          </>
+        )}
+        
+        {/* Header Content Overlay */}
+        <div className="absolute inset-0 flex items-end justify-start">
+          <div className="px-6 pb-6 text-white">
+            <h1 className="text-3xl md:text-5xl font-bold mb-3 leading-tight drop-shadow-lg">
+              {blogPost.title}
+            </h1>
+            
+            {/* Meta information */}
+            <div className="flex flex-wrap items-center gap-4 text-gray-200 text-sm">
               {blogPost.author && (
                 <span>By {blogPost.author.displayName || 'Anonymous'}</span>
               )}
               {blogPost.publishedAt && (
-                <span>
-                  {formatDate(blogPost.publishedAt)}
-                </span>
+                <span>• {formatDate(blogPost.publishedAt)}</span>
               )}
               {blogPost.viewCount !== undefined && (
-                <span>{blogPost.viewCount} views</span>
+                <span>• {blogPost.viewCount} views</span>
               )}
             </div>
           </div>
-        </header>
+        </div>
+        
+        {/* Image Credit */}
+        {coverImage?.credit && (
+          <div className="absolute bottom-4 right-4 text-xs text-white/70 bg-black/30 px-2 py-1 rounded">
+            {coverImage.credit}
+          </div>
+        )}
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* Content */}
         <main className="prose prose-lg max-w-none">
