@@ -250,7 +250,7 @@ const UserGuides: React.FC<UserGuidesProps> = ({ user }) => {
                   <div className="flex justify-between items-center">
                     <div className="flex space-x-2">
                       <Link
-                        to={`/blog/${guide.id}`}
+                        to={`/blog/${guide.publicSlug || guide.id}`}
                         className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         View
