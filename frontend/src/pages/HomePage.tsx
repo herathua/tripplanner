@@ -391,14 +391,24 @@ const HomePage: React.FC = () => {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {userGuides.length === 0 ? (
-              <div className="col-span-3 text-center py-8">
-                <div className="text-gray-500 mb-4">No guides created yet.</div>
-                <button
-                  onClick={handleCreateNewGuide}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
-                >
-                  Create Your First Guide
-                </button>
+              <div className="col-span-3 text-center text-gray-500 py-8">
+                <div className="mb-4">
+                  {user?.uid ? 'No guides created yet.' : 'Please log in to view your guides.'}
+                </div>
+                <small className="text-xs text-gray-400">
+                  Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
+                  Guides count: {userGuides.length}
+                  {user?.uid && (
+                    <div className="mt-2">
+                      <button 
+                        onClick={handleCreateNewGuide}
+                        className="text-blue-600 hover:text-blue-700 underline"
+                      >
+                        Create Your First Guide
+                      </button>
+                    </div>
+                  )}
+                </small>
               </div>
             ) : (
               userGuides.map((guide) => (
