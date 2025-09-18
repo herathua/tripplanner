@@ -3,9 +3,8 @@ import { useAppSelector } from '../store';
 import ProfileSettings from '../components/user/ProfileSettings';
 import UserTrips from '../components/user/UserTrips';
 import UserGuides from '../components/user/UserGuides';
-import UserBlogs from '../components/user/UserBlogs';
 
-type UserManagementTab = 'profile' | 'trips' | 'guides' | 'blogs';
+type UserManagementTab = 'profile' | 'trips' | 'guides';
 
 const UserManagement: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -26,7 +25,6 @@ const UserManagement: React.FC = () => {
     { id: 'profile' as UserManagementTab, name: 'Profile Settings', icon: '👤' },
     { id: 'trips' as UserManagementTab, name: 'My Trips', icon: '✈️' },
     { id: 'guides' as UserManagementTab, name: 'My Guides', icon: '📖' },
-    { id: 'blogs' as UserManagementTab, name: 'My Blogs', icon: '📝' },
   ];
 
   const renderContent = () => {
@@ -37,8 +35,6 @@ const UserManagement: React.FC = () => {
         return <UserTrips user={user} />;
       case 'guides':
         return <UserGuides user={user} />;
-      case 'blogs':
-        return <UserBlogs user={user} />;
       default:
         return <ProfileSettings user={user} />;
     }

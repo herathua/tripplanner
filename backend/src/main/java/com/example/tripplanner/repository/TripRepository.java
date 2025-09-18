@@ -76,6 +76,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.startDate >= :today ORDER BY t.startDate ASC")
     List<Trip> findUpcomingTrips(@Param("user") User user, @Param("today") LocalDate today);
     
+    // Upcoming and active trips (trips that haven't ended yet)
+    @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.endDate >= :today ORDER BY t.startDate ASC")
+    List<Trip> findUpcomingAndActiveTrips(@Param("user") User user, @Param("today") LocalDate today);
+    
     // Recent trips
     @Query("SELECT t FROM Trip t WHERE t.user = :user AND t.endDate <= :today ORDER BY t.endDate DESC")
     List<Trip> findRecentTrips(@Param("user") User user, @Param("today") LocalDate today);

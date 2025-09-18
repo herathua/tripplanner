@@ -289,9 +289,9 @@ public class TripService {
             .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
         
         LocalDate today = LocalDate.now();
-        List<Trip> upcomingTrips = tripRepository.findByUserAndStartDateAfter(user, today);
+        List<Trip> upcomingTrips = tripRepository.findUpcomingAndActiveTrips(user, today);
         
-        System.out.println("✅ Found " + upcomingTrips.size() + " upcoming trips");
+        System.out.println("✅ Found " + upcomingTrips.size() + " upcoming and active trips");
         
         // Convert to DTOs
         List<TripDTO> tripDTOs = upcomingTrips.stream()
