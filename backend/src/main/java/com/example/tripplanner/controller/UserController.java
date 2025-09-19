@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -315,6 +314,116 @@ public class UserController {
             
             response.put("success", false);
             response.put("error", "Internal server error occurred while updating password");
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @PostMapping("/email-verification")
+    @Operation(summary = "Update email verification status", description = "Update user email verification status")
+    public ResponseEntity<Map<String, Object>> updateEmailVerificationStatus(
+            @RequestBody Map<String, Object> verificationData,
+            Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String firebaseUid = null;
+            if (authentication != null && authentication.getPrincipal() != null) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof String) {
+                    firebaseUid = (String) principal;
+                }
+            }
+            
+            if (firebaseUid == null || firebaseUid.isBlank()) {
+                response.put("success", false);
+                response.put("error", "Authentication required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            if (userOpt.isEmpty()) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return ResponseEntity.notFound().build();
+            }
+            
+            User user = userOpt.get();
+            
+            // Get email verification status
+            Object emailVerifiedObj = verificationData.get("emailVerified");
+            if (emailVerifiedObj == null) {
+                response.put("success", false);
+                response.put("error", "Email verification status is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            boolean emailVerified;
+            if (emailVerifiedObj instanceof Boolean) {
+                emailVerified = (Boolean) emailVerifiedObj;
+            } else {
+                emailVerified = Boolean.parseBoolean(emailVerifiedObj.toString());
+            }
+            
+            // Update email verification status
+            user.setEmailVerified(emailVerified);
+            userRepository.save(user);
+            
+            response.put("success", true);
+            response.put("message", "Email verification status updated successfully");
+            response.put("emailVerified", emailVerified);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            System.err.println("Error updating email verification status: " + e.getMessage());
+            e.printStackTrace();
+            
+            response.put("success", false);
+            response.put("error", "Internal server error occurred while updating email verification status");
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @GetMapping("/email-verification")
+    @Operation(summary = "Get email verification status", description = "Get current user email verification status")
+    public ResponseEntity<Map<String, Object>> getEmailVerificationStatus(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String firebaseUid = null;
+            if (authentication != null && authentication.getPrincipal() != null) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof String) {
+                    firebaseUid = (String) principal;
+                }
+            }
+            
+            if (firebaseUid == null || firebaseUid.isBlank()) {
+                response.put("success", false);
+                response.put("error", "Authentication required");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            Optional<User> userOpt = userRepository.findByFirebaseUid(firebaseUid);
+            if (userOpt.isEmpty()) {
+                response.put("success", false);
+                response.put("error", "User not found");
+                return ResponseEntity.notFound().build();
+            }
+            
+            User user = userOpt.get();
+            
+            response.put("success", true);
+            response.put("emailVerified", user.isEmailVerified());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            System.err.println("Error getting email verification status: " + e.getMessage());
+            e.printStackTrace();
+            
+            response.put("success", false);
+            response.put("error", "Internal server error occurred while getting email verification status");
             return ResponseEntity.status(500).body(response);
         }
     }

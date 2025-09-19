@@ -24,6 +24,7 @@ const EnhancedBlogViewer = React.lazy(() => import('./pages/EnhancedBlogViewer')
 const BlogManagementDashboard = React.lazy(() => import('./pages/BlogManagementDashboard'));
 const SupabaseDebugger = React.lazy(() => import('./components/SupabaseDebugger'));
 const UserManagement = React.lazy(() => import('./pages/UserManagement'));
+const EmailVerificationPage = React.lazy(() => import('./pages/EmailVerificationPage'));
 const AdminConsole = React.lazy(() => import('./pages/AdminConsole'));
 const AdminRoute = React.lazy(() => import('./components/admin/AdminRoute'));
 
@@ -92,6 +93,10 @@ const AppRoutes: React.FC = () => {
               <LoginPage />
             </PublicRoute>
           }
+        />
+        <Route
+          path="/verify-email"
+          element={<EmailVerificationPage />}
         />
         <Route
           path="/travel-guide"

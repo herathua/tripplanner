@@ -8,7 +8,12 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  applyActionCode,
+  checkActionCode,
+  confirmPasswordReset,
+  verifyPasswordResetCode
 } from 'firebase/auth';
 
 // Your web app's Firebase configuration
@@ -67,6 +72,33 @@ export const resetPassword = async (email: string) => {
 export const logoutUser = async () => {
   try {
     await signOut(auth);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendEmailVerificationToUser = async (user: User) => {
+  try {
+    await sendEmailVerification(user);
+    return { success: true };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const verifyEmailWithCode = async (code: string) => {
+  try {
+    await applyActionCode(auth, code);
+    return { success: true };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const checkEmailVerificationCode = async (code: string) => {
+  try {
+    const info = await checkActionCode(auth, code);
+    return { success: true, info };
   } catch (error) {
     throw error;
   }

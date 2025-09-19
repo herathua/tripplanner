@@ -4,6 +4,7 @@ import { useAppDispatch } from '../../store';
 import { addNotification } from '../../store/slices/uiSlice';
 import { ImageUploadService } from '../../services/imageUploadService';
 import { PasswordService, PasswordUpdateRequest } from '../../services/passwordService';
+import { EmailVerificationService } from '../../services/emailVerificationService';
 
 interface ProfileSettingsProps {
   user: User;
@@ -13,6 +14,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [passwordStrength, setPasswordStrength] = useState<{ strength: 'weak' | 'medium' | 'strong'; score: number }>({ strength: 'weak', score: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -284,6 +286,67 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
     }
   };
 
+  const handleSendEmailVerification = async () => {
+    setIsSendingVerification(true);
+    
+    try {
+      const result = await EmailVerificationService.sendVerificationEmail(user);
+      
+      if (result.success) {
+        dispatch(addNotification({
+          type: 'success',
+          message: result.message || 'Verification email sent successfully!',
+          duration: 5000,
+        }));
+      } else {
+        dispatch(addNotification({
+          type: 'error',
+          message: result.error || 'Failed to send verification email',
+          duration: 5000,
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error sending verification email:', error);
+      dispatch(addNotification({
+        type: 'error',
+        message: 'Failed to send verification email. Please try again.',
+        duration: 5000,
+      }));
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
+
+  const handleRefreshEmailStatus = async () => {
+    try {
+      // Reload the user to get updated email verification status
+      await user.reload();
+      
+      // Update backend with the latest Firebase status
+      const backendResult = await EmailVerificationService.updateBackendEmailVerificationStatus(user, user.emailVerified);
+      
+      if (backendResult.success) {
+        dispatch(addNotification({
+          type: 'success',
+          message: 'Email verification status updated',
+          duration: 3000,
+        }));
+        
+        // Trigger a page refresh to show updated status
+        window.location.reload();
+      } else {
+        console.warn('Failed to update backend email verification status:', backendResult.error);
+      }
+    } catch (error: any) {
+      console.error('Error refreshing email status:', error);
+      dispatch(addNotification({
+        type: 'error',
+        message: 'Failed to refresh email verification status',
+        duration: 3000,
+      }));
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -536,14 +599,45 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div>
               <dt className="text-sm font-medium text-gray-500">Email Verified</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {user.emailVerified ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Verified
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    Not Verified
-                  </span>
+                <div className="flex items-center space-x-2">
+                  {user.emailVerified ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Not Verified
+                    </span>
+                  )}
+                  {!user.emailVerified && (
+                    <button
+                      onClick={handleSendEmailVerification}
+                      disabled={isSendingVerification}
+                      className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                    >
+                      {isSendingVerification ? 'Sending...' : 'Verify Email'}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleRefreshEmailStatus}
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
+                {!user.emailVerified && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Click "Verify Email" to send a verification link to your email address.
+                  </p>
                 )}
               </dd>
             </div>

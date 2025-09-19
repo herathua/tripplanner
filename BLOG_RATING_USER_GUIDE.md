@@ -136,3 +136,4 @@ The Trip Planner now includes a comprehensive 5-star rating system for blog post
 - **Stored in database** for persistence
 
 This rating system helps improve the quality of travel guides by providing feedback from the community and helping other users find the most valuable content.
+
