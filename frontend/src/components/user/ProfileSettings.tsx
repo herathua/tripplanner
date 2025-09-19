@@ -16,7 +16,25 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({});
   const [passwordStrength, setPasswordStrength] = useState<{ strength: 'weak' | 'medium' | 'strong'; score: number }>({ strength: 'weak', score: 0 });
+  const [passwordRequirements, setPasswordRequirements] = useState<{
+    length: boolean;
+    uppercase: boolean;
+    lowercase: boolean;
+    number: boolean;
+    special: boolean;
+  }>({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -75,15 +93,48 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       [name]: value
     }));
 
-    // Validate password strength for new password
+    // Clear general errors when user starts typing
+    if (passwordErrors.length > 0) {
+      setPasswordErrors([]);
+    }
+
+    // Clear field-specific errors
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: undefined
+    }));
+
+    // Validate password strength and requirements for new password
     if (name === 'newPassword') {
       const strength = PasswordService.getPasswordStrength(value);
       setPasswordStrength(strength);
+      
+      // Update password requirements checklist
+      setPasswordRequirements({
+        length: value.length >= 8,
+        uppercase: /[A-Z]/.test(value),
+        lowercase: /[a-z]/.test(value),
+        number: /\d/.test(value),
+        special: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(value),
+      });
     }
 
-    // Clear errors when user starts typing
-    if (passwordErrors.length > 0) {
-      setPasswordErrors([]);
+    // Validate password confirmation
+    if (name === 'confirmPassword' && formData.newPassword) {
+      if (value && value !== formData.newPassword) {
+        setFieldErrors(prev => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match'
+        }));
+      }
+    }
+
+    // Validate current password (basic check)
+    if (name === 'currentPassword' && value.length > 0 && value.length < 6) {
+      setFieldErrors(prev => ({
+        ...prev,
+        currentPassword: 'Password seems too short'
+      }));
     }
   };
 
@@ -209,6 +260,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
     
     // Clear previous errors
     setPasswordErrors([]);
+    setFieldErrors({});
     
     // Create password update request
     const passwordRequest: PasswordUpdateRequest = {
@@ -221,6 +273,20 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
     const validation = PasswordService.validatePasswordUpdate(passwordRequest);
     if (!validation.isValid) {
       setPasswordErrors(validation.errors);
+      
+      // Set field-specific errors
+      const newFieldErrors: typeof fieldErrors = {};
+      validation.errors.forEach(error => {
+        if (error.includes('Current password')) {
+          newFieldErrors.currentPassword = error;
+        } else if (error.includes('New password') || error.includes('Password must')) {
+          newFieldErrors.newPassword = error;
+        } else if (error.includes('confirmation') || error.includes('match')) {
+          newFieldErrors.confirmPassword = error;
+        }
+      });
+      setFieldErrors(newFieldErrors);
+      
       dispatch(addNotification({
         type: 'error',
         message: 'Please fix the following errors: ' + validation.errors.join(', '),
@@ -236,10 +302,19 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       const backendResult = await PasswordService.updatePassword(passwordRequest, user);
       
       if (!backendResult.success) {
-        setPasswordErrors([backendResult.error || 'Backend validation failed']);
+        const errorMessage = backendResult.error || 'Backend validation failed';
+        setPasswordErrors([errorMessage]);
+        
+        // Try to identify which field the error relates to
+        if (errorMessage.toLowerCase().includes('current') || errorMessage.toLowerCase().includes('incorrect')) {
+          setFieldErrors({ currentPassword: errorMessage });
+        } else if (errorMessage.toLowerCase().includes('weak') || errorMessage.toLowerCase().includes('strength')) {
+          setFieldErrors({ newPassword: errorMessage });
+        }
+        
         dispatch(addNotification({
           type: 'error',
-          message: backendResult.error || 'Failed to validate password update',
+          message: errorMessage,
           duration: 5000,
         }));
         return;
@@ -257,17 +332,33 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           confirmPassword: ''
         }));
         setPasswordStrength({ strength: 'weak', score: 0 });
+        setPasswordRequirements({
+          length: false,
+          uppercase: false,
+          lowercase: false,
+          number: false,
+          special: false,
+        });
         
         dispatch(addNotification({
           type: 'success',
-          message: 'Password updated successfully',
-          duration: 3000,
+          message: 'Password updated successfully! Please log out and log back in to ensure security.',
+          duration: 5000,
         }));
       } else {
-        setPasswordErrors([firebaseResult.error || 'Failed to update password']);
+        const errorMessage = firebaseResult.error || 'Failed to update password';
+        setPasswordErrors([errorMessage]);
+        
+        // Handle specific Firebase errors
+        if (errorMessage.includes('requires-recent-login')) {
+          setFieldErrors({ currentPassword: 'Please log out and log back in before changing your password' });
+        } else if (errorMessage.includes('weak-password')) {
+          setFieldErrors({ newPassword: 'Password is too weak. Please choose a stronger password' });
+        }
+        
         dispatch(addNotification({
           type: 'error',
-          message: firebaseResult.error || 'Failed to update password',
+          message: errorMessage,
           duration: 5000,
         }));
       }
@@ -457,12 +548,12 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           <div className="bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
             
-            {/* Display validation errors */}
+            {/* Display general validation errors */}
             {passwordErrors.length > 0 && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -491,9 +582,23 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   id="currentPassword"
                   value={formData.currentPassword}
                   onChange={handlePasswordInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+                    fieldErrors.currentPassword 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                  }`}
                   placeholder="Enter your current password"
+                  aria-invalid={fieldErrors.currentPassword ? 'true' : 'false'}
+                  aria-describedby={fieldErrors.currentPassword ? 'currentPassword-error' : undefined}
                 />
+                {fieldErrors.currentPassword && (
+                  <p id="currentPassword-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+                    <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {fieldErrors.currentPassword}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -506,9 +611,74 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   id="newPassword"
                   value={formData.newPassword}
                   onChange={handlePasswordInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+                    fieldErrors.newPassword 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                  }`}
                   placeholder="Enter your new password"
+                  aria-invalid={fieldErrors.newPassword ? 'true' : 'false'}
+                  aria-describedby={fieldErrors.newPassword ? 'newPassword-error' : undefined}
                 />
+                
+                {/* Password Requirements Checklist */}
+                {formData.newPassword && (
+                  <div className="mt-2 space-y-1">
+                    <div className="text-xs text-gray-600 mb-2">Password requirements:</div>
+                    <div className="space-y-1">
+                      <div className={`flex items-center text-xs ${passwordRequirements.length ? 'text-green-600' : 'text-gray-500'}`}>
+                        <svg className={`w-3 h-3 mr-2 ${passwordRequirements.length ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {passwordRequirements.length ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        At least 8 characters
+                      </div>
+                      <div className={`flex items-center text-xs ${passwordRequirements.uppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                        <svg className={`w-3 h-3 mr-2 ${passwordRequirements.uppercase ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {passwordRequirements.uppercase ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        One uppercase letter
+                      </div>
+                      <div className={`flex items-center text-xs ${passwordRequirements.lowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                        <svg className={`w-3 h-3 mr-2 ${passwordRequirements.lowercase ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {passwordRequirements.lowercase ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        One lowercase letter
+                      </div>
+                      <div className={`flex items-center text-xs ${passwordRequirements.number ? 'text-green-600' : 'text-gray-500'}`}>
+                        <svg className={`w-3 h-3 mr-2 ${passwordRequirements.number ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {passwordRequirements.number ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        One number
+                      </div>
+                      <div className={`flex items-center text-xs ${passwordRequirements.special ? 'text-green-600' : 'text-gray-500'}`}>
+                        <svg className={`w-3 h-3 mr-2 ${passwordRequirements.special ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {passwordRequirements.special ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        One special character
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Password Strength Indicator */}
                 {formData.newPassword && (
@@ -532,10 +702,16 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                         {passwordStrength.strength.charAt(0).toUpperCase() + passwordStrength.strength.slice(1)}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Password must contain uppercase, lowercase, number, and special character
-                    </p>
                   </div>
+                )}
+                
+                {fieldErrors.newPassword && (
+                  <p id="newPassword-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+                    <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {fieldErrors.newPassword}
+                  </p>
                 )}
               </div>
 
@@ -549,8 +725,14 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   id="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handlePasswordInputChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                  className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+                    fieldErrors.confirmPassword 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                  }`}
                   placeholder="Confirm your new password"
+                  aria-invalid={fieldErrors.confirmPassword ? 'true' : 'false'}
+                  aria-describedby={fieldErrors.confirmPassword ? 'confirmPassword-error' : undefined}
                 />
                 
                 {/* Password Match Indicator */}
@@ -558,14 +740,14 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                   <div className="mt-1">
                     {formData.newPassword === formData.confirmPassword ? (
                       <p className="text-xs text-green-600 flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         Passwords match
                       </p>
                     ) : (
                       <p className="text-xs text-red-600 flex items-center">
-                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                         Passwords do not match
@@ -573,16 +755,35 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                     )}
                   </div>
                 )}
+                
+                {fieldErrors.confirmPassword && (
+                  <p id="confirmPassword-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+                    <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {fieldErrors.confirmPassword}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="mt-6">
               <button
                 type="submit"
-                disabled={isUpdatingPassword || passwordErrors.length > 0}
+                disabled={isUpdatingPassword || passwordErrors.length > 0 || Object.values(fieldErrors).some(error => error)}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                {isUpdatingPassword ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
               </button>
             </div>
           </div>

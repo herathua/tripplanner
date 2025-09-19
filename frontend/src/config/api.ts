@@ -26,7 +26,7 @@ export const EXTERNAL_APIS = {
   },
   OPENROUTER: {
     BASE_URL: 'https://openrouter.ai/api/v1',
-    API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY || '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',
+    API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY || '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',
     TIMEOUT: 30000,
   },
   UNSPLASH: {

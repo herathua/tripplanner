@@ -545,7 +545,7 @@ const EnhancedBlogEditor: React.FC = () => {
                 {isPublishing ? 'Publishing...' : 'Publish'}
               </button>
 
-              <button
+              {/* <button
                 className={`px-6 py-2 rounded-md text-lg font-semibold ${
                   !isEditorReady
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
@@ -555,7 +555,7 @@ const EnhancedBlogEditor: React.FC = () => {
                 disabled={!isEditorReady}
               >
                 Preview
-              </button>
+              </button> */}
             </div>
 
             {/* Status */}

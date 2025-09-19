@@ -62,7 +62,7 @@ const EditorJsBlogPage: React.FC = () => {
         holder: editorRef.current,
         tools: {
           header: {
-            class: Header,
+            class: Header as any,
             inlineToolbar: true,
             config: {
               levels: [1, 2, 3],
@@ -70,7 +70,7 @@ const EditorJsBlogPage: React.FC = () => {
             },
           },
           image: {
-            class: ImageTool,
+            class: ImageTool as any,
             config: {
               uploader: {
                 async uploadByFile(file: File) {
@@ -88,16 +88,45 @@ const EditorJsBlogPage: React.FC = () => {
               },
             },
           },
-          list: List,
-          quote: Quote,
-          code: CodeTool,
-          embed: Embed,
-          marker: Marker,
+          list: List as any,
+          quote: Quote as any,
+          code: CodeTool as any,
+          embed: Embed as any,
+          marker: Marker as any,
         },
         placeholder: 'Start writing your story...',
         inlineToolbar: ['bold', 'italic', 'marker'],
         onReady: () => {
           console.log('Editor is ready to work!');
+          // Apply custom CSS to move toolbar to left
+          setTimeout(() => {
+            const toolbar = document.querySelector('.ce-toolbar');
+            const toolbarActions = document.querySelector('.ce-toolbar__actions');
+            const toolbarPlus = document.querySelector('.ce-toolbar__plus');
+            const toolbarSettings = document.querySelector('.ce-toolbar__settings-btn');
+            const toolbarContent = document.querySelector('.ce-toolbar__content');
+            
+            if (toolbar) {
+              (toolbar as HTMLElement).style.left = '0';
+              (toolbar as HTMLElement).style.right = 'auto';
+            }
+            if (toolbarActions) {
+              (toolbarActions as HTMLElement).style.left = '0';
+              (toolbarActions as HTMLElement).style.right = 'auto';
+            }
+            if (toolbarPlus) {
+              (toolbarPlus as HTMLElement).style.left = '0';
+              (toolbarPlus as HTMLElement).style.right = 'auto';
+            }
+            if (toolbarSettings) {
+              (toolbarSettings as HTMLElement).style.left = '0';
+              (toolbarSettings as HTMLElement).style.right = 'auto';
+            }
+            if (toolbarContent) {
+              (toolbarContent as HTMLElement).style.left = '0';
+              (toolbarContent as HTMLElement).style.right = 'auto';
+            }
+          }, 100);
         },
       });
     }
@@ -207,6 +236,32 @@ const EditorJsBlogPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center py-8">
+      {/* Custom CSS for EditorJS toolbar positioning */}
+      <style>{`
+        .ce-toolbar {
+          left: 0 !important;
+          right: auto !important;
+        }
+        .ce-toolbar__actions {
+          left: 0 !important;
+          right: auto !important;
+        }
+        .ce-toolbar__plus {
+          left: 0 !important;
+          right: auto !important;
+        }
+        .ce-toolbar__settings-btn {
+          left: 0 !important;
+          right: auto !important;
+        }
+        .ce-block__content {
+          margin-left: 0 !important;
+        }
+        .ce-toolbar__content {
+          left: 0 !important;
+          right: auto !important;
+        }
+      `}</style>
       <div className="w-full max-w-3xl">
         {/* Success Message */}
         {showSuccessMessage && (
