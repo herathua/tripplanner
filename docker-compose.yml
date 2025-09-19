@@ -1,0 +1,33 @@
+services:
+  mysql:
+    image: mysql:9.2
+    environment:
+    - MYSQL_DATABASE=tripplanner
+    - MYSQL_ROOT_PASSWORD=P4ssword!
+    ports:
+    - 3307:3306
+    volumes:
+    - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    ports:
+    - "8080:8080"
+    environment:
+    - JDBC_DATABASE_URL=jdbc:mysql://mysql:3306/tripplanner?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    - JDBC_DATABASE_USERNAME=root
+    - JDBC_DATABASE_PASSWORD=P4ssword!
+    depends_on:
+    - mysql
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+    - "3000:80"
+    depends_on:
+    - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

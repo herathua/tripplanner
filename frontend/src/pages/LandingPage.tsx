@@ -520,7 +520,7 @@ const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
                 <img src={logo} alt="TripPlanner Logo" className="w-12 h-12" />
@@ -549,15 +549,6 @@ const LandingPage: React.FC = () => {
                 <li><a href="#how-it-works" className="hover:text-white transition-colors duration-300">How It Works</a></li>
                 <li><a href="#about" className="hover:text-white transition-colors duration-300">About Us</a></li>
                 <li><button onClick={handleGetStarted} className="hover:text-white transition-colors duration-300">Login</button></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-6">Support</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors duration-300">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors duration-300">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors duration-300">FAQ</a></li>
               </ul>
             </div>
           </div>
