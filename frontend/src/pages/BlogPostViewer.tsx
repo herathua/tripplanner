@@ -106,7 +106,7 @@ const BlogPostViewer: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -114,13 +114,13 @@ const BlogPostViewer: React.FC = () => {
 
   if (error || !blogPost) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Blog Post Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold text-gray-800">Blog Post Not Found</h1>
           <p className="text-gray-600">{error || 'The blog post you are looking for does not exist.'}</p>
           <a 
             href="/" 
-            className="mt-4 inline-block bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600"
+            className="inline-block px-6 py-2 mt-4 text-white bg-blue-500 rounded-full hover:bg-blue-600"
           >
             Go Home
           </a>
@@ -134,9 +134,9 @@ const BlogPostViewer: React.FC = () => {
       {/* Cover Image Header */}
       <header className="relative h-[60vh] min-h-[450px] overflow-hidden mb-8">
         {isCoverImageLoading ? (
-          <div className="w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+          <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-3"></div>
+              <div className="w-10 h-10 mx-auto mb-3 border-b-2 border-blue-500 rounded-full animate-spin"></div>
               <div className="text-gray-600">Loading cover image...</div>
             </div>
           </div>
@@ -145,7 +145,7 @@ const BlogPostViewer: React.FC = () => {
             <img
               src={coverImage?.url || '/src/assets/logo.png'}
               alt={coverImage?.alt || blogPost.title}
-              className="w-full h-full object-cover"
+              className="object-cover w-full h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
           </>
@@ -154,17 +154,18 @@ const BlogPostViewer: React.FC = () => {
         {/* Header Content Overlay */}
         <div className="absolute inset-0 flex items-end justify-start">
           <div className="px-6 pb-8 text-white">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
+            <h1 className="mb-4 text-4xl font-bold leading-tight md:text-6xl drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
               {blogPost.title}
             </h1>
             
             {/* Meta information */}
-            <div className="flex flex-wrap items-center gap-4 text-gray-200 text-sm mb-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-200">
               {blogPost.author && (
                 <span>By {blogPost.author.name || 'Anonymous'}</span>
               )}
               {blogPost.publishedAt && (
                 <span>
+                  get
                   {new Date(blogPost.publishedAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -183,7 +184,7 @@ const BlogPostViewer: React.FC = () => {
                 {blogPost.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm border border-white/30"
+                    className="px-3 py-1 text-sm text-white border rounded-full bg-white/20 backdrop-blur-sm border-white/30"
                   >
                     #{tag}
                   </span>
@@ -195,13 +196,13 @@ const BlogPostViewer: React.FC = () => {
         
         {/* Image Credit */}
         {coverImage?.credit && (
-          <div className="absolute bottom-4 right-4 text-xs text-white/70 bg-black/30 px-2 py-1 rounded">
+          <div className="absolute px-2 py-1 text-xs rounded bottom-4 right-4 text-white/70 bg-black/30">
             {coverImage.credit}
           </div>
         )}
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl px-4 py-8 mx-auto">
 
         {/* Content */}
         <main className="prose prose-lg max-w-none">
@@ -209,11 +210,11 @@ const BlogPostViewer: React.FC = () => {
         </main>
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex justify-between items-center text-gray-600">
+        <footer className="pt-8 mt-12 border-t border-gray-200">
+          <div className="flex items-center justify-between text-gray-600">
             <div>
               <p>Share this post:</p>
-              <div className="flex space-x-4 mt-2">
+              <div className="flex mt-2 space-x-4">
                 <a 
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(blogPost.title)}&url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
