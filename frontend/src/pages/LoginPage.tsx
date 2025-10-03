@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { login, register, loginWithGoogle, clearError, resetPassword } from '../store/slices/authSlice';
 import { addNotification } from '../store/slices/uiSlice';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowLeft } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,8 +89,34 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleGoHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-blue-light to-royal-blue py-12 px-4 sm:px-6 lg:px-8">
+      {/* Logo/Brand Link */}
+      <div className="absolute top-4 left-4 z-10">
+        <button
+          onClick={handleGoHome}
+          className="flex items-center space-x-2 text-white hover:text-gray-200 transition-colors duration-300 group"
+        >
+          <img src={logo} alt="TripPlanner Logo" className="h-8 w-auto group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-lg font-bold">TripPlanner</span>
+        </button>
+      </div>
+
+      {/* Navigation Header */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={handleGoHome}
+          className="flex items-center space-x-2 text-white hover:text-gray-200 transition-colors duration-300 group"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
+          <span className="font-medium">Back to Home</span>
+        </button>
+      </div>
+
       <div className="max-w-md w-full space-y-8">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div>
@@ -229,6 +256,7 @@ const LoginPage: React.FC = () => {
               <span className="ml-2">Google</span>
             </button>
           </div>
+
         </div>
         </div>
 

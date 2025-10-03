@@ -9,25 +9,25 @@ services:
     volumes:
     - mysql_data:/var/lib/mysql
 
-  backend:
-    build: ./backend
-    ports:
-    - "8080:8080"
-    environment:
-    - JDBC_DATABASE_URL=jdbc:mysql://mysql:3306/tripplanner?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
-    - JDBC_DATABASE_USERNAME=root
-    - JDBC_DATABASE_PASSWORD=P4ssword!
-    depends_on:
-    - mysql
-    restart: unless-stopped
+#   backend:
+#     build: ./backend
+#     ports:
+#     - "8080:8080"
+#     environment:
+#     - JDBC_DATABASE_URL=jdbc:mysql://mysql:3306/tripplanner?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+#     - JDBC_DATABASE_USERNAME=root
+#     - JDBC_DATABASE_PASSWORD=P4ssword!
+#     depends_on:
+#     - mysql
+#     restart: unless-stopped
 
-  frontend:
-    build: ./frontend
-    ports:
-    - "3000:80"
-    depends_on:
-    - backend
-    restart: unless-stopped
+#   frontend:
+#     build: ./frontend
+#     ports:
+#     - "3000:80"
+#     depends_on:
+#     - backend
+#     restart: unless-stopped
 
 volumes:
   mysql_data:
