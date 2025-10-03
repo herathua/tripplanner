@@ -121,7 +121,7 @@ Try asking me something like:
         <div className={`flex items-start gap-3 max-w-full ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
           {/* Avatar */}
           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-            isUser ? 'bg-blue-500' : 'bg-gradient-to-br from-purple-500 to-pink-500'
+            isUser ? 'bg-[#029E9D]' : 'bg-[#029E9D]'
           }`}>
             {isUser ? (
               <User className="w-4 h-4 text-white" />
@@ -134,7 +134,7 @@ Try asking me something like:
           <div className={`flex-1 ${isUser ? 'text-right' : 'text-left'}`}>
             <div className={`inline-block px-3 py-2 rounded-xl shadow-sm max-w-full ${
               isUser 
-                ? 'bg-blue-500 text-white' 
+                ? 'bg-[#029E9D] text-white' 
                 : 'bg-white text-gray-800 border border-gray-100'
             }`}>
               {/* Special message types */}
@@ -167,7 +167,7 @@ Try asking me something like:
       <div className="fixed right-4 bottom-4 z-50">
         <button
           onClick={onToggle}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+          className="bg-[#029E9D] text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
@@ -178,14 +178,13 @@ Try asking me something like:
   return (
     <div className="fixed left-0 top-0 h-full w-1/3 bg-white shadow-2xl z-50 border-r border-gray-200">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 flex items-center justify-between">
+      <div className="bg-[#029E9D] text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
             <MessageCircle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">AI Travel Assistant</h2>
-            <p className="text-sm text-white/80">Powered by AI & Real-time Data</p>
+            <h2 className="text-lg font-bold">Travel Assistant</h2>
           </div>
         </div>
         
@@ -214,7 +213,7 @@ Try asking me something like:
           {isTyping && (
             <div className="flex justify-start mb-4">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#029E9D] flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div className="bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-100">
@@ -245,7 +244,7 @@ Try asking me something like:
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask me about weather, locations, attractions, or any travel question..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#029E9D] focus:border-transparent resize-none text-sm"
               rows={1}
               style={{ minHeight: '40px', maxHeight: '100px' }}
               onInput={(e) => {
@@ -259,7 +258,7 @@ Try asking me something like:
           <button
             onClick={handleSendMessage}
             disabled={isLoading || !input.trim()}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="px-4 py-2 bg-[#029E9D] text-white rounded-lg hover:bg-[#027a7a] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -273,7 +272,7 @@ Try asking me something like:
         <div className="mt-2 flex flex-wrap gap-1">
           <button
             onClick={() => setInput('What\'s the weather like in Paris?')}
-            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors duration-200"
+            className="px-2 py-1 text-xs bg-teal-100 text-[#029E9D] rounded-full hover:bg-teal-200 transition-colors duration-200"
           >
             <Sun className="w-3 h-3 inline mr-1" />
             Weather
@@ -380,7 +379,7 @@ const WikipediaMessage: React.FC<{ data: WikipediaData }> = ({ data }) => (
         href={data.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-600 hover:text-blue-800 underline"
+        className="text-[#029E9D] hover:text-[#027a7a] underline"
       >
         Read more on Wikipedia →
       </a>

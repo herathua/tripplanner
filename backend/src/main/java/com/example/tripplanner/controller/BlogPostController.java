@@ -142,9 +142,10 @@ class PublicBlogPostController {
     @GetMapping("/{slug}")
     public ResponseEntity<?> getPublicBlogPost(@PathVariable String slug) {
         try {
-            BlogPost blogPost = blogPostService.getPublicBlogPostBySlug(slug);
-            // Increment view count
+            // Increment view count first
             blogPostService.incrementViewCount(slug);
+            // Then get the updated blog post with incremented view count
+            BlogPost blogPost = blogPostService.getPublicBlogPostBySlug(slug);
             return ResponseEntity.ok(blogPost);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

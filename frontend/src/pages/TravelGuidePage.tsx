@@ -62,7 +62,7 @@ const TravelGuidePage: React.FC = () => {
           )}
           <div className="absolute top-3 right-3">
             {post.status === 'PUBLISHED' && (
-              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+              <span className="px-2 py-1 text-xs rounded-full bg-teal-100 text-teal-800">
                 PUBLISHED
               </span>
             )}
@@ -90,9 +90,9 @@ const TravelGuidePage: React.FC = () => {
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center">
               <Eye className="w-4 h-4 mr-1" />
-              <span>{post.views || 0} views</span>
+              <span>{post.viewCount || 0} views</span>
             </div>
-            <button className="text-blue-600 hover:text-blue-700 flex items-center">
+            <button className="text-[#029E9D] hover:text-[#027a7a] flex items-center">
               View Guide <ArrowRight className="w-4 h-4 ml-1" />
             </button>
           </div>
@@ -210,7 +210,7 @@ const TravelGuidePage: React.FC = () => {
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#029E9D]"></div>
           </div>
         ) : filteredPosts.length === 0 ? (
           <div className="text-center py-12">
@@ -220,7 +220,7 @@ const TravelGuidePage: React.FC = () => {
             {searchTerm && (
               <button 
                 onClick={() => setSearchTerm('')}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-[#029E9D] hover:text-[#027a7a]"
               >
                 Clear search
               </button>
@@ -250,7 +250,7 @@ const TravelGuidePage: React.FC = () => {
                 <div className="text-3xl mb-3">{category.icon}</div>
                 <h3 className="font-semibold mb-2">{category.title}</h3>
                 <p className="text-gray-600 text-sm mb-4">{category.description}</p>
-                <button className="text-blue-600 text-sm hover:text-blue-700 flex items-center">
+                <button className="text-[#029E9D] text-sm hover:text-[#027a7a] flex items-center">
                   Explore <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
               </div>

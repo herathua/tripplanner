@@ -6,6 +6,7 @@ import { clearTripDetails } from '../../store/slices/tripSlice';
 import { addNotification } from '../../store/slices/uiSlice';
 import FloatingAIAssistant from '../chatbot/FloatingAIAssistant';
 import { useUserProfile } from '../../hooks/useUserProfile';
+import logo from '../../assets/logo.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -65,14 +66,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-3">
                 <img
-                  src="/src/assets/logo.png"
+                  src={logo}
                   alt="TripPlanner Logo"
                   title="TripPlanner"
-                  className="object-contain w-8 h-8"
+                  className="object-contain h-10 w-auto"
                 />
-                <span className="text-2xl font-bold text-black-500">TripPlanner</span>
+                <span className="text-2xl font-bold text-black-500 leading-none">TripPlanner</span>
               </Link>
             </div>
 

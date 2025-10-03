@@ -6,24 +6,15 @@ import {
   Calendar, 
   Users, 
   Globe, 
-  Star, 
   ArrowRight, 
   Heart,
-  Compass,
   Camera,
   BookOpen,
   Shield,
   Zap,
   CheckCircle,
-  TrendingUp,
-  Award,
-  Map,
-  Smartphone,
-  Cloud,
-  Lock,
   Sparkles,
   Target,
-  Clock,
   DollarSign
 } from 'lucide-react';
 import CardImageService from '../utils/cardImageService';
@@ -67,23 +58,23 @@ const LandingPage: React.FC = () => {
         <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3 group cursor-pointer">
-                <div className="relative">
-                  <img src={logo} alt="TripPlanner Logo" className="w-12 h-12 transition-transform duration-300 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              <div className="flex items-center space-x-4 group cursor-pointer">
+                <div className="relative flex items-center">
+                  <img src={logo} alt="TripPlanner Logo" className="h-14 w-auto transition-transform duration-300 group-hover:scale-110 object-contain" />
+                  <div className="absolute inset-0 bg-[#029E9D] rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-[#029E9D] leading-none">
                   TripPlanner
                 </span>
               </div>
               <div className="hidden md:flex items-center space-x-8">
-                <a href="#features" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">Features</a>
-                <a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">How It Works</a>
-                <a href="#about" className="text-gray-600 hover:text-blue-600 transition-all duration-300 hover:scale-105">About</a>
+                <a href="#features" className="text-gray-600 hover:text-[#029E9D] transition-all duration-300 hover:scale-105">Features</a>
+                <a href="#how-it-works" className="text-gray-600 hover:text-[#029E9D] transition-all duration-300 hover:scale-105">How It Works</a>
+                <a href="#about" className="text-gray-600 hover:text-[#029E9D] transition-all duration-300 hover:scale-105">About</a>
               </div>
               <button
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1"
+                className="bg-[#029E9D] text-white px-6 py-3 rounded-xl hover:bg-[#027a7a] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1"
               >
                 Get Started
               </button>
@@ -118,7 +109,7 @@ const LandingPage: React.FC = () => {
             <span className="block">
               Plan Your Dream
             </span>
-            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="block text-[#029E9D]">
               Adventure
             </span>
           </h1>
@@ -131,7 +122,7 @@ const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button
               onClick={handleGetStarted}
-              className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-500 shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105 hover:-translate-y-2"
+              className="group bg-[#029E9D] text-white px-10 py-5 rounded-2xl text-xl font-semibold hover:bg-[#027a7a] transition-all duration-500 shadow-2xl hover:shadow-teal-500/25 transform hover:scale-105 hover:-translate-y-2"
             >
               <span className="flex items-center">
                 Start Planning Now
@@ -161,7 +152,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
               Why Choose
-              <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="block text-[#029E9D]">
                 TripPlanner?
               </span>
             </h2>
@@ -173,7 +164,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* AI Travel Assistant */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Sparkles className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Travel Assistant</h3>
@@ -183,15 +174,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Smart destination recommendations
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Real-time weather forecasts
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-blue-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Local culture insights
                 </li>
               </ul>
@@ -199,7 +190,7 @@ const LandingPage: React.FC = () => {
 
             {/* Smart Trip Planning */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Target className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Smart Trip Planning</h3>
@@ -209,15 +200,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Interactive itinerary builder
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Advanced budget management
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-purple-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Group collaboration tools
                 </li>
               </ul>
@@ -225,7 +216,7 @@ const LandingPage: React.FC = () => {
 
             {/* Travel Guides */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <BookOpen className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Expert Travel Guides</h3>
@@ -235,15 +226,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Local expert insights
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Off-the-beaten-path spots
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Cultural context & tips
                 </li>
               </ul>
@@ -251,7 +242,7 @@ const LandingPage: React.FC = () => {
 
             {/* Dynamic Images */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Camera className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Beautiful Visuals</h3>
@@ -261,15 +252,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   High-quality destination photos
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Smart image matching
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-orange-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Professional travel imagery
                 </li>
               </ul>
@@ -277,7 +268,7 @@ const LandingPage: React.FC = () => {
 
             {/* Community */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Travel Community</h3>
@@ -287,15 +278,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Share travel stories
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Connect with travelers
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-pink-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Discover new destinations
                 </li>
               </ul>
@@ -303,7 +294,7 @@ const LandingPage: React.FC = () => {
 
             {/* Security */}
             <div className="group bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 border border-gray-100">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 bg-[#029E9D] rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Shield className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Secure & Reliable</h3>
@@ -313,15 +304,15 @@ const LandingPage: React.FC = () => {
               </p>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   End-to-end encryption
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Privacy protection
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-indigo-500 mr-3" />
+                  <CheckCircle className="w-5 h-5 text-[#029E9D] mr-3" />
                   Automatic backups
                 </li>
               </ul>
@@ -336,7 +327,7 @@ const LandingPage: React.FC = () => {
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
               How
-              <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="block text-[#029E9D]">
                 TripPlanner Works
               </span>
             </h2>
@@ -348,7 +339,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center group">
               <div className="relative mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                <div className="w-24 h-24 bg-[#029E9D] rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                   <span className="text-3xl font-bold text-white">1</span>
                 </div>
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
@@ -361,7 +352,7 @@ const LandingPage: React.FC = () => {
 
             <div className="text-center group">
               <div className="relative mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                <div className="w-24 h-24 bg-[#029E9D] rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                   <span className="text-3xl font-bold text-white">2</span>
                 </div>
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
@@ -374,7 +365,7 @@ const LandingPage: React.FC = () => {
 
             <div className="text-center group">
               <div className="relative mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                <div className="w-24 h-24 bg-[#029E9D] rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                   <span className="text-3xl font-bold text-white">3</span>
                 </div>
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
@@ -387,7 +378,7 @@ const LandingPage: React.FC = () => {
 
             <div className="text-center group">
               <div className="relative mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                <div className="w-24 h-24 bg-[#029E9D] rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                   <span className="text-3xl font-bold text-white">4</span>
                 </div>
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center">
@@ -410,7 +401,7 @@ const LandingPage: React.FC = () => {
             <div>
               <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8">
                 About
-                <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="block text-[#029E9D]">
                   TripPlanner
                 </span>
               </h2>
@@ -424,8 +415,8 @@ const LandingPage: React.FC = () => {
               </p>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-7 h-7 text-blue-600" />
+                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-7 h-7 text-[#029E9D]" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Made with Love</h3>
@@ -433,8 +424,8 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-7 h-7 text-purple-600" />
+                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-7 h-7 text-[#029E9D]" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Global Coverage</h3>
@@ -442,8 +433,8 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-7 h-7 text-green-600" />
+                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-7 h-7 text-[#029E9D]" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Always Evolving</h3>
@@ -455,24 +446,24 @@ const LandingPage: React.FC = () => {
             <div className="relative">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                  <div className="bg-[#029E9D] rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
                     <Plane className="w-10 h-10 mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Smart Planning</h3>
                     <p className="text-sm opacity-90">AI-powered recommendations and intelligent itinerary building</p>
                   </div>
-                  <div className="bg-gradient-to-br from-green-400 to-blue-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                  <div className="bg-[#029E9D] rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
                     <MapPin className="w-10 h-10 mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Global Destinations</h3>
                     <p className="text-sm opacity-90">Comprehensive coverage of worldwide locations</p>
                   </div>
                 </div>
                 <div className="space-y-6 mt-12">
-                  <div className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                  <div className="bg-[#029E9D] rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
                     <Users className="w-10 h-10 mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Community</h3>
                     <p className="text-sm opacity-90">Connect with fellow travelers worldwide</p>
                   </div>
-                  <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
+                  <div className="bg-[#029E9D] rounded-3xl p-8 text-white transform hover:scale-105 transition-transform duration-300">
                     <BookOpen className="w-10 h-10 mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Expert Guides</h3>
                     <p className="text-sm opacity-90">Local insights and cultural knowledge</p>
@@ -485,22 +476,22 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <section className="py-24 bg-[#029E9D] text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-5xl md:text-6xl font-bold mb-6">
             Ready to Start Your
-            <span className="block bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+            <span className="block text-white">
               Adventure?
             </span>
           </h2>
-          <p className="text-xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-white mb-10 max-w-3xl mx-auto leading-relaxed">
             Join thousands of travelers who are already planning their dream trips with TripPlanner. 
             Start creating your perfect itinerary today!
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button
               onClick={handleGetStarted}
-              className="group bg-white text-blue-600 px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/25 transform hover:scale-105 hover:-translate-y-2"
+              className="group bg-white text-[#029E9D] px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-white/25 transform hover:scale-105 hover:-translate-y-2"
             >
               <span className="flex items-center">
                 Get Started Free
@@ -509,7 +500,7 @@ const LandingPage: React.FC = () => {
             </button>
             <button
               onClick={handleLearnMore}
-              className="border-2 border-white text-white px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 backdrop-blur-sm"
+              className="border-2 border-white text-white px-12 py-5 rounded-2xl text-xl font-semibold hover:bg-white hover:text-[#029E9D] transition-all duration-300 backdrop-blur-sm"
             >
               Learn More
             </button>
@@ -522,22 +513,22 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center space-x-3 mb-6">
-                <img src={logo} alt="TripPlanner Logo" className="w-12 h-12" />
-                <span className="text-2xl font-bold">TripPlanner</span>
+              <div className="flex items-center space-x-4 mb-6">
+                <img src={logo} alt="TripPlanner Logo" className="h-14 w-auto object-contain" />
+                <span className="text-2xl font-bold leading-none">TripPlanner</span>
               </div>
               <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
                 Your ultimate travel planning companion. Discover destinations, create itineraries, 
                 and connect with fellow travelers worldwide. Start your journey today.
               </p>
               <div className="flex space-x-4">
-                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all duration-300 cursor-pointer group">
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-[#029E9D] transition-all duration-300 cursor-pointer group">
                   <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">f</span>
                 </div>
-                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-all duration-300 cursor-pointer group">
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-[#029E9D] transition-all duration-300 cursor-pointer group">
                   <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">t</span>
                 </div>
-                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-all duration-300 cursor-pointer group">
+                <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-[#029E9D] transition-all duration-300 cursor-pointer group">
                   <span className="text-sm font-semibold group-hover:scale-110 transition-transform duration-300">in</span>
                 </div>
               </div>
