@@ -55,7 +55,7 @@ const BlogPostViewerWithRating: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">
-              By {blogPost.author?.name || 'Anonymous'}
+              By {blogPost.author?.displayName || 'Anonymous'}
             </span>
             <span className="text-gray-400">•</span>
             <span className="text-gray-600">

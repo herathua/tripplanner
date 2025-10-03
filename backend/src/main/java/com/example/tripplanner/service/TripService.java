@@ -58,11 +58,15 @@ public class TripService {
         User user = userRepository.findByFirebaseUid(firebaseUid)
             .orElseGet(() -> {
                 System.out.println("Creating new user for Firebase UID: " + firebaseUid);
-                // Create a new user for development/testing
+                // Create a new user with unique email
                 User newUser = new User();
                 newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail("dev@example.com");
-                newUser.setDisplayName("Development User");
+                
+                // Generate unique email to avoid conflicts
+                String uniqueEmail = "user-" + firebaseUid.substring(Math.max(0, firebaseUid.length() - 8)) + "@example.com";
+                newUser.setEmail(uniqueEmail);
+                
+                newUser.setDisplayName("Trip User");
                 newUser.setEmailVerified(true);
                 newUser.setActive(true);
                 newUser.setRole(User.UserRole.USER);
@@ -308,7 +312,8 @@ public class TripService {
                 System.out.println("Creating new user for Firebase UID: " + firebaseUid);
                 User newUser = new User();
                 newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail("dev@example.com");
+                String uniqueEmail = "user-" + firebaseUid.substring(Math.max(0, firebaseUid.length() - 8)) + "@example.com";
+                newUser.setEmail(uniqueEmail);
                 newUser.setDisplayName("Development User");
                 newUser.setEmailVerified(true);
                 newUser.setActive(true);
@@ -347,7 +352,8 @@ public class TripService {
                 System.out.println("Creating new user for Firebase UID: " + firebaseUid);
                 User newUser = new User();
                 newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail("dev@example.com");
+                String uniqueEmail = "user-" + firebaseUid.substring(Math.max(0, firebaseUid.length() - 8)) + "@example.com";
+                newUser.setEmail(uniqueEmail);
                 newUser.setDisplayName("Development User");
                 newUser.setEmailVerified(true);
                 newUser.setActive(true);
@@ -385,7 +391,8 @@ public class TripService {
                 System.out.println("Creating new user for Firebase UID: " + firebaseUid);
                 User newUser = new User();
                 newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail("dev@example.com");
+                String uniqueEmail = "user-" + firebaseUid.substring(Math.max(0, firebaseUid.length() - 8)) + "@example.com";
+                newUser.setEmail(uniqueEmail);
                 newUser.setDisplayName("Development User");
                 newUser.setEmailVerified(true);
                 newUser.setActive(true);
@@ -437,7 +444,8 @@ public class TripService {
                 System.out.println("Creating new user for Firebase UID: " + firebaseUid);
                 User newUser = new User();
                 newUser.setFirebaseUid(firebaseUid);
-                newUser.setEmail("dev@example.com");
+                String uniqueEmail = "user-" + firebaseUid.substring(Math.max(0, firebaseUid.length() - 8)) + "@example.com";
+                newUser.setEmail(uniqueEmail);
                 newUser.setDisplayName("Development User");
                 newUser.setEmailVerified(true);
                 newUser.setActive(true);

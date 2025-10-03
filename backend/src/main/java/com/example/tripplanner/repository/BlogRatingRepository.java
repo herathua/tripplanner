@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,4 +37,25 @@ public interface BlogRatingRepository extends JpaRepository<BlogRating, Long> {
     
     // Delete rating by blog post and user
     void deleteByBlogPostAndUser(BlogPost blogPost, User user);
+    
+    // Find ratings by user created after a specific date (for anti-spam)
+    List<BlogRating> findByUserAndCreatedAtAfter(User user, LocalDateTime date);
+    
+    // Find ratings by user ordered by creation date (for pattern analysis)
+    List<BlogRating> findByUserOrderByCreatedAtDesc(User user);
+    
+    // Get rating distribution for a blog post
+    @Query("SELECT br.rating, COUNT(br) FROM BlogRating br WHERE br.blogPost = :blogPost GROUP BY br.rating ORDER BY br.rating")
+    List<Object[]> getRatingDistributionByBlogPost(@Param("blogPost") BlogPost blogPost);
+    
+    // Get recent ratings for analytics
+    @Query("SELECT br FROM BlogRating br WHERE br.createdAt >= :since ORDER BY br.createdAt DESC")
+    List<BlogRating> findRecentRatings(@Param("since") LocalDateTime since);
+    
+    // Get top rated blog posts
+    @Query("SELECT br.blogPost, AVG(br.rating) as avgRating, COUNT(br) as ratingCount " +
+           "FROM BlogRating br GROUP BY br.blogPost " +
+           "HAVING COUNT(br) >= :minRatings " +
+           "ORDER BY avgRating DESC, ratingCount DESC")
+    List<Object[]> getTopRatedBlogPosts(@Param("minRatings") Long minRatings);
 }

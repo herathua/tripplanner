@@ -155,4 +155,75 @@ public class BlogRatingController {
             return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
         }
     }
+    
+    // ========== ANALYTICS AND INSIGHTS ENDPOINTS ==========
+    
+    // Get rating distribution for a blog post
+    @GetMapping("/{blogPostId}/distribution")
+    public ResponseEntity<?> getRatingDistribution(@PathVariable Long blogPostId) {
+        try {
+            Map<Integer, Long> distribution = blogRatingService.getRatingDistribution(blogPostId);
+            return ResponseEntity.ok(distribution);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            System.err.println("Error getting rating distribution: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
+    }
+    
+    // Get comprehensive rating insights for a blog post
+    @GetMapping("/{blogPostId}/insights")
+    public ResponseEntity<?> getRatingInsights(@PathVariable Long blogPostId) {
+        try {
+            Map<String, Object> insights = blogRatingService.getRatingInsights(blogPostId);
+            return ResponseEntity.ok(insights);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            System.err.println("Error getting rating insights: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
+    }
+    
+    // Get recent rating activity
+    @GetMapping("/recent-activity")
+    public ResponseEntity<?> getRecentRatingActivity(@RequestParam(defaultValue = "24") int hours) {
+        try {
+            List<Map<String, Object>> activity = blogRatingService.getRecentRatingActivity(hours);
+            return ResponseEntity.ok(activity);
+        } catch (Exception e) {
+            System.err.println("Error getting recent rating activity: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
+    }
+    
+    // Get top rated blog posts
+    @GetMapping("/top-rated")
+    public ResponseEntity<?> getTopRatedBlogPosts(@RequestParam(defaultValue = "5") Long minRatings) {
+        try {
+            List<Map<String, Object>> topPosts = blogRatingService.getTopRatedBlogPosts(minRatings);
+            return ResponseEntity.ok(topPosts);
+        } catch (Exception e) {
+            System.err.println("Error getting top rated blog posts: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
+    }
+    
+    // Get user rating statistics
+    @GetMapping("/user/{firebaseUid}/stats")
+    public ResponseEntity<?> getUserRatingStats(@PathVariable String firebaseUid) {
+        try {
+            Map<String, Object> stats = blogRatingService.getUserRatingStats(firebaseUid);
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            System.err.println("Error getting user rating stats: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
+    }
 }

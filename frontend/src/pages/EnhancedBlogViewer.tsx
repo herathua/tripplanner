@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAppSelector } from '../store';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
+// @ts-ignore
 import Paragraph from '@editorjs/paragraph';
 import List from '@editorjs/list';
 import Quote from '@editorjs/quote';
@@ -26,7 +27,7 @@ const EnhancedBlogViewer: React.FC = () => {
   const [isCoverImageLoading, setIsCoverImageLoading] = useState(true);
   
   // Get user authentication state
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth);
 
   // Handle rating submission
   const handleRatingSubmitted = async (rating: number) => {

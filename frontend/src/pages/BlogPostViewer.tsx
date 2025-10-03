@@ -161,7 +161,7 @@ const BlogPostViewer: React.FC = () => {
             {/* Meta information */}
             <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-200">
               {blogPost.author && (
-                <span>By {blogPost.author.name || 'Anonymous'}</span>
+                <span>By {blogPost.author.displayName || 'Anonymous'}</span>
               )}
               {blogPost.publishedAt && (
                 <span>

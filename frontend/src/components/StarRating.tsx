@@ -73,8 +73,25 @@ const StarRating: React.FC<StarRatingProps> = ({
       if (onRatingChange) {
         onRatingChange(rating);
       }
+      
+      // Show success feedback
+      console.log(`Successfully rated ${rating} stars!`);
     } catch (error) {
       console.error('Error submitting rating:', error);
+      
+      // Show user-friendly error messages
+      if (error.response?.data?.error) {
+        const errorMessage = error.response.data.error;
+        if (errorMessage.includes('Too many ratings')) {
+          alert('You\'ve rated too many posts recently. Please wait before rating again.');
+        } else if (errorMessage.includes('cannot rate your own')) {
+          alert('You cannot rate your own blog post.');
+        } else {
+          alert(`Rating failed: ${errorMessage}`);
+        }
+      } else {
+        alert('Failed to submit rating. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

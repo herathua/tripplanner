@@ -14,6 +14,40 @@ export interface RatingStats {
   ratingCount: number;
 }
 
+export interface RatingInsights {
+  averageRating: number;
+  ratingCount: number;
+  distribution: { [key: number]: number };
+  highRatingPercentage: number;
+  lowRatingPercentage: number;
+  ratingQuality: string;
+}
+
+export interface RatingActivity {
+  id: number;
+  blogPostId: number;
+  blogPostTitle: string;
+  userId: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TopRatedPost {
+  blogPostId: number;
+  title: string;
+  averageRating: number;
+  ratingCount: number;
+  author: string;
+}
+
+export interface UserRatingStats {
+  totalRatings: number;
+  averageRatingGiven: number;
+  ratingPattern: { [key: number]: number };
+  recentRatings: number;
+}
+
 class BlogRatingService {
   private baseUrl = '/blog-ratings';
 
@@ -70,6 +104,38 @@ class BlogRatingService {
   // Delete a rating
   async deleteRating(blogPostId: number, firebaseUid: string): Promise<{ message: string }> {
     const response = await apiClient.delete(`${this.baseUrl}/${blogPostId}/user/${firebaseUid}`);
+    return response.data;
+  }
+
+  // ========== ANALYTICS AND INSIGHTS METHODS ==========
+
+  // Get rating distribution for a blog post
+  async getRatingDistribution(blogPostId: number): Promise<{ [key: number]: number }> {
+    const response = await apiClient.get(`${this.baseUrl}/${blogPostId}/distribution`);
+    return response.data;
+  }
+
+  // Get comprehensive rating insights for a blog post
+  async getRatingInsights(blogPostId: number): Promise<RatingInsights> {
+    const response = await apiClient.get(`${this.baseUrl}/${blogPostId}/insights`);
+    return response.data;
+  }
+
+  // Get recent rating activity
+  async getRecentRatingActivity(hours: number = 24): Promise<RatingActivity[]> {
+    const response = await apiClient.get(`${this.baseUrl}/recent-activity?hours=${hours}`);
+    return response.data;
+  }
+
+  // Get top rated blog posts
+  async getTopRatedBlogPosts(minRatings: number = 5): Promise<TopRatedPost[]> {
+    const response = await apiClient.get(`${this.baseUrl}/top-rated?minRatings=${minRatings}`);
+    return response.data;
+  }
+
+  // Get user rating statistics
+  async getUserRatingStats(firebaseUid: string): Promise<UserRatingStats> {
+    const response = await apiClient.get(`${this.baseUrl}/user/${firebaseUid}/stats`);
     return response.data;
   }
 }

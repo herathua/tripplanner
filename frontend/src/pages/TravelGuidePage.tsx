@@ -85,7 +85,7 @@ const TravelGuidePage: React.FC = () => {
             </div>
           </div>
           <div className="text-sm text-gray-600 mb-2">
-            By {post.author?.name || 'Anonymous'} • {post.createdAt ? formatDate(post.createdAt) : 'Recently'}
+            By {post.author?.displayName || 'Anonymous'} • {post.createdAt ? formatDate(post.createdAt) : 'Recently'}
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center">
@@ -130,7 +130,7 @@ const TravelGuidePage: React.FC = () => {
       const filtered = blogPosts.filter(post => 
         post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.author?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        post.author?.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredPosts(filtered);
     }
@@ -233,30 +233,6 @@ const TravelGuidePage: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Featured Categories */}
-      <div className="bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8">Featured Categories</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { title: "Best Time to Visit", icon: "🌤️", description: "Seasonal travel tips and weather guides" },
-              { title: "Local Cuisine Guide", icon: "🍽️", description: "Discover authentic local dishes and restaurants" },
-              { title: "Hidden Gems", icon: "💎", description: "Off-the-beaten-path destinations and experiences" },
-              { title: "Cultural Experiences", icon: "🏛️", description: "Immerse yourself in local culture and traditions" }
-            ].map((category, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-3xl mb-3">{category.icon}</div>
-                <h3 className="font-semibold mb-2">{category.title}</h3>
-                <p className="text-gray-600 text-sm mb-4">{category.description}</p>
-                <button className="text-[#029E9D] text-sm hover:text-[#027a7a] flex items-center">
-                  Explore <ArrowRight className="w-4 h-4 ml-1" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
