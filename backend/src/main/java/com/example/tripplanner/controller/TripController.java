@@ -242,6 +242,52 @@ public class TripController {
         }
     }
 
+    @GetMapping("/user/{firebaseUid}/accessible")
+    @Operation(summary = "Get accessible trips for user", description = "Retrieve trips accessible to user (own trips + shared trips)")
+    public ResponseEntity<PagedResponseDTO<TripDTO>> getAccessibleTripsByUser(
+            @Parameter(description = "Firebase UID of the user")
+            @PathVariable String firebaseUid,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("=== GETTING ACCESSIBLE TRIPS FOR USER ===");
+            System.out.println("Firebase UID: " + firebaseUid);
+            System.out.println("Page: " + page + ", Size: " + size);
+            
+            PagedResponseDTO<TripDTO> trips = tripService.getAccessibleTripsByUser(firebaseUid, page, size);
+            System.out.println("✅ Returning " + trips.getContent().size() + " accessible trips");
+            return ResponseEntity.ok(trips);
+        } catch (Exception e) {
+            System.err.println("=== ERROR GETTING ACCESSIBLE TRIPS ===");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(new PagedResponseDTO<>(new ArrayList<>(), 0, size, 0));
+        }
+    }
+
+    @GetMapping("/user/{firebaseUid}/accessible/upcoming")
+    @Operation(summary = "Get upcoming accessible trips for user", description = "Retrieve upcoming trips accessible to user (own trips + shared trips)")
+    public ResponseEntity<PagedResponseDTO<TripDTO>> getUpcomingAccessibleTripsByUser(
+            @Parameter(description = "Firebase UID of the user")
+            @PathVariable String firebaseUid,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("=== GETTING UPCOMING ACCESSIBLE TRIPS FOR USER ===");
+            System.out.println("Firebase UID: " + firebaseUid);
+            System.out.println("Page: " + page + ", Size: " + size);
+            
+            PagedResponseDTO<TripDTO> trips = tripService.getUpcomingAccessibleTripsByUser(firebaseUid, page, size);
+            System.out.println("✅ Returning " + trips.getContent().size() + " upcoming accessible trips");
+            return ResponseEntity.ok(trips);
+        } catch (Exception e) {
+            System.err.println("=== ERROR GETTING UPCOMING ACCESSIBLE TRIPS ===");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(new PagedResponseDTO<>(new ArrayList<>(), 0, size, 0));
+        }
+    }
+
     // Unified Trip Plan Operations
     @PostMapping("/{id}/plan")
     @Operation(summary = "Save complete trip plan", description = "Save the entire trip plan including places, activities, and expenses in one operation")

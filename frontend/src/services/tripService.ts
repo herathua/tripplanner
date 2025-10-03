@@ -10,6 +10,7 @@ export interface Trip {
   description?: string;
   status?: TripStatus;
   visibility?: TripVisibility;
+  firebaseUid?: string; // Added to identify trip owner
   createdAt?: string;
   updatedAt?: string;
 }
@@ -82,6 +83,22 @@ export const tripService = {
   // Get all trips by user Firebase UID with paging
   async getAllTripsByUser(firebaseUid: string, page = 0, size = 10) {
     const response = await apiClient.get(`/trips/user/${firebaseUid}`, {
+      params: { page, size }
+    });
+    return response.data;
+  },
+
+  // NEW: Get accessible trips for user (own trips + shared trips) with paging
+  async getAccessibleTripsByUser(firebaseUid: string, page = 0, size = 10) {
+    const response = await apiClient.get(`/trips/user/${firebaseUid}/accessible`, {
+      params: { page, size }
+    });
+    return response.data;
+  },
+
+  // NEW: Get upcoming accessible trips for user (own trips + shared trips) with paging
+  async getUpcomingAccessibleTripsByUser(firebaseUid: string, page = 0, size = 10) {
+    const response = await apiClient.get(`/trips/user/${firebaseUid}/accessible/upcoming`, {
       params: { page, size }
     });
     return response.data;

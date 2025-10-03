@@ -16,30 +16,40 @@ import java.io.IOException;
 import java.util.Collections;
 
 public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
+    private static final String DEV_FIREBASE_UID = "BGCJQjqmIlZvj67EvkewU2BpUK43"; // Use a consistent dev UID
+    
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         
-        // Skip authentication for development - allow requests without Firebase token
+        String authUserId = null;
+        
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
-            // For development, allow requests without authentication
-            filterChain.doFilter(request, response);
-            return;
+            // For development, use consistent dev UID when no auth header
+            authUserId = DEV_FIREBASE_UID;
+            System.out.println("No auth header - using dev Firebase UID: " + DEV_FIREBASE_UID);
+        } else {
+            String token = header.substring(7);
+            try {
+                FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+                authUserId = decodedToken.getUid();
+                System.out.println("✅ Firebase token verified successfully for UID: " + authUserId);
+            } catch (Exception e) {
+                // For development, use consistent dev UID when token fails
+                authUserId = DEV_FIREBASE_UID;
+                System.out.println("Firebase token verification failed: " + e.getMessage());
+                System.out.println("Using dev Firebase UID: " + DEV_FIREBASE_UID);
+            }
         }
         
-        String token = header.substring(7);
-        try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            decodedToken.getUid(), null, Collections.emptyList());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (Exception e) {
-            // For development, allow requests even if token verification fails
-            System.out.println("Firebase token verification failed: " + e.getMessage());
-        }
+        // Set authentication with consistent UID
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        authUserId, null, Collections.emptyList());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
         filterChain.doFilter(request, response);
     }
 }

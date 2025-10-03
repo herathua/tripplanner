@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
     if (user && user.uid) {
       console.log('Loading trips for user:', user.uid);
       setTripsLoading(true);
-      tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+      tripService.getUpcomingAccessibleTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
         console.log('Trips data received:', data);
         console.log('Data structure:', {
           content: data.content,

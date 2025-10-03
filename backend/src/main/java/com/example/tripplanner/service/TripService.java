@@ -18,6 +18,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +44,9 @@ public class TripService {
     
     @Autowired
     private ItineraryRepository itineraryRepository;
+    
+    @Autowired
+    private TripShareRepository tripShareRepository;
 
     // Trip CRUD Operations
     public TripDTO createTrip(TripDTO tripDTO, String firebaseUid) {
@@ -48,9 +54,20 @@ public class TripService {
         System.out.println("Trip DTO: " + tripDTO);
         System.out.println("Firebase UID: " + firebaseUid);
         
-        // Find user by Firebase UID
+        // Find user by Firebase UID or create if doesn't exist
         User user = userRepository.findByFirebaseUid(firebaseUid)
-            .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
+            .orElseGet(() -> {
+                System.out.println("Creating new user for Firebase UID: " + firebaseUid);
+                // Create a new user for development/testing
+                User newUser = new User();
+                newUser.setFirebaseUid(firebaseUid);
+                newUser.setEmail("dev@example.com");
+                newUser.setDisplayName("Development User");
+                newUser.setEmailVerified(true);
+                newUser.setActive(true);
+                newUser.setRole(User.UserRole.USER);
+                return userRepository.save(newUser);
+            });
         
         // Convert DTO to Entity
         Trip trip = new Trip();
@@ -285,8 +302,19 @@ public class TripService {
         System.out.println("Firebase UID: " + firebaseUid);
         System.out.println("Page: " + page + ", Size: " + size);
         
+        // Find user by Firebase UID or create if doesn't exist
         User user = userRepository.findByFirebaseUid(firebaseUid)
-            .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
+            .orElseGet(() -> {
+                System.out.println("Creating new user for Firebase UID: " + firebaseUid);
+                User newUser = new User();
+                newUser.setFirebaseUid(firebaseUid);
+                newUser.setEmail("dev@example.com");
+                newUser.setDisplayName("Development User");
+                newUser.setEmailVerified(true);
+                newUser.setActive(true);
+                newUser.setRole(User.UserRole.USER);
+                return userRepository.save(newUser);
+            });
         
         LocalDate today = LocalDate.now();
         List<Trip> upcomingTrips = tripRepository.findUpcomingAndActiveTrips(user, today);
@@ -313,8 +341,19 @@ public class TripService {
         System.out.println("Firebase UID: " + firebaseUid);
         System.out.println("Page: " + page + ", Size: " + size);
         
+        // Find user by Firebase UID or create if doesn't exist
         User user = userRepository.findByFirebaseUid(firebaseUid)
-            .orElseThrow(() -> new RuntimeException("User not found with Firebase UID: " + firebaseUid));
+            .orElseGet(() -> {
+                System.out.println("Creating new user for Firebase UID: " + firebaseUid);
+                User newUser = new User();
+                newUser.setFirebaseUid(firebaseUid);
+                newUser.setEmail("dev@example.com");
+                newUser.setDisplayName("Development User");
+                newUser.setEmailVerified(true);
+                newUser.setActive(true);
+                newUser.setRole(User.UserRole.USER);
+                return userRepository.save(newUser);
+            });
         
         List<Trip> allTrips = tripRepository.findByUser(user);
         
@@ -326,6 +365,113 @@ public class TripService {
             .collect(Collectors.toList());
         
         // Apply pagination manually (since we don't have Spring Data pagination here)
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, tripDTOs.size());
+        
+        List<TripDTO> pagedTrips = tripDTOs.subList(startIndex, endIndex);
+        
+        return new PagedResponseDTO<>(pagedTrips, page, size, tripDTOs.size());
+    }
+
+    // NEW: Get user's accessible trips (own trips + shared trips) with pagination
+    public PagedResponseDTO<TripDTO> getAccessibleTripsByUser(String firebaseUid, int page, int size) {
+        System.out.println("=== GETTING ACCESSIBLE TRIPS FOR USER ===");
+        System.out.println("Firebase UID: " + firebaseUid);
+        System.out.println("Page: " + page + ", Size: " + size);
+        
+        // Find user by Firebase UID or create if doesn't exist
+        User user = userRepository.findByFirebaseUid(firebaseUid)
+            .orElseGet(() -> {
+                System.out.println("Creating new user for Firebase UID: " + firebaseUid);
+                User newUser = new User();
+                newUser.setFirebaseUid(firebaseUid);
+                newUser.setEmail("dev@example.com");
+                newUser.setDisplayName("Development User");
+                newUser.setEmailVerified(true);
+                newUser.setActive(true);
+                newUser.setRole(User.UserRole.USER);
+                return userRepository.save(newUser);
+            });
+        
+        // Get user's own trips
+        List<Trip> ownTrips = tripRepository.findByUser(user);
+        
+        // Get trips shared with this user (accepted shares only)
+        List<TripShare> acceptedShares = tripShareRepository.findBySharedWithAndStatus(user, TripShare.ShareStatus.ACCEPTED);
+        List<Trip> sharedTrips = acceptedShares.stream()
+            .map(TripShare::getTrip)
+            .collect(Collectors.toList());
+        
+        // Combine own trips and shared trips (remove duplicates)
+        Set<Trip> accessibleTrips = new HashSet<>(ownTrips);
+        accessibleTrips.addAll(sharedTrips);
+        
+        List<Trip> allAccessibleTrips = new ArrayList<>(accessibleTrips);
+        allAccessibleTrips.sort(Comparator.comparing(Trip::getStartDate).reversed()); // Sort by start date (newest first)
+        
+        System.out.println("✅ Found " + allAccessibleTrips.size() + " accessible trips (" + ownTrips.size() + " own, " + sharedTrips.size() + " shared)");
+        
+        // Convert to DTOs
+        List<TripDTO> tripDTOs = allAccessibleTrips.stream()
+            .map(this::convertToTripDTO)
+            .collect(Collectors.toList());
+        
+        // Apply pagination manually
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, tripDTOs.size());
+        
+        List<TripDTO> pagedTrips = tripDTOs.subList(startIndex, endIndex);
+        
+        return new PagedResponseDTO<>(pagedTrips, page, size, tripDTOs.size());
+    }
+
+    // NEW: Get user's upcoming accessible trips (own trips + shared trips) with pagination
+    public PagedResponseDTO<TripDTO> getUpcomingAccessibleTripsByUser(String firebaseUid, int page, int size) {
+        System.out.println("=== GETTING UPCOMING ACCESSIBLE TRIPS FOR USER ===");
+        System.out.println("Firebase UID: " + firebaseUid);
+        System.out.println("Page: " + page + ", Size: " + size);
+        
+        // Find user by Firebase UID or create if doesn't exist
+        User user = userRepository.findByFirebaseUid(firebaseUid)
+            .orElseGet(() -> {
+                System.out.println("Creating new user for Firebase UID: " + firebaseUid);
+                User newUser = new User();
+                newUser.setFirebaseUid(firebaseUid);
+                newUser.setEmail("dev@example.com");
+                newUser.setDisplayName("Development User");
+                newUser.setEmailVerified(true);
+                newUser.setActive(true);
+                newUser.setRole(User.UserRole.USER);
+                return userRepository.save(newUser);
+            });
+        
+        LocalDate today = LocalDate.now();
+        
+        // Get user's own upcoming trips
+        List<Trip> ownUpcomingTrips = tripRepository.findUpcomingAndActiveTrips(user, today);
+        
+        // Get upcoming trips shared with this user (accepted shares only)
+        List<TripShare> acceptedShares = tripShareRepository.findBySharedWithAndStatus(user, TripShare.ShareStatus.ACCEPTED);
+        List<Trip> sharedUpcomingTrips = acceptedShares.stream()
+            .map(TripShare::getTrip)
+            .filter(trip -> !trip.getEndDate().isBefore(today)) // Filter for upcoming/active trips
+            .collect(Collectors.toList());
+        
+        // Combine own trips and shared trips (remove duplicates)
+        Set<Trip> accessibleUpcomingTrips = new HashSet<>(ownUpcomingTrips);
+        accessibleUpcomingTrips.addAll(sharedUpcomingTrips);
+        
+        List<Trip> allAccessibleUpcomingTrips = new ArrayList<>(accessibleUpcomingTrips);
+        allAccessibleUpcomingTrips.sort(Comparator.comparing(Trip::getStartDate)); // Sort by start date (upcoming first)
+        
+        System.out.println("✅ Found " + allAccessibleUpcomingTrips.size() + " upcoming accessible trips (" + ownUpcomingTrips.size() + " own, " + sharedUpcomingTrips.size() + " shared)");
+        
+        // Convert to DTOs
+        List<TripDTO> tripDTOs = allAccessibleUpcomingTrips.stream()
+            .map(this::convertToTripDTO)
+            .collect(Collectors.toList());
+        
+        // Apply pagination manually
         int startIndex = page * size;
         int endIndex = Math.min(startIndex + size, tripDTOs.size());
         

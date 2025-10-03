@@ -27,7 +27,8 @@ const UserTrips: React.FC<UserTripsProps> = ({ user }) => {
 
     setIsLoading(true);
     try {
-      const response = await tripService.getAllTripsByUser(user.uid, currentPage, tripsPerPage);
+      // Use privacy-aware endpoint that includes shared trips
+      const response = await tripService.getAccessibleTripsByUser(user.uid, currentPage, tripsPerPage);
       setTrips(response.content || []);
       setTotalPages(response.totalPages || 1);
       setTotalElements(response.totalElements || 0);
@@ -110,7 +111,7 @@ const UserTrips: React.FC<UserTripsProps> = ({ user }) => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Trips</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Manage your trip plans and itineraries
+            Manage your trip plans and itineraries, including trips shared with you
           </p>
         </div>
         <Link
@@ -145,7 +146,7 @@ const UserTrips: React.FC<UserTripsProps> = ({ user }) => {
       ) : (
         <>
           <div className="mb-4 text-sm text-gray-600">
-            Showing {trips.length} of {totalElements} trips
+            Showing {trips.length} of {totalElements} accessible trips (your trips + shared with you)
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -153,9 +154,16 @@ const UserTrips: React.FC<UserTripsProps> = ({ user }) => {
               <div key={trip.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                      {trip.title}
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                        {trip.title}
+                      </h3>
+                      {trip.firebaseUid !== user.uid && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          👥 Shared Trip
+                        </span>
+                      )}
+                    </div>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(trip.status)}`}>
                       {trip.status}
                     </span>
