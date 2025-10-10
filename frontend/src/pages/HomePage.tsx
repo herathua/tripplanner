@@ -7,6 +7,7 @@ import TripCreationModal from '../components/modals/TripCreationModal';
 import { tripService } from '../services/tripService';
 import { blogService, BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const HomePage: React.FC = () => {
     }, [trip.destination, trip.title]);
 
     return (
-      <div className="overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+      <div className="overflow-hidden border rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 glass-card">
         <div className="relative">
           {isImageLoading ? (
             <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -116,6 +117,7 @@ const HomePage: React.FC = () => {
   };
 
   const user = useAppSelector((state) => state.auth.user);
+  const { profile } = useUserProfile(user);
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
   const [tripPage, setTripPage] = useState(0);
   const [tripTotalPages, setTripTotalPages] = useState(1);
@@ -264,73 +266,87 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      {/* Removed navigation links and bell icon */}
-
+    <div className="min-h-screen font-body">
       {/* Main Content */}
-      <main className="px-6 py-8">
+      <main className="space-y-12">
+        {/* Welcome Section */}
+        <section className="text-center py-8">
+          <h1 className="text-4xl font-bold text-primary mb-4 font-heading">
+            Welcome back, {profile?.displayName || user?.displayName || 'Traveler'}!
+          </h1>
+          <p className="text-lg text-neutral-600 font-body">
+            Plan your next adventure or explore travel guides
+          </p>
+        </section>
+
         {/* Upcoming Trips Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[#029E9D]"><span className="text-black">Upcoming </span>Trips</h2>
-            <div className="flex space-x-3">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-primary font-heading">
+              <span className="text-neutral-800">Upcoming </span>Trips
+            </h2>
+            <div className="flex space-x-4">
               <button
-                className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
+                className="glass-button text-neutral-700 px-6 py-3 rounded-xl text-sm hover:scale-105 transition-all duration-300 flex items-center font-body"
                 onClick={handleViewAllTrips}
               >
                 View All
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <ArrowRight className="w-4 h-4 ml-2" />
               </button>
               <button
-                className="bg-[#029E9D] text-white px-4 py-1.5 rounded-full text-sm hover:bg-[#027a7a] flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary text-white px-6 py-3 rounded-xl text-sm hover:bg-primary-dark hover:scale-105 transition-all duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed font-body"
                 onClick={handlePlanNewTrip}
                 disabled={!user?.uid}
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-4 h-4 mr-2" />
                 Plan new trip
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {tripsLoading ? (
-              <div className="col-span-3 text-center text-gray-500 py-8">
-                <div className="mb-4">Loading trips...</div>
+              <div className="col-span-3 text-center text-neutral-500 py-12">
+                <div className="glass-subtle rounded-xl p-8">
+                  <div className="mb-4 text-lg font-body">Loading trips...</div>
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-neutral-200 rounded w-1/4 mx-auto"></div>
+                  </div>
+                </div>
               </div>
             ) : upcomingTrips.length === 0 ? (
-              <div className="col-span-3 text-center text-gray-500 py-8">
-                <div className="mb-4">
-                  {user?.uid ? 'No upcoming trips found.' : 'Please log in to view your trips.'}
+              <div className="col-span-3 text-center text-neutral-500 py-12">
+                <div className="glass-subtle rounded-xl p-8">
+                  <div className="mb-4 text-lg font-body">
+                    {user?.uid ? 'No upcoming trips found.' : 'Please log in to view your trips.'}
+                  </div>
+                  <small className="text-sm text-neutral-400 font-body">
+                    Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
+                    Trips count: {upcomingTrips.length}
+                    {user?.uid && (
+                      <div className="mt-4">
+                        <button 
+                          onClick={() => {
+                            console.log('Refreshing trips...');
+                            setTripsLoading(true);
+                            tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
+                              console.log('Refreshed trips data:', data);
+                              setUpcomingTrips(data.content || []);
+                              setTripTotalPages(data.totalPages || 1);
+                            }).catch(error => {
+                              console.error('Error refreshing trips:', error);
+                            }).finally(() => {
+                              setTripsLoading(false);
+                            });
+                          }}
+                          className="text-primary hover:text-primary-dark underline font-body"
+                        >
+                          Refresh trips
+                        </button>
+                      </div>
+                    )}
+                  </small>
                 </div>
-                <small className="text-xs text-gray-400">
-                  Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
-                  Trips count: {upcomingTrips.length}
-                  {user?.uid && (
-                    <div className="mt-2">
-                      <button 
-                        onClick={() => {
-                          console.log('Refreshing trips...');
-                          setTripsLoading(true);
-                          tripService.getUpcomingTripsByUser(user.uid, tripPage, tripsPerPage).then((data) => {
-                            console.log('Refreshed trips data:', data);
-                            setUpcomingTrips(data.content || []);
-                            setTripTotalPages(data.totalPages || 1);
-                          }).catch(error => {
-                            console.error('Error refreshing trips:', error);
-                          }).finally(() => {
-                            setTripsLoading(false);
-                          });
-                        }}
-                        className="text-[#029E9D] hover:text-[#027a7a] underline"
-
-
-                      >
-                        Refresh trips
-                      </button>
-                    </div>
-                  )}
-                </small>
               </div>
             ) : (
               upcomingTrips.map((trip, idx) => (
@@ -340,10 +356,10 @@ const HomePage: React.FC = () => {
           </div>
           {/* Paging Controls */}
           {tripTotalPages > 1 && (
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mt-8">
               {tripPage > 0 && (
                 <button
-                  className="px-4 py-2 mr-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="glass-button text-neutral-700 px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300 font-body"
                   onClick={() => setTripPage(tripPage - 1)}
                 >
                   Show less
@@ -351,7 +367,7 @@ const HomePage: React.FC = () => {
               )}
               {tripPage < tripTotalPages - 1 && (
                 <button
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="glass-button text-neutral-700 px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300 font-body ml-4"
                   onClick={() => setTripPage(tripPage + 1)}
                 >
                   Show more
@@ -369,48 +385,50 @@ const HomePage: React.FC = () => {
 
         {/* Your Guides Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[#029E9D]"><span className="text-black">Your </span>Guides</h2>
-            <div className="flex space-x-3">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-primary font-heading">
+              <span className="text-neutral-800">Your </span>Guides
+            </h2>
+            <div className="flex space-x-4">
               <button
-                className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-200 flex items-center"
+                className="glass-button text-neutral-700 px-6 py-3 rounded-xl text-sm hover:scale-105 transition-all duration-300 flex items-center font-body"
                 onClick={handleViewAllGuides}
               >
                 View All
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <ArrowRight className="w-4 h-4 ml-2" />
               </button>
               <button
-                className="bg-[#029E9D] text-white px-4 py-1.5 rounded-full text-sm hover:bg-[#027a7a] flex items-center"
+                className="bg-primary text-white px-6 py-3 rounded-xl text-sm hover:bg-primary-dark hover:scale-105 transition-all duration-300 flex items-center font-body"
                 onClick={handleCreateNewGuide}
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-4 h-4 mr-2" />
                 Create new guide
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {userGuides.length === 0 ? (
-              <div className="col-span-3 text-center text-gray-500 py-8">
-                <div className="mb-4">
-                  {user?.uid ? 'No guides created yet.' : 'Please log in to view your guides.'}
+              <div className="col-span-3 text-center text-neutral-500 py-12">
+                <div className="glass-subtle rounded-xl p-8">
+                  <div className="mb-4 text-lg font-body">
+                    {user?.uid ? 'No guides created yet.' : 'Please log in to view your guides.'}
+                  </div>
+                  <small className="text-sm text-neutral-400 font-body">
+                    Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
+                    Guides count: {userGuides.length}
+                    {user?.uid && (
+                      <div className="mt-4">
+                        <button 
+                          onClick={handleCreateNewGuide}
+                          className="text-primary hover:text-primary-dark underline font-body"
+                        >
+                          Create Your First Guide
+                        </button>
+                      </div>
+                    )}
+                  </small>
                 </div>
-                <small className="text-xs text-gray-400">
-                  Debug: User: {user?.uid ? 'Authenticated' : 'Not authenticated'}, 
-                  Guides count: {userGuides.length}
-                  {user?.uid && (
-                    <div className="mt-2">
-                      <button 
-                        onClick={handleCreateNewGuide}
-                        className="text-[#029E9D] hover:text-[#027a7a] underline"
-
-
-                      >
-                        Create Your First Guide
-                      </button>
-                    </div>
-                  )}
-                </small>
               </div>
             ) : (
               userGuides.map((guide) => (
@@ -427,10 +445,10 @@ const HomePage: React.FC = () => {
 
           {/* Paging Controls for Guides */}
           {guideTotalPages > 1 && (
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mt-8">
               {guidePage > 0 && (
                 <button
-                  className="px-4 py-2 mr-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="glass-button text-neutral-700 px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300 font-body"
                   onClick={() => setGuidePage(guidePage - 1)}
                 >
                   Show less
@@ -438,7 +456,7 @@ const HomePage: React.FC = () => {
               )}
               {guidePage < guideTotalPages - 1 && (
                 <button
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="glass-button text-neutral-700 px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300 font-body ml-4"
                   onClick={() => setGuidePage(guidePage + 1)}
                 >
                   Show more
@@ -450,14 +468,18 @@ const HomePage: React.FC = () => {
 
         {/* Published Guides Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[#029E9D]"><span className="text-black">Popular </span>Guides</h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-primary font-heading">
+              <span className="text-neutral-800">Popular </span>Guides
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {publishedGuides.length === 0 ? (
-              <div className="col-span-3 text-center py-8 text-gray-500">
-                No published guides available.
+              <div className="col-span-3 text-center py-12 text-neutral-500">
+                <div className="glass-subtle rounded-xl p-8">
+                  <div className="text-lg font-body">No published guides available.</div>
+                </div>
               </div>
             ) : (
               publishedGuides.map((guide) => (

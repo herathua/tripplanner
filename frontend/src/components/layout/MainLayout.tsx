@@ -59,25 +59,28 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 font-body">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="glass-nav fixed top-0 left-0 right-0 z-50">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center gap-3">
-                <img
-                  src={logo}
-                  alt="TripPlanner Logo"
-                  title="TripPlanner"
-                  className="object-contain h-10 w-auto"
-                />
-                <span className="text-2xl font-bold text-black-500 leading-none">TripPlanner</span>
+              <Link to="/" className="flex items-center gap-3 group">
+                <div className="relative">
+                  <img
+                    src={logo}
+                    alt="TripPlanner Logo"
+                    title="TripPlanner"
+                    className="object-contain h-10 w-auto transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-primary rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                </div>
+                <span className="text-2xl font-bold text-primary leading-none font-heading">TripPlanner</span>
               </Link>
             </div>
 
-            {/* Centered Navigation - Removed Trip and Login links */}
+            {/* Centered Navigation */}
             <nav className="justify-center flex-1 hidden md:flex">
               <div className="flex space-x-8">
                 {navigation.map((item) => (
@@ -85,7 +88,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <button
                       key={item.path}
                       onClick={item.action}
-                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 cursor-pointer"
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 hover:text-primary transition-all duration-300 hover:scale-105 font-body"
                     >
                       {item.name}
                     </button>
@@ -93,10 +96,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <Link
                       key={item.path}
                       to={item.path}
-                      className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105 font-body ${
                         location.pathname === item.path
-                          ? 'text-red-500 border-b-2 border-red-500'
-                          : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          ? 'text-primary border-b-2 border-primary'
+                          : 'text-neutral-600 hover:text-primary'
                       }`}
                     >
                       {item.name}
@@ -113,23 +116,23 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   {/* User Avatar Button */}
                   <button
                     onClick={handleUserAvatarClick}
-                    className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="flex items-center space-x-2 p-2 rounded-full hover:bg-white/20 transition-all duration-300 hover:scale-105 group"
                     title="User Management"
                   >
                     {profile?.photoUrl ? (
                       <img
                         src={profile.photoUrl}
                         alt={profile.displayName || 'User'}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-white/20 group-hover:ring-primary/50 transition-all duration-300"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ring-2 ring-white/20 group-hover:ring-primary/50 transition-all duration-300">
                         <span className="text-sm font-medium text-white">
                           {profile?.displayName?.charAt(0) || user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                         </span>
                       </div>
                     )}
-                    <span className="hidden sm:block text-sm font-medium text-gray-700">
+                    <span className="hidden sm:block text-sm font-medium text-neutral-700 group-hover:text-primary transition-colors duration-300 font-body">
                       {profile?.displayName || user?.displayName || user?.email || 'User'}
                     </span>
                   </button>
@@ -137,7 +140,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-primary transition-all duration-300 hover:scale-105 font-body"
                   >
                     Sign out
                   </button>
@@ -145,7 +148,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               ) : (
                 <Link
                   to="/login"
-                  className="px-4 py-2 ml-4 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="px-4 py-2 ml-4 text-sm font-medium text-neutral-600 hover:text-primary transition-all duration-300 hover:scale-105 font-body"
                 >
                   Sign in
                 </Link>
@@ -156,8 +159,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        {children}
+      <main className="pt-20 px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="glass-subtle rounded-2xl p-6">
+          {children}
+        </div>
       </main>
 
       {/* Floating AI Assistant */}
