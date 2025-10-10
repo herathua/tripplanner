@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import AppRoutes from './routes';
 import { TripProvider } from './contexts/TripContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { useAppDispatch } from './store';
 import { setUser, setLoading } from './store/slices/authSlice';
 import { onAuthStateChange } from './config/firebase';
@@ -41,12 +42,14 @@ const AuthInitializer: React.FC = () => {
 function App() {
   return (
     <Provider store={store}>
-      <TripProvider>
-        <Router>
-          <AuthInitializer />
-          <AppRoutes />
-        </Router>
-      </TripProvider>
+      <CurrencyProvider>
+        <TripProvider>
+          <Router>
+            <AuthInitializer />
+            <AppRoutes />
+          </Router>
+        </TripProvider>
+      </CurrencyProvider>
     </Provider>
   );
 }

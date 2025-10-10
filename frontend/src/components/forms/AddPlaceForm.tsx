@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 import { Place } from '../../contexts/TripContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface AddPlaceFormProps {
   onSubmit: (place: Omit<Place, 'id'>) => void;
@@ -8,6 +9,7 @@ interface AddPlaceFormProps {
 }
 
 const AddPlaceForm: React.FC<AddPlaceFormProps> = ({ onSubmit, onCancel }) => {
+  const { currentCurrency, currencyInfo } = useCurrency();
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -72,7 +74,9 @@ const AddPlaceForm: React.FC<AddPlaceFormProps> = ({ onSubmit, onCancel }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cost ({currencyInfo?.symbol || '$'} {currentCurrency})
+          </label>
           <input
             type="number"
             min="0"

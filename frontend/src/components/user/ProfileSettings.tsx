@@ -5,6 +5,7 @@ import { addNotification } from '../../store/slices/uiSlice';
 import { ImageUploadService } from '../../services/imageUploadService';
 import { PasswordService, PasswordUpdateRequest } from '../../services/passwordService';
 import { EmailVerificationService } from '../../services/emailVerificationService';
+import CurrencySelector from './CurrencySelector';
 
 interface ProfileSettingsProps {
   user: User;
@@ -788,6 +789,12 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             </div>
           </div>
         </form>
+
+        {/* Currency Preferences */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Currency Preferences</h3>
+          <CurrencySelector />
+        </div>
 
         {/* Account Information */}
         <div className="bg-gray-50 rounded-lg p-6">

@@ -8,6 +8,7 @@ import { tripService } from '../services/tripService';
 import { blogService, BlogPost } from '../services/blogService';
 import CardImageService from '../utils/cardImageService';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useFormatAmount } from '../contexts/CurrencyContext';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -83,7 +84,7 @@ const HomePage: React.FC = () => {
               <span>{trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'TBD'} - {trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'TBD'}</span>
               {trip.budget && (
                 <span className="font-medium text-[#029E9D]">
-                  ${trip.budget.toLocaleString()}
+                  {formatAmount(trip.budget)}
                 </span>
               )}
             </div>
@@ -118,6 +119,7 @@ const HomePage: React.FC = () => {
 
   const user = useAppSelector((state) => state.auth.user);
   const { profile } = useUserProfile(user);
+  const { formatAmount } = useFormatAmount();
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
   const [tripPage, setTripPage] = useState(0);
   const [tripTotalPages, setTripTotalPages] = useState(1);

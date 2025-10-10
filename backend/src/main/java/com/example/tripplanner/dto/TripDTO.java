@@ -38,6 +38,9 @@ public class TripDTO {
     @Digits(integer = 10, fraction = 2, message = "Budget must have at most 10 digits and 2 decimal places")
     private BigDecimal budget;
     
+    @Size(min = 3, max = 3, message = "Currency must be a 3-letter code")
+    private String currency = "USD";
+    
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
     

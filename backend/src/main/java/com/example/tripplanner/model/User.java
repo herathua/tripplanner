@@ -54,6 +54,9 @@ public class User {
     @Column(nullable = false)
     private boolean active = true;
     
+    @Column(name = "preferred_currency", length = 3)
+    private String preferredCurrency = "USD";
+    
     @CreationTimestamp
     @Column(name = "date_created", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -7,6 +7,7 @@ export interface Trip {
   startDate: string;
   endDate: string;
   budget?: number;
+  currency?: string;
   description?: string;
   status?: TripStatus;
   visibility?: TripVisibility;

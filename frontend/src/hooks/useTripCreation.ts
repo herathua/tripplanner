@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store';
 import { addNotification } from '../store/slices/uiSlice';
 import apiClient from '../config/api';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 export interface TripFormData {
   title: string;
@@ -23,6 +24,7 @@ export const useTripCreation = (): TripCreationResult => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const { currentCurrency } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +71,7 @@ export const useTripCreation = (): TripCreationResult => {
         startDate: formattedStartDate,
         endDate: formattedEndDate,
         budget: budgetValue,
+        currency: currentCurrency,
         description: destination.trim(),
         itineraryData: {
           days: [

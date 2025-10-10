@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Place } from '../../contexts/TripContext';
 import { Activity, ActivityType, ActivityStatus } from '../../services/itineraryService';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface AddActivityFormProps {
   onSubmit: (activity: Omit<Activity, 'id'>) => void;
@@ -19,6 +20,7 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
   selectedPlace,
   editingActivity
 }) => {
+  const { currentCurrency, currencyInfo } = useCurrency();
   const [formData, setFormData] = useState({
     name: editingActivity?.name || selectedPlace?.name || '',
     description: editingActivity?.description || '',
@@ -149,7 +151,9 @@ const AddActivityForm: React.FC<AddActivityFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cost ({currencyInfo?.symbol || '$'} {currentCurrency})
+          </label>
           <input
             type="number"
             min="0"

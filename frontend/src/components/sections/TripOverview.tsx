@@ -1,7 +1,8 @@
 import React from 'react';
-import { Clock, DollarSign, MapPin, Navigation } from 'lucide-react';
+import { Clock, MapPin, Navigation } from 'lucide-react';
 import TripMap from '../TripMap';
 import { Place } from '../../contexts/TripContext';
+import { useFormatAmount } from '../../contexts/CurrencyContext';
 
 interface TripDay {
   date: Date;
@@ -29,6 +30,7 @@ const TripOverview: React.FC<TripOverviewProps> = ({
   onToggleMapFullscreen,
   getCategoryIcon
 }) => {
+  const { formatAmount } = useFormatAmount();
   const remainingBudget = budget - totalSpent;
 
   return (
@@ -44,11 +46,10 @@ const TripOverview: React.FC<TripOverviewProps> = ({
         <div className="h-full p-6 bg-white rounded-lg shadow-md">
           <h3 className="mb-4 text-lg font-semibold">Total Budget</h3>
           <div className="flex items-center text-gray-600">
-            <DollarSign className="w-5 h-5 mr-2" />
-            <span>${budget.toLocaleString()}</span>
+            <span className="text-2xl font-semibold">{formatAmount(budget)}</span>
           </div>
           <div className="mt-2 text-sm text-gray-500">
-            Spent: ${totalSpent.toLocaleString()} | Remaining: ${remainingBudget.toLocaleString()}
+            Spent: {formatAmount(totalSpent)} | Remaining: {formatAmount(remainingBudget)}
           </div>
         </div>
         <div className="h-full p-6 bg-white rounded-lg shadow-md">

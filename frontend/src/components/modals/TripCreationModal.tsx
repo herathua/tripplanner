@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, DollarSign } from 'lucide-react';
+import { X } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useTripCreation, TripFormData } from '../../hooks/useTripCreation';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface TripCreationModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface TripCreationModalProps {
 
 const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }) => {
   const { isLoading, error, createTrip, clearError } = useTripCreation();
+  const { currentCurrency, currencyInfo } = useCurrency();
   
   const [formData, setFormData] = useState<TripFormData>({
     title: '',
@@ -65,7 +67,13 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
 
   const formatCurrency = (value: string) => {
     const number = value.replace(/\D/g, '');
-    return number ? `$${parseInt(number).toLocaleString()}` : '';
+    if (!number) return '';
+    
+    const formattedNumber = parseInt(number).toLocaleString();
+    const symbol = currencyInfo?.symbol || '$';
+    const position = currencyInfo?.symbolPosition || 'before';
+    
+    return position === 'before' ? `${symbol}${formattedNumber}` : `${formattedNumber}${symbol}`;
   };
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,23 +177,25 @@ const TripCreationModal: React.FC<TripCreationModalProps> = ({ isOpen, onClose }
 
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
-              Expected Budget *
+              Expected Budget * ({currencyInfo?.symbol || '$'} {currentCurrency})
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <DollarSign className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-400 text-lg font-medium">
+                  {currencyInfo?.symbol || '$'}
+                </span>
               </div>
               <input
                 type="text"
                 value={formData.budget ? formatCurrency(formData.budget) : ''}
                 onChange={handleBudgetChange}
-                placeholder="Enter your budget"
+                placeholder={`Enter your budget in ${currentCurrency}`}
                 className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 disabled={isLoading}
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Enter your total budget for the trip
+              Enter your total budget for the trip in {currentCurrency}
             </p>
           </div>
 

@@ -54,6 +54,9 @@ public class Trip {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal budget;
     
+    @Column(name = "currency", length = 3, nullable = false)
+    private String currency = "USD";
+    
     @Column(columnDefinition = "TEXT")
     private String description;
     

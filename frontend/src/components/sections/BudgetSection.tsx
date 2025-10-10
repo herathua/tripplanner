@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, DollarSign, Trash2, MapPin } from 'lucide-react';
 import { Expense } from '../../contexts/TripContext';
 import { Activity } from '../../services/itineraryService';
+import { useFormatAmount } from '../../contexts/CurrencyContext';
 
 interface BudgetSectionProps {
   budget: number;
@@ -22,6 +23,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
   onDeleteExpense,
   getExpenseCategoryIcon
 }) => {
+  const { formatAmount } = useFormatAmount();
   const remainingBudget = budget - totalSpent;
   
   // Calculate activity costs breakdown
@@ -44,19 +46,19 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
         <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-4">
           <div className="h-full p-6 rounded-lg bg-blue-50">
             <h3 className="mb-2 text-sm font-medium text-gray-600">Total Budget</h3>
-            <p className="text-2xl font-semibold text-blue-600">${budget.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-blue-600">{formatAmount(budget)}</p>
           </div>
           <div className="h-full p-6 rounded-lg bg-purple-50">
             <h3 className="mb-2 text-sm font-medium text-gray-600">Activity Costs</h3>
-            <p className="text-2xl font-semibold text-purple-600">${activityCosts.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-purple-600">{formatAmount(activityCosts)}</p>
           </div>
           <div className="h-full p-6 rounded-lg bg-green-50">
             <h3 className="mb-2 text-sm font-medium text-gray-600">Manual Expenses</h3>
-            <p className="text-2xl font-semibold text-green-600">${manualExpenseCosts.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-green-600">{formatAmount(manualExpenseCosts)}</p>
           </div>
           <div className="h-full p-6 rounded-lg bg-yellow-50">
             <h3 className="mb-2 text-sm font-medium text-gray-600">Remaining</h3>
-            <p className="text-2xl font-semibold text-yellow-600">${remainingBudget.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-yellow-600">{formatAmount(remainingBudget)}</p>
           </div>
         </div>
         
@@ -82,7 +84,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
                     <MapPin className="w-4 h-4 text-blue-600" />
                     <span className="font-medium text-blue-900">Activity Costs</span>
                   </div>
-                  <span className="font-semibold text-blue-900">${activityCosts.toLocaleString()}</span>
+                  <span className="font-semibold text-blue-900">{formatAmount(activityCosts)}</span>
                 </div>
                 <div className="space-y-2">
                   {activities.filter(activity => activity.cost && activity.cost > 0).map(activity => (
@@ -91,7 +93,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
                         <span className="text-gray-600">Day {activity.dayNumber || 'N/A'}</span>
                         <span className="text-gray-900">{activity.name}</span>
                       </div>
-                      <span className="font-medium text-blue-700">${activity.cost?.toLocaleString()}</span>
+                      <span className="font-medium text-blue-700">{formatAmount(activity.cost || 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -115,7 +117,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
                           {getExpenseCategoryIcon(category)}
                           <span className="font-medium capitalize">{category}</span>
                         </div>
-                        <span className="font-semibold text-gray-900">${categoryTotal.toLocaleString()}</span>
+                        <span className="font-semibold text-gray-900">{formatAmount(categoryTotal)}</span>
                       </div>
                       <div className="space-y-2">
                         {categoryExpenses.map(expense => (
@@ -125,7 +127,7 @@ const BudgetSection: React.FC<BudgetSectionProps> = ({
                               <span className="text-gray-900">{expense.description}</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium">${expense.amount.toLocaleString()}</span>
+                              <span className="font-medium">{formatAmount(expense.amount)}</span>
                               <button 
                                 onClick={() => expense.id && onDeleteExpense(expense.id)}
                                 className="text-red-500 hover:text-red-700"
