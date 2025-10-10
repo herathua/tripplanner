@@ -279,7 +279,7 @@ Context from previous conversation: ${context}
 Please provide helpful, accurate, and engaging responses. If the user asks about weather, locations, or specific places, you can mention that you have access to real-time data. Keep responses conversational and informative.`;
 
       const response = await openRouterClient.post('/chat/completions', {
-        model: 'anthropic/claude-3.5-sonnet',
+        model: 'google/gemini-2.5-flash-lite',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }

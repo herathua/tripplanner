@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>OpenRouter API Key Test</h1>
+    
+    <div class="info">
+        <strong>Testing API Key:</strong> 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
+    </div>
+    
+    <button onclick="testAPI()" id="testBtn">Test API Key</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const btn = document.getElementById('testBtn');
+            const resultDiv = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            const apiKey = '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';
+            
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'google/gemini-2.5-flash-lite',
+                        messages: [
+                            { role: 'user', content: 'Hello! Please respond with "API key is working!" if you can read this.' }
+                        ],
+                        max_tokens: 50,
+                        temperature: 0.7,
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ SUCCESS: API Key is working!</strong><br>
+                            <strong>Response:</strong> ${data.choices[0]?.message?.content || 'No response'}<br>
+                            <strong>Status:</strong> ${response.status}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ ERROR: API Key is not working</strong><br>
+                            <strong>Status:</strong> ${response.status} ${response.statusText}<br>
+                            <strong>Error:</strong> ${data.error?.message || 'Unknown error'}
+                        </div>
+                    `;
+                    
+                    if (response.status === 401) {
+                        resultDiv.innerHTML += `<div class="result error">🔐 Authentication error - API key is invalid or expired</div>`;
+                    } else if (response.status === 429) {
+                        resultDiv.innerHTML += `<div class="result error">⏰ Rate limit exceeded - API key works but you hit the limit</div>`;
+                    } else if (response.status === 402) {
+                        resultDiv.innerHTML += `<div class="result error">💳 Payment required - API key works but account needs credits</div>`;
+                    }
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ NETWORK ERROR</strong><br>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Test API Key';
+        }
+    </script>
+</body>
+</html>
